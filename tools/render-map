@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+"""Tool to render maps in the example format.
+
+Usage: tools/render-map [db.sqlite] [--big] [--labels]
+
+--big renders the image in a higher resolution.
+--labels inscribes nodes and lines.
+
+The output will be written to 'output.png'."""
+
+import sys
+from openlr_decoder.example_sqlite_map import ExampleMapReader
+from openlr_decoder.tests.example_mapformat import setup_testdb
+from shapely.geometry import Point, LineString
+from warnings import warn
+import matplotlib.pylab as pylab
+import geopandas
+
+def get_graph_lines(map: ExampleMapReader) -> geopandas.GeoSeries:
+        lines = [LineString([
+                        Point(*line.start_node().coordinates()),
+                        Point(*line.end_node().coordinates())]
+                ) for line in map.get_lines()]
+        if not lines:
+                warn("THE MAP HAS NO LINES")
+        return geopandas.GeoSeries(lines)
+
+def render_map(map: ExampleMapReader, outfile: str, labels: bool=True):
+        gs = get_graph_lines(map)
+        ax = gs.plot()
+
+        if labels:
+                # Text labels
+                for point in map.get_nodes():
+                        ax.text(*point.coordinates(), point.get_id(), weight="bold")
+
+                for line in map.get_lines():
+                        (lon0, lat0) = line.start_node().coordinates()
+                        (lon1, lat1) = line.end_node().coordinates()
+                        lon = (lon0 + lon1) / 2
+                        lat = (lat0 + lat1) / 2
+                        ax.text(lon, lat, line.get_id(), color="darkred", ma="center")
+
+        fig = ax.get_figure()
+        fig.savefig(outfile)
+
+def render_sqlite(db: str, labels: bool=True):
+    reader = ExampleMapReader(db)
+    render_map(reader, "output.png", labels)
+
+if __name__ == "__main__":
+    if "--big" in sys.argv:
+        pylab.rcParams['figure.figsize'] = 80, 60
+    labels = "--labels" in sys.argv
+    if len(sys.argv) > 1 and sys.argv[1][0] != "-":
+        render_sqlite(sys.argv[1], labels)
+    else:
+        render_sqlite("db.sqlite", labels)

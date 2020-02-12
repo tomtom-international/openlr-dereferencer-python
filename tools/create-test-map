@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+"Creates a test map DB"
+
+from sys import argv
+from openlr_decoder.tests.example_mapformat import setup_testdb, remove_db_file
+
+def clean_setup(db_file_path):
+    remove_db_file(db_file_path)
+    setup_testdb(db_file_path)
+
+if __name__ == "__main__":
+    clean_setup(argv[1] if len(argv) > 1 else 'db.sqlite')
