@@ -4,6 +4,8 @@ python:
   - "3.6"
   - "3.7"
   - "3.8"
+before_install:
+  - sudo apt-get -y install libsqlite3-mod-spatialite
 install: pip install tox-travis codecov
 script: tox
 after_success: codecov
