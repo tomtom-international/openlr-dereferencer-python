@@ -1,4 +1,10 @@
 # openlr_dereferencer
+
+[![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
+[![Travis (.org)](https://img.shields.io/travis/tomtom-internationalopenlr-dereferencer-python)](https://travis-ci.org/tomtom-international/openlr-dereferencer-python)
+[![Coverage Status](https://img.shields.io/codecov/c/github/tomtom-international/openlr-dereferencer-python/master.svg)](https://codecov.io/github/tomtom-international/openlr-dereferencer-python?branch=master)
+
+
 This is a Python package for decoding OpenLR™ location references on target maps.
 ## Dependencies
 - Python ≥ 3.6
