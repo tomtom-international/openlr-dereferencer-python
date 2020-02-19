@@ -12,11 +12,12 @@ from .scoring import score_lrp_candidate
 from .tools import LRDecodeError
 from .line_decoding import decode_line
 from .line_location import LineLocation
+from .point_locations import decode_pointalongline, PointAlongLine
 
 SEARCH_RADIUS = 100.0
 
 LR = TypeVar("LocationReference", LineLocationRef, PointAlongLineLocation)
-MAP_OBJECTS = TypeVar("MapObjects", LineLocation, Coordinates)
+MAP_OBJECTS = TypeVar("MapObjects", LineLocation, Coordinates, PointAlongLine)
 
 
 def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS) -> MAP_OBJECTS:
@@ -35,6 +36,14 @@ def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS) -> M
         ------------------------------|-------------------------------
         openlr.GeoCoordinateLocation  | Node
         openlr.LineLocation           | openlr_dereferencer.LineLocation
-        openlr.PointAlongLineLocation | PointAlongLine
+        openlr.PointAlongLine         | PointAlongLineLocation
     """
-    return decode_line(reference, reader, radius)
+    if isinstance(reference, LineLocationRef):
+        return decode_line(reference, reader, radius)
+    elif isinstance(reference, PointAlongLineLocation):
+        return decode_pointalongline(reference, reader, radius)
+    else:
+        raise LRDecodeError("Currently, the following reference types are supported:"
+                            " · openlr.LineLocation"
+                            " · openlr.PointAlongLineLocation."
+                            f"'{reference}' is none of them.")

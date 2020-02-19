@@ -8,7 +8,7 @@ with `1.0` being an exact match and 0.0 being a non-match."""
 from math import degrees
 from logging import debug
 from openlr import Coordinates, FRC, FOW, LocationReferencePoint
-from ..maps.wgs84 import point_along_line, distance, bearing
+from ..maps.wgs84 import point_along_path, distance, bearing
 from ..maps import Line
 from .tools import coords
 
@@ -67,7 +67,7 @@ def get_bearing_point(candidate: Line, reverse: bool = False) -> Coordinates:
     coordinates = list(candidate.coordinates())
     if reverse:
         coordinates.reverse()
-    return point_along_line(coordinates, BEAR_DIST)
+    return point_along_path(coordinates, BEAR_DIST)
 
 def score_angle_difference(angle1: float, angle2: float) -> float:
     """Helper for `score_bearing` which scores the angle difference.
