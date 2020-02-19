@@ -1,7 +1,7 @@
 "Decoding logic for point (along line, ...) locations"
 
-from typing import NamedTuple, List
-from openlr import Coordinates, PointAlongLineLocation
+from typing import NamedTuple, List, Tuple
+from openlr import Coordinates, PointAlongLineLocation, Orientation, SideOfRoad
 from ..maps import MapReader, path_length
 from ..maps.abstract import Line
 from ..maps.wgs84 import point_along_path
@@ -14,12 +14,14 @@ class PointAlongLine(NamedTuple):
     Contains the coordinates as well as the road on which it was located."""
     line: Line
     meters_into: float
+    side: SideOfRoad
+    orientation: Orientation
 
     def location(self) -> Coordinates:
         "Returns the actual geo coordinate"
         return point_along_path(list(self.line.coordinates()), self.meters_into)
 
-def point_along_linelocation(path: List[Line], length: float) -> PointAlongLine:
+def point_along_linelocation(path: List[Line], length: float) -> Tuple[Line, float]:
     """Steps `length` meters into the `path` and returns the and the Line + offset in meters.
 
     If the path is exhausted (`length` longer than `path`), raises an LRDecodeError."""
@@ -28,7 +30,7 @@ def point_along_linelocation(path: List[Line], length: float) -> PointAlongLine:
         if leftover_length > road.length:
             leftover_length -= road.length
         else:
-            return PointAlongLine(road, leftover_length)
+            return road, leftover_length
     raise LRDecodeError("Path length exceeded while projecting point")
 
 def decode_pointalongline(
@@ -37,4 +39,5 @@ def decode_pointalongline(
     "Decodes a point along line location reference into a Coordinates tuple"
     path = dereference_path(reference.points, reader, radius)
     absolute_offset = path_length(path) * reference.poffs
-    return point_along_linelocation(path, absolute_offset)
+    line_object, line_offset = point_along_linelocation(path, absolute_offset)
+    return PointAlongLine(line_object, line_offset, reference.sideOfRoad, reference.orientation)
