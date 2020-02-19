@@ -2,7 +2,7 @@
 This includes finding candidates, rating them and choosing the best path"""
 
 from itertools import product
-from typing import Sequence, Iterable, Tuple, List, Optional
+from typing import TypeVar, Sequence
 from logging import debug, basicConfig, DEBUG
 from openlr import LineLocation as LineLocationRef, PointAlongLineLocation, Coordinates
 from ..maps import shortest_path, MapReader, Line
@@ -15,8 +15,11 @@ from .line_location import LineLocation
 
 SEARCH_RADIUS = 100.0
 
-def decode(reference: LineLocationRef, reader: MapReader, radius: float = SEARCH_RADIUS) \
-        -> LineLocation:
+LR = TypeVar("LocationReference", LineLocationRef, PointAlongLineLocation)
+MAP_OBJECTS = TypeVar("MapObjects", LineLocation, Coordinates)
+
+
+def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS) -> MAP_OBJECTS:
     """Translates an openLocationReference into a real location on your map.
 
     Args:
@@ -25,7 +28,13 @@ def decode(reference: LineLocationRef, reader: MapReader, radius: float = SEARCH
         radius: The search path for the location's components' candidates
 
     Returns:
-        The returned value will be a dereferenced openlr_dereferencer.LineLocation. It contains
-        a list of Line objects, which is trimmed by the offset values of the line location.
+        This function will return one or more map object, optionally wrapped into some class.
+        Here is an overview for what reference type will result in which return type:
+
+        reference                     | returns
+        ------------------------------|-------------------------------
+        openlr.GeoCoordinateLocation  | Node
+        openlr.LineLocation           | openlr_dereferencer.LineLocation
+        openlr.PointAlongLineLocation | PointAlongLine
     """
     return decode_line(reference, reader, radius)
