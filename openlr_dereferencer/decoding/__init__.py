@@ -1,14 +1,9 @@
 """The module doing the actual decoding work.
 This includes finding candidates, rating them and choosing the best path"""
 
-from itertools import product
-from typing import TypeVar, Sequence
-from logging import debug, basicConfig, DEBUG
+from typing import TypeVar
 from openlr import LineLocation as LineLocationRef, PointAlongLineLocation, Coordinates
-from ..maps import shortest_path, MapReader, Line
-from ..maps.wgs84 import point_along_line
-from .candidates import generate_candidates, match_tail
-from .scoring import score_lrp_candidate
+from ..maps import MapReader, Line
 from .tools import LRDecodeError
 from .line_decoding import decode_line
 from .line_location import LineLocation

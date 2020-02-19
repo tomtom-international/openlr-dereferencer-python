@@ -1,7 +1,7 @@
 """An abstract `MapReader` base class, which must be implemented for each
 map format to decode location references on."""
 from abc import ABC, abstractmethod
-from typing import Iterable, Hashable, List
+from typing import Iterable, Hashable
 from openlr import Coordinates, FOW, FRC
 
 class Line(ABC):

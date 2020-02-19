@@ -4,7 +4,7 @@ from typing import List, Tuple
 from logging import debug
 from openlr import Coordinates, LocationReferencePoint
 from ..maps import Line
-from ..maps.wgs84 import point_along_line
+from ..maps.wgs84 import point_along_path
 
 def add_offsets(path: List[Line], p_off: float, n_off: float) -> List[Coordinates]:
     "Add the absolute meter offsets to `path` and return the resulting coordinate list"
@@ -14,10 +14,10 @@ def add_offsets(path: List[Line], p_off: float, n_off: float) -> List[Coordinate
     # If offsets available, correct first / last coordinate
     if p_off > 0.0:
         # first LRP to second one
-        coordinates[0] = point_along_line(coordinates, p_off)
+        coordinates[0] = point_along_path(coordinates, p_off)
     if n_off > 0.0:
         # last LRP to second-last LRP
-        coordinates[-1] = point_along_line(coordinates[::-1], n_off)
+        coordinates[-1] = point_along_path(coordinates[::-1], n_off)
     return coordinates
 
 def remove_unnecessary_lines(path: List[Line], p_off: float, n_off: float) \
