@@ -2,7 +2,7 @@
 
 from typing import NamedTuple, List
 from openlr import Coordinates, PointAlongLineLocation
-from ..maps import MapReader
+from ..maps import MapReader, path_length
 from ..maps.abstract import Line
 from ..maps.wgs84 import point_along_path
 from .line_decoding import dereference_path
@@ -15,10 +15,9 @@ class PointAlongLine(NamedTuple):
     line: Line
     meters_into: float
 
-    @property
-    def coordinates(self) -> Coordinates:
+    def location(self) -> Coordinates:
         "Returns the actual geo coordinate"
-        return point_along_path(self.line.coordinates, self.meters_into)
+        return point_along_path(list(self.line.coordinates()), self.meters_into)
 
 def point_along_linelocation(path: List[Line], length: float) -> PointAlongLine:
     """Steps `length` meters into the `path` and returns the and the Line + offset in meters.
@@ -37,4 +36,5 @@ def decode_pointalongline(
     ) -> PointAlongLine:
     "Decodes a point along line location reference into a Coordinates tuple"
     path = dereference_path(reference.points, reader, radius)
-    return point_along_linelocation(path, reference.length)
+    absolute_offset = path_length(path) * reference.poffs
+    return point_along_linelocation(path, absolute_offset)

@@ -3,12 +3,12 @@ import unittest
 from itertools import zip_longest
 from typing import List, Iterable, TypeVar
 
-from openlr import Coordinates, FRC, FOW, LineLocation as LineLocationRef, LocationReferencePoint
-
-from openlr_dereferencer.decoding import decode_line
+from openlr import Coordinates, FRC, FOW, LineLocation as LineLocationRef, \
+    LocationReferencePoint, PointAlongLineLocation, Orientation, SideOfRoad
+from openlr_dereferencer.decoding import decode, LineLocation, PointAlongLine, LRDecodeError
 from openlr_dereferencer.decoding.candidates import generate_candidates
-from openlr_dereferencer.decoding.scoring import score_geolocation, score_frc, score_fow, score_bearing, \
-    score_angle_difference
+from openlr_dereferencer.decoding.scoring import score_geolocation, score_frc, score_fow, \
+    score_bearing, score_angle_difference
 from openlr_dereferencer.example_sqlite_map import ExampleMapReader
 from openlr_dereferencer.maps.wgs84 import distance, bearing
 
@@ -50,19 +50,31 @@ class DummyLine():
         return distance(self.start_node.coord, self.end_node.coord)
 
 def get_test_linelocation_1():
-    "Return a prepared line locations"
+    "Return a prepared line location with 3 LRPs"
     # References node 0 / line 1 / lines 1, 3
     lrp1 = LocationReferencePoint(13.41, 52.525,
-        FRC.FRC0, FOW.SINGLE_CARRIAGEWAY, 0.75,
-        FRC.FRC2, 837.0)
+                                  FRC.FRC0, FOW.SINGLE_CARRIAGEWAY, 0.75,
+                                  FRC.FRC2, 837.0)
     # References node 3 / line 4
     lrp2 = LocationReferencePoint(13.4145, 52.529,
-        FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, 0.0,
-        FRC.FRC2, 456.6)
+                                  FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, 0.0,
+                                  FRC.FRC2, 456.6)
     # References node 4 / line 4
     lrp3 = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
-        FOW.SINGLE_CARRIAGEWAY, 0.125, None, None)
+                                  FOW.SINGLE_CARRIAGEWAY, 0.125, None, None)
     return LineLocationRef([lrp1, lrp2, lrp3], 0.0, 0.0)
+
+def get_test_pointalongline() -> PointAlongLineLocation:
+    "Get a test Point Along Line location reference"
+    path_ref = get_test_linelocation_1().points[1:]
+    return PointAlongLineLocation(path_ref, 0.5, Orientation.WITH_LINE_DIRECTION, \
+                                  SideOfRoad.RIGHT)
+    
+def get_test_invalid_pointalongline() -> PointAlongLineLocation:
+    "Get a test Point Along Line location reference"
+    path_ref = get_test_linelocation_1().points[1:]
+    return PointAlongLineLocation(path_ref, 1.5, Orientation.WITH_LINE_DIRECTION, \
+                                  SideOfRoad.RIGHT)
 
 T = TypeVar("T")
 
@@ -72,7 +84,7 @@ class DecodingTests(unittest.TestCase):
 
     def assertIterableAlmostEqual(self, iter_a: Iterable[T], iter_b: Iterable[T], delta: float):
         """Tests if `a` and `b` iterate over nearly-equal floats.
-        
+
         This means, that two floats of the same index in `a` and `b` should not have a greater
         difference than `delta`."""
         # Get the generators
@@ -180,24 +192,42 @@ class DecodingTests(unittest.TestCase):
     def test_decode_3_lrps(self):
         "Decode a line location of 3 LRPs"
         reference = get_test_linelocation_1()
-        location = decode_line(reference, self.reader, 15.0)
+        location = decode(reference, self.reader, 15.0)
+        self.assertTrue(location, LineLocation)
         lines = [l.line_id for l in location.lines]
         self.assertListEqual([1, 3, 4], lines)
-        self.assertListEqual(location.coordinates(), [Coordinates(13.41, 52.525),
-            Coordinates(13.414, 52.525), Coordinates(13.4145, 52.529),
-            Coordinates(13.416, 52.525)])
+        self.assertListEqual(location.coordinates(),
+                             [Coordinates(13.41, 52.525), Coordinates(13.414, 52.525),
+                              Coordinates(13.4145, 52.529), Coordinates(13.416, 52.525)])
 
     def test_decode_offsets(self):
         "Decode a line location with offsets"
         reference = get_test_linelocation_1()
         reference = reference._replace(poffs=0.25)
         reference = reference._replace(noffs=0.75)
-        path = decode_line(reference, self.reader, 15.0).coordinates()
+        path = decode(reference, self.reader, 15.0).coordinates()
+        self.assertTrue(path, LineLocation)
         self.assertEqual(len(path), 4)
         self.assertAlmostEqual(path[0].lon, 13.414, delta=0.001)
         self.assertAlmostEqual(path[0].lat, 52.525, delta=0.001)
         self.assertAlmostEqual(path[1].lon, 13.414, delta=0.001)
         self.assertAlmostEqual(path[1].lat, 52.525, delta=0.001)
+
+    def test_decode_pointalongline(self):
+        "Test a valid point along line location"
+        # Get a list of 2 LRPs
+        reference = get_test_pointalongline()
+        pal: PointAlongLine = decode(reference, self.reader)
+        coords = pal.location()
+        self.assertAlmostEqual(coords.lon, 13.4153, places=4)
+        self.assertAlmostEqual(coords.lat, 52.5270, places=4)
+
+    def test_decode_pointalongline_raises(self):
+        "Test a valid point along line location with too high offset"
+        # Get a list of 2 LRPs
+        reference = get_test_invalid_pointalongline()
+        with self.assertRaises(LRDecodeError):
+            decode(reference, self.reader)
 
     def tearDown(self):
         self.reader.connection.close()
