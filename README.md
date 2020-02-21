@@ -1,15 +1,17 @@
-# openlr_dereferencer
+# openlr-dereferencer
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 [![Build status](https://img.shields.io/travis/tomtom-international/openlr-dereferencer-python)](https://travis-ci.org/tomtom-international/openlr-dereferencer-python)
 [![Coverage Status](https://img.shields.io/codecov/c/github/tomtom-international/openlr-dereferencer-python/master.svg)](https://codecov.io/github/tomtom-international/openlr-dereferencer-python?branch=master)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/openlr-dereferencer)](https://pypi.org/project/openlr-dereferencer)
+[![PyPI](https://img.shields.io/pypi/v/openlr-dereferencer)](https://pypi.org/project/openlr-dereferencer)
 
 
 This is a Python package for decoding OpenLR™ location references on target maps.
 ## Dependencies
 - Python ≥ 3.6
 - geographiclib (PyPi package)
-- openlr (PyPi package)
+- [openlr](https://github.com/tomtom-international/openlr-python) (PyPi package)
 - For unittests, SQlite with spatialite extension is required
 ## State
 - ☑ Example map format
@@ -17,7 +19,7 @@ This is a Python package for decoding OpenLR™ location references on target ma
 - ☑ Candidate route rating
 - ☑ Backtracking to get correct routes
 - ☑ Decoding line locations
-- ☐ Decoding 'point along line' locations
+- ☑ Decoding 'point along line' locations
 - ☐ Decoding 'POI with access point' locations
 ## Structure
 It is divided into the following submodules:
