@@ -4,7 +4,7 @@ from typing import NamedTuple, List, Tuple
 from openlr import Coordinates, PointAlongLineLocation, Orientation, SideOfRoad
 from ..maps import MapReader, path_length
 from ..maps.abstract import Line
-from ..maps.wgs84 import point_along_path
+from ..maps.wgs84 import project_along_path
 from .line_decoding import dereference_path
 from . import LRDecodeError
 
@@ -13,13 +13,13 @@ class PointAlongLine(NamedTuple):
 
     Contains the coordinates as well as the road on which it was located."""
     line: Line
-    meters_into: float
+    positive_offset: float
     side: SideOfRoad
     orientation: Orientation
 
-    def location(self) -> Coordinates:
+    def coordinates(self) -> Coordinates:
         "Returns the actual geo coordinate"
-        return point_along_path(list(self.line.coordinates()), self.meters_into)
+        return project_along_path(list(self.line.coordinates()), self.positive_offset)
 
 def point_along_linelocation(path: List[Line], length: float) -> Tuple[Line, float]:
     """Steps `length` meters into the `path` and returns the and the Line + offset in meters.

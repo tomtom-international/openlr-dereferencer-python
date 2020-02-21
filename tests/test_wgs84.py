@@ -5,7 +5,7 @@ from math import pi
 
 from openlr import Coordinates
 
-from openlr_dereferencer.maps.wgs84 import point_along_path, distance, project, bearing
+from openlr_dereferencer.maps.wgs84 import project, distance, project_along_path, bearing
 
 class GeoTests(unittest.TestCase):
     "Unit tests for all the WGS84 functions"
@@ -85,7 +85,7 @@ class GeoTests(unittest.TestCase):
         self.assertAlmostEqual(geo2.lon, geo3.lon)
         self.assertAlmostEqual(geo2.lat, geo3.lat)
 
-    def test_point_along_line(self):
+    def test_point_along_path(self):
         "Test point projection along path"
         path = [
             Coordinates(0.0, 0.0),
@@ -94,6 +94,6 @@ class GeoTests(unittest.TestCase):
         ]
         part_lengths = [distance(path[i], path[i+1]) for i in range(len(path)-1)]
         length = sum(part_lengths)
-        projected = point_along_path(path, 0.75 * length)
+        projected = project_along_path(path, 0.75 * length)
         self.assertAlmostEqual(projected.lon, 0.0, places=3)
         self.assertAlmostEqual(projected.lat, 1.5, places=3)

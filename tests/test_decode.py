@@ -72,7 +72,7 @@ def get_test_pointalongline() -> PointAlongLineLocation:
     
 def get_test_invalid_pointalongline() -> PointAlongLineLocation:
     "Get a test Point Along Line location reference"
-    path_ref = get_test_linelocation_1().points[1:]
+    path_ref = get_test_linelocation_1().points[-2:]
     return PointAlongLineLocation(path_ref, 1.5, Orientation.WITH_LINE_DIRECTION, \
                                   SideOfRoad.RIGHT)
 
@@ -218,12 +218,12 @@ class DecodingTests(unittest.TestCase):
         # Get a list of 2 LRPs
         reference = get_test_pointalongline()
         pal: PointAlongLine = decode(reference, self.reader)
-        coords = pal.location()
-        self.assertAlmostEqual(coords.lon, 13.4153, places=4)
-        self.assertAlmostEqual(coords.lat, 52.5270, places=4)
+        coords = pal.coordinates()
+        self.assertAlmostEqual(coords.lon, 13.4153, delta=0.0001)
+        self.assertAlmostEqual(coords.lat, 52.5270, delta=0.0001)
 
-    def test_decode_pointalongline_raises(self):
-        "Test a valid point along line location with too high offset"
+    def test_decode_pointalong_raises(self):
+        "Test an invalid point along line location with too high offset"
         # Get a list of 2 LRPs
         reference = get_test_invalid_pointalongline()
         with self.assertRaises(LRDecodeError):

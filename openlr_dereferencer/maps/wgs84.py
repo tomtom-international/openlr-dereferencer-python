@@ -33,7 +33,7 @@ def project(point: Coordinates, dist: float, angle: float) -> Coordinates:
     # and `lat2` store the second point.
     return Coordinates(line['lon2'], line['lat2'])
 
-def point_along_path(path: Sequence[Coordinates], distance_meters: float) -> Coordinates:
+def project_along_path(path: Sequence[Coordinates], distance_meters: float) -> Coordinates:
     """Go `distance` meters along the `path` and return the resulting point
 
     When the length of the path is too short, returns its last coordinate"""
