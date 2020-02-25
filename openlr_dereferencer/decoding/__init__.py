@@ -6,13 +6,19 @@ from openlr import (
     LineLocation as LineLocationRef,
     PointAlongLineLocation,
     Coordinates,
-    GeoCoordinateLocation
+    GeoCoordinateLocation,
+    PoiWithAccessPointLocation
 )
 from ..maps import MapReader, Line
 from .tools import LRDecodeError
 from .line_decoding import decode_line
 from .line_location import LineLocation
-from .point_locations import decode_pointalongline, PointAlongLine
+from .point_locations import (
+    decode_pointalongline,
+    PointAlongLine,
+    decode_poi_with_ap,
+    PoiWithAccessPoint
+)
 
 SEARCH_RADIUS = 100.0
 
@@ -35,7 +41,7 @@ def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS) -> M
 
         reference                     | returns
         ------------------------------|-------------------------------
-        openlr.GeoCoordinateLocation  | Node
+        openlr.GeoCoordinateLocation  | Coordinates
         openlr.LineLocation           | openlr_dereferencer.LineLocation
         openlr.PointAlongLine         | PointAlongLineLocation
     """
@@ -45,8 +51,12 @@ def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS) -> M
         return decode_pointalongline(reference, reader, radius)
     elif isinstance(reference, GeoCoordinateLocation):
         return reference.point
+    elif isinstance(reference, PoiWithAccessPointLocation):
+        return decode_poi_with_ap(reference, reader, radius)
     else:
-        raise LRDecodeError("Currently, the following reference types are supported:"
-                            " · openlr.LineLocation"
-                            " · openlr.PointAlongLineLocation."
-                            f"'{reference}' is none of them.")
+        raise LRDecodeError("Currently, the following reference types are supported:\n"
+                            " · GeoCoordinateLocation\n"
+                            " · LineLocation\n"
+                            " · PointAlongLineLocation\n"
+                            " · PoiWithAccessPointLocation\n"
+                            f'The value "{reference}" is none of them.')
