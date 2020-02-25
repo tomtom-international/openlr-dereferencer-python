@@ -2,7 +2,12 @@
 This includes finding candidates, rating them and choosing the best path"""
 
 from typing import TypeVar
-from openlr import LineLocation as LineLocationRef, PointAlongLineLocation, Coordinates
+from openlr import (
+    LineLocation as LineLocationRef,
+    PointAlongLineLocation,
+    Coordinates,
+    GeoCoordinateLocation
+)
 from ..maps import MapReader, Line
 from .tools import LRDecodeError
 from .line_decoding import decode_line
@@ -11,7 +16,8 @@ from .point_locations import decode_pointalongline, PointAlongLine
 
 SEARCH_RADIUS = 100.0
 
-LR = TypeVar("LocationReference", LineLocationRef, PointAlongLineLocation)
+LR = TypeVar("LocationReference",
+             LineLocationRef, PointAlongLineLocation, GeoCoordinateLocation)
 MAP_OBJECTS = TypeVar("MapObjects", LineLocation, Coordinates, PointAlongLine)
 
 
@@ -37,6 +43,8 @@ def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS) -> M
         return decode_line(reference, reader, radius)
     elif isinstance(reference, PointAlongLineLocation):
         return decode_pointalongline(reference, reader, radius)
+    elif isinstance(reference, GeoCoordinateLocation):
+        return reference.point
     else:
         raise LRDecodeError("Currently, the following reference types are supported:"
                             " · openlr.LineLocation"
