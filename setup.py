@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_namespace_packages
 
 with open("README.md") as f:
     readme = f.read()
@@ -17,7 +17,7 @@ setup(
     author_email=about["__author_email__"],
     url=about["__url__"],
     license=about["__license__"],
-    packages=["openlr_dereferencer"],
+    packages=find_namespace_packages(),
     install_requires=["openlr", "geographiclib"],
     test_suite="tests",
     python_requires=">=3.6",
