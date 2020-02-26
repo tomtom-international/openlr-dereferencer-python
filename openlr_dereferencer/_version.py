@@ -2,7 +2,7 @@
 __title__ = "openlr_dereferencer"
 __description__ = "OpenLR location dereferencer"
 __url__ = "https://github.com/tomtom-international/openlr-dereferencer-python"
-__version__ = "0.9.2"
+__version__ = "0.9.3"
 __author__ = "Jan Ole Zabel"
 __author_email__ = "janole.zabel@tomtom.com"
 __license__ = "Apache 2.0"
