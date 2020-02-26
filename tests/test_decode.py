@@ -3,9 +3,9 @@ import unittest
 from itertools import zip_longest
 from typing import List, Iterable, TypeVar
 
-from openlr import Coordinates, FRC, FOW, LineLocation as LineLocationRef, \
-    LocationReferencePoint, PointAlongLineLocation, Orientation, SideOfRoad
-from openlr_dereferencer.decoding import decode, LineLocation, PointAlongLine, LRDecodeError
+from openlr import Coordinates, FRC, FOW, LineLocation as LineLocationRef, LocationReferencePoint\
+    , PointAlongLineLocation, Orientation, SideOfRoad, PoiWithAccessPointLocation
+from openlr_dereferencer.decoding import decode, LineLocation, PointAlongLine, LRDecodeError, PoiWithAccessPoint
 from openlr_dereferencer.decoding.candidates import generate_candidates
 from openlr_dereferencer.decoding.scoring import score_geolocation, score_frc, score_fow, \
     score_bearing, score_angle_difference
@@ -66,7 +66,7 @@ def get_test_linelocation_1():
 
 def get_test_pointalongline() -> PointAlongLineLocation:
     "Get a test Point Along Line location reference"
-    path_ref = get_test_linelocation_1().points[1:]
+    path_ref = get_test_linelocation_1().points[-2:]
     return PointAlongLineLocation(path_ref, 0.5, Orientation.WITH_LINE_DIRECTION, \
                                   SideOfRoad.RIGHT)
     
@@ -75,6 +75,13 @@ def get_test_invalid_pointalongline() -> PointAlongLineLocation:
     path_ref = get_test_linelocation_1().points[-2:]
     return PointAlongLineLocation(path_ref, 1.5, Orientation.WITH_LINE_DIRECTION, \
                                   SideOfRoad.RIGHT)
+
+def get_test_poi() -> PoiWithAccessPointLocation:
+    "Get a test POI with access point location reference"
+    path_ref = get_test_linelocation_1().points[-2:]
+    return PoiWithAccessPointLocation(
+        path_ref, 0.5, 13.414, 52.526, Orientation.WITH_LINE_DIRECTION,
+        SideOfRoad.RIGHT)
 
 T = TypeVar("T")
 
@@ -226,6 +233,22 @@ class DecodingTests(unittest.TestCase):
         "Test an invalid point along line location with too high offset"
         # Get a list of 2 LRPs
         reference = get_test_invalid_pointalongline()
+        with self.assertRaises(LRDecodeError):
+            decode(reference, self.reader)
+
+    def test_decode_poi(self):
+        "Test decoding a valid POI with access point location"
+        reference = get_test_poi()
+        poi: PoiWithAccessPoint = decode(reference, self.reader)
+        coords = poi.access_point_coordinates()
+        self.assertAlmostEqual(coords.lon, 13.4153, delta=0.0001)
+        self.assertAlmostEqual(coords.lat, 52.5270, delta=0.0001)
+        self.assertEqual(poi.poi, Coordinates(13.414, 52.526))
+
+    def decode_invalid_poi(self):
+        "Test if decoding a valid POI with access point location raises an error"
+        reference = get_test_poi()
+        reference.poffs = 1.5
         with self.assertRaises(LRDecodeError):
             decode(reference, self.reader)
 
