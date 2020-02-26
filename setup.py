@@ -1,4 +1,4 @@
-from setuptools import setup, find_namespace_packages
+from setuptools import setup
 
 with open("README.md") as f:
     readme = f.read()
@@ -17,7 +17,12 @@ setup(
     author_email=about["__author_email__"],
     url=about["__url__"],
     license=about["__license__"],
-    packages=find_namespace_packages(),
+    packages=[
+        'openlr_dereferencer.example_sqlite_map',
+        'openlr_dereferencer.maps',
+        'openlr_dereferencer.maps.a_star',
+        'openlr_dereferencer.decoding',
+        'openlr_dereferencer'],
     install_requires=["openlr", "geographiclib"],
     test_suite="tests",
     python_requires=">=3.6",
