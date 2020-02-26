@@ -20,7 +20,7 @@ This is a Python package for decoding OpenLR™ location references on target ma
 - ☑ Backtracking to get correct routes
 - ☑ Decoding line locations
 - ☑ Decoding 'point along line' locations
-- ☐ Decoding 'POI with access point' locations
+- ☑ Decoding 'POI with access point' locations
 ## Structure
 It is divided into the following submodules:
 ### maps
