@@ -1,7 +1,7 @@
 "Decoding logic for point (along line, ...) locations"
 
 from typing import NamedTuple, List, Tuple
-from openlr import Coordinates, PointAlongLineLocation, Orientation, SideOfRoad
+from openlr import Coordinates, PointAlongLineLocation, Orientation, SideOfRoad, PoiWithAccessPointLocation
 from ..maps import MapReader, path_length
 from ..maps.abstract import Line
 from ..maps.wgs84 import project_along_path
@@ -48,17 +48,19 @@ class PoiWithAccessPoint(NamedTuple):
     positive_offset: float
     side: SideOfRoad
     orientation: Orientation
+    poi: Coordinates
 
     def access_point_coordinates(self) -> Coordinates:
         "Returns the geo coordinates of the access point"
         return project_along_path(list(self.line.coordinates()), self.positive_offset)
 
 def decode_poi_with_ap(
-        reference: PointAlongLineLocation, reader: MapReader, radius: float
+        reference: PoiWithAccessPointLocation, reader: MapReader, radius: float
     ) -> PoiWithAccessPoint:
     "Decodes a point along line location reference into a Coordinates tuple"
     path = dereference_path(reference.points, reader, radius)
     absolute_offset = path_length(path) * reference.poffs
     line_object, line_offset = point_along_linelocation(path, absolute_offset)
     return PoiWithAccessPoint(
-        line_object, line_offset, reference.sideOfRoad, reference.orientation)
+        line_object, line_offset, reference.sideOfRoad, reference.orientation,
+        Coordinates(reference.lon, reference.lat))
