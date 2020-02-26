@@ -16,8 +16,10 @@ MAX_DNP_DEVIATION = 0.3
 # A filter for candidates with insufficient score
 MIN_SCORE = 0.3
 
-def generate_candidates(lrp: LocationReferencePoint, reader: MapReader, radius: float,
-                        is_last_lrp: bool) -> Iterable[Tuple[Line, float]]:
+
+def generate_candidates(
+    lrp: LocationReferencePoint, reader: MapReader, radius: float, is_last_lrp: bool
+) -> Iterable[Tuple[Line, float]]:
     """Convenience function for decoding, that returns a list of candidate lines for the LRP along
     with their score."""
     debug(f"Finding candidates for LRP {lrp} at {coords(lrp)} in radius {radius}")
@@ -27,8 +29,10 @@ def generate_candidates(lrp: LocationReferencePoint, reader: MapReader, radius: 
         if score >= MIN_SCORE:
             yield (candidate, score)
 
-def get_candidate_route(map_reader: MapReader, line1: Line, line2: Line, lfrc: FRC,
-                        last_lrp: bool, maxlen: float) -> Optional[Sequence[Line]]:
+
+def get_candidate_route(
+    map_reader: MapReader, line1: Line, line2: Line, lfrc: FRC, last_lrp: bool, maxlen: float
+) -> Optional[Sequence[Line]]:
     """Returns the shortest path which uses the two given lines as first
     and last step and thus connects both, as well as the length.
 
@@ -65,8 +69,14 @@ def get_candidate_route(map_reader: MapReader, line1: Line, line2: Line, lfrc: F
         debug(f"No path found between these nodes")
         return None
 
-def match_tail(current: LocationReferencePoint, candidates: List[Tuple[Line, float]], tail:
-               List[LocationReferencePoint], reader: MapReader, radius: float) -> List[Line]:
+
+def match_tail(
+    current: LocationReferencePoint,
+    candidates: List[Tuple[Line, float]],
+    tail: List[LocationReferencePoint],
+    reader: MapReader,
+    radius: float,
+) -> List[Line]:
     """Searches for the rest of the line location.
 
     Every element of `candidates` is routed to every candidate for `tail[0]` (best scores first).

@@ -1,17 +1,25 @@
 "Decoding logic for point (along line, ...) locations"
 
 from typing import NamedTuple, List, Tuple
-from openlr import Coordinates, PointAlongLineLocation, Orientation, SideOfRoad, PoiWithAccessPointLocation
+from openlr import (
+    Coordinates,
+    PointAlongLineLocation,
+    Orientation,
+    SideOfRoad,
+    PoiWithAccessPointLocation,
+)
 from ..maps import MapReader, path_length
 from ..maps.abstract import Line
 from ..maps.wgs84 import project_along_path
 from .line_decoding import dereference_path
 from . import LRDecodeError
 
+
 class PointAlongLine(NamedTuple):
     """A dereferenced point along line location.
 
     Contains the coordinates as well as the road on which it was located."""
+
     line: Line
     positive_offset: float
     side: SideOfRoad
@@ -20,6 +28,7 @@ class PointAlongLine(NamedTuple):
     def coordinates(self) -> Coordinates:
         "Returns the actual geo coordinate"
         return project_along_path(list(self.line.coordinates()), self.positive_offset)
+
 
 def point_along_linelocation(path: List[Line], length: float) -> Tuple[Line, float]:
     """Steps `length` meters into the `path` and returns the and the Line + offset in meters.
@@ -33,14 +42,16 @@ def point_along_linelocation(path: List[Line], length: float) -> Tuple[Line, flo
             return road, leftover_length
     raise LRDecodeError("Path length exceeded while projecting point")
 
+
 def decode_pointalongline(
-        reference: PointAlongLineLocation, reader: MapReader, radius: float
-    ) -> PointAlongLine:
+    reference: PointAlongLineLocation, reader: MapReader, radius: float
+) -> PointAlongLine:
     "Decodes a point along line location reference"
     path = dereference_path(reference.points, reader, radius)
     absolute_offset = path_length(path) * reference.poffs
     line_object, line_offset = point_along_linelocation(path, absolute_offset)
     return PointAlongLine(line_object, line_offset, reference.sideOfRoad, reference.orientation)
+
 
 class PoiWithAccessPoint(NamedTuple):
     "A dereferenced POI with access point location."
@@ -54,13 +65,18 @@ class PoiWithAccessPoint(NamedTuple):
         "Returns the geo coordinates of the access point"
         return project_along_path(list(self.line.coordinates()), self.positive_offset)
 
+
 def decode_poi_with_ap(
-        reference: PoiWithAccessPointLocation, reader: MapReader, radius: float
-    ) -> PoiWithAccessPoint:
+    reference: PoiWithAccessPointLocation, reader: MapReader, radius: float
+) -> PoiWithAccessPoint:
     "Decodes a point along line location reference into a Coordinates tuple"
     path = dereference_path(reference.points, reader, radius)
     absolute_offset = path_length(path) * reference.poffs
     line_object, line_offset = point_along_linelocation(path, absolute_offset)
     return PoiWithAccessPoint(
-        line_object, line_offset, reference.sideOfRoad, reference.orientation,
-        Coordinates(reference.lon, reference.lat))
+        line_object,
+        line_offset,
+        reference.sideOfRoad,
+        reference.orientation,
+        Coordinates(reference.lon, reference.lat),
+    )

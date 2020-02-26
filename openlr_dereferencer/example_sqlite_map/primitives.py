@@ -8,8 +8,10 @@ from ..maps import Line as AbstractLine, Node as AbstractNode
 # https://epsg.io/4326
 SRID = 4326
 
+
 class Line(AbstractLine):
     "Line object implementation for the example format"
+
     def __init__(self, map_reader, line_id: int):
         if not isinstance(line_id, int):
             raise ExampleMapError(f"Line id '{line_id}' has confusing type {type(line_id)}")
@@ -25,16 +27,16 @@ class Line(AbstractLine):
         return self.line_id_internal
 
     @property
-    def start_node(self) -> 'Node':
+    def start_node(self) -> "Node":
         "Returns the node from which this line comes from"
-        stmt = 'SELECT startnode FROM lines WHERE rowid = ?'
+        stmt = "SELECT startnode FROM lines WHERE rowid = ?"
         (point_id,) = self.map_reader.connection.execute(stmt, (self.line_id,)).fetchone()
         return self.map_reader.get_node(point_id)
 
     @property
-    def end_node(self) -> 'Node':
+    def end_node(self) -> "Node":
         "Returns the node to which this line goes"
-        stmt = 'SELECT endnode FROM lines WHERE rowid = ?'
+        stmt = "SELECT endnode FROM lines WHERE rowid = ?"
         (point_id,) = self.map_reader.connection.execute(stmt, (self.line_id,)).fetchone()
         return self.map_reader.get_node(point_id)
 
@@ -55,7 +57,7 @@ class Line(AbstractLine):
     def coordinates(self) -> Iterable[Coordinates]:
         "Yields every point in the path geometry as Coordinates"
         for index in range(self.num_points()):
-            lon, lat = self.point_n(index+1)
+            lon, lat = self.point_n(index + 1)
             yield Coordinates(lon=lon, lat=lat)
 
     def distance_to(self, coord) -> float:
@@ -63,9 +65,7 @@ class Line(AbstractLine):
         stmt = """SELECT Distance(Makepoint(?, ?), lines.path)
             FROM nodes, lines WHERE lines.rowid = ?"""
         con = self.map_reader.connection
-        (dist,) = con.execute(stmt,
-                              (coord.lon, coord.lat, self.line_id)
-                             ).fetchone()
+        (dist,) = con.execute(stmt, (coord.lon, coord.lat, self.line_id)).fetchone()
         return dist
 
     def num_points(self) -> int:
@@ -77,8 +77,9 @@ class Line(AbstractLine):
     def point_n(self, index) -> Coordinates:
         "Returns the `n`th point in the path geometry, starting at 0"
         stmt = "SELECT X(PointN(path, ?)), Y(PointN(path, ?)) FROM lines WHERE lines.rowid = ?"
-        (lon, lat) = self.map_reader.connection.execute(stmt,
-                                                        (index, index, self.line_id)).fetchone()
+        (lon, lat) = self.map_reader.connection.execute(
+            stmt, (index, index, self.line_id)
+        ).fetchone()
         if lon is None or lat is None:
             raise Exception(f"line {self.line_id} has no point {index}!")
         return Coordinates(lon, lat)
@@ -97,8 +98,10 @@ class Line(AbstractLine):
         (result,) = self.map_reader.connection.execute(stmt, (self.line_id,)).fetchone()
         return result
 
+
 class Node(AbstractNode):
     "Node class implementation for example_sqlite_map"
+
     def __init__(self, map_reader, node_id: int):
         if not isinstance(node_id, int):
             raise ExampleMapError(f"Node id '{id}' has confusing type {type(node_id)}")
@@ -127,6 +130,7 @@ class Node(AbstractNode):
 
     def connected_lines(self) -> Iterable[Line]:
         return chain(self.incoming_lines(), self.outgoing_lines())
+
 
 class ExampleMapError(Exception):
     "Some error reading the DB"

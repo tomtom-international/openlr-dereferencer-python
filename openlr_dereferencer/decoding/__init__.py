@@ -7,7 +7,7 @@ from openlr import (
     PointAlongLineLocation,
     Coordinates,
     GeoCoordinateLocation,
-    PoiWithAccessPointLocation
+    PoiWithAccessPointLocation,
 )
 from ..maps import MapReader, Line
 from .tools import LRDecodeError
@@ -17,13 +17,12 @@ from .point_locations import (
     decode_pointalongline,
     PointAlongLine,
     decode_poi_with_ap,
-    PoiWithAccessPoint
+    PoiWithAccessPoint,
 )
 
 SEARCH_RADIUS = 100.0
 
-LR = TypeVar("LocationReference",
-             LineLocationRef, PointAlongLineLocation, GeoCoordinateLocation)
+LR = TypeVar("LocationReference", LineLocationRef, PointAlongLineLocation, GeoCoordinateLocation)
 MAP_OBJECTS = TypeVar("MapObjects", LineLocation, Coordinates, PointAlongLine)
 
 
@@ -54,9 +53,11 @@ def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS) -> M
     elif isinstance(reference, PoiWithAccessPointLocation):
         return decode_poi_with_ap(reference, reader, radius)
     else:
-        raise LRDecodeError("Currently, the following reference types are supported:\n"
-                            " · GeoCoordinateLocation\n"
-                            " · LineLocation\n"
-                            " · PointAlongLineLocation\n"
-                            " · PoiWithAccessPointLocation\n"
-                            f'The value "{reference}" is none of them.')
+        raise LRDecodeError(
+            "Currently, the following reference types are supported:\n"
+            " · GeoCoordinateLocation\n"
+            " · LineLocation\n"
+            " · PointAlongLineLocation\n"
+            " · PoiWithAccessPointLocation\n"
+            f'The value "{reference}" is none of them.'
+        )

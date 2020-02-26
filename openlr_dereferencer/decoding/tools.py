@@ -6,6 +6,7 @@ from openlr import Coordinates, LocationReferencePoint
 from ..maps import Line
 from ..maps.wgs84 import project_along_path
 
+
 def add_offsets(path: List[Line], p_off: float, n_off: float) -> List[Coordinates]:
     "Add the absolute meter offsets to `path` and return the resulting coordinate list"
     coordinates = [path[0].start_node.coordinates]
@@ -20,8 +21,10 @@ def add_offsets(path: List[Line], p_off: float, n_off: float) -> List[Coordinate
         coordinates[-1] = project_along_path(coordinates[::-1], n_off)
     return coordinates
 
-def remove_unnecessary_lines(path: List[Line], p_off: float, n_off: float) \
-        -> Tuple[List[Line], float, float]:
+
+def remove_unnecessary_lines(
+    path: List[Line], p_off: float, n_off: float
+) -> Tuple[List[Line], float, float]:
     """Remove start+end lines shorter than the offset and adjust offsets accordingly
 
     If the offsets are greater than the first/last line, remove that line from the path.
@@ -40,8 +43,10 @@ def remove_unnecessary_lines(path: List[Line], p_off: float, n_off: float) \
     debug(f"path[n-1] ({resulting_path[-1]}) seems to be longer than n_off {n_off}")
     return resulting_path, p_off, n_off
 
+
 class LRDecodeError(Exception):
     "An error that happens through decoding location references"
+
 
 def coords(lrp: LocationReferencePoint) -> Coordinates:
     "Return the coordinates of an LRP"

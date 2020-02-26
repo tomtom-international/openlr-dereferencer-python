@@ -25,29 +25,33 @@ BEAR_DIST = 20
 # It returns the score.
 # The values are adopted from the openlr Java implementation.
 FOW_STAND_IN_SCORE = [
-    [0.50, 0.50, 0.50, 0.50, 0.50, 0.50, 0.50, 0.5], # Undefined FOW
-    [0.50, 1.00, 0.75, 0.00, 0.00, 0.00, 0.00, 0.0], # Motorway
-    [0.50, 0.75, 1.00, 0.75, 0.50, 0.00, 0.00, 0.0], # Multiple carriage way
-    [0.50, 0.00, 0.75, 1.00, 0.50, 0.50, 0.00, 0.0], # Single carriage way
-    [0.50, 0.00, 0.50, 0.50, 1.00, 0.50, 0.00, 0.0], # Roundabout
-    [0.50, 0.00, 0.00, 0.50, 0.50, 1.00, 0.00, 0.0], # Traffic quare
-    [0.50, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.0], # Sliproad
-    [0.50, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.0]  # Other FOW
+    [0.50, 0.50, 0.50, 0.50, 0.50, 0.50, 0.50, 0.5],  # Undefined FOW
+    [0.50, 1.00, 0.75, 0.00, 0.00, 0.00, 0.00, 0.0],  # Motorway
+    [0.50, 0.75, 1.00, 0.75, 0.50, 0.00, 0.00, 0.0],  # Multiple carriage way
+    [0.50, 0.00, 0.75, 1.00, 0.50, 0.50, 0.00, 0.0],  # Single carriage way
+    [0.50, 0.00, 0.50, 0.50, 1.00, 0.50, 0.00, 0.0],  # Roundabout
+    [0.50, 0.00, 0.00, 0.50, 0.50, 1.00, 0.00, 0.0],  # Traffic quare
+    [0.50, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.0],  # Sliproad
+    [0.50, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.0],  # Other FOW
 ]
 
 # LocationReferencePoint.bear is angle / 11.25°, so has to be multiplied to get the degree value
 BEAR_MULTIPLIER = 11.25
 
+
 def score_fow(wanted: FOW, actual: FOW) -> float:
     "Return a score for a FOW value"
     return FOW_STAND_IN_SCORE[wanted][actual]
+
 
 def score_frc(wanted: FRC, actual: FRC) -> float:
     "Return a score for a FRC value"
     return 1.0 - abs(actual - wanted) / 7
 
-def score_geolocation(wanted: LocationReferencePoint, actual: Line, radius: float,
-                      is_last_lrp: bool) -> float:
+
+def score_geolocation(
+    wanted: LocationReferencePoint, actual: Line, radius: float, is_last_lrp: bool
+) -> float:
     """Scores the geolocation of a candidate.
 
     A distance of `radius` or more will result in a 0.0 score."""
@@ -60,6 +64,7 @@ def score_geolocation(wanted: LocationReferencePoint, actual: Line, radius: floa
         return 1.0 - dist / radius
     return 0.0
 
+
 def get_bearing_point(candidate: Line, reverse: bool = False) -> Coordinates:
     "Gets the point to which the bearing angle is computed."
     if candidate.length < BEAR_DIST:
@@ -68,6 +73,7 @@ def get_bearing_point(candidate: Line, reverse: bool = False) -> Coordinates:
     if reverse:
         coordinates.reverse()
     return project_along_path(coordinates, BEAR_DIST)
+
 
 def score_angle_difference(angle1: float, angle2: float) -> float:
     """Helper for `score_bearing` which scores the angle difference.
@@ -93,15 +99,19 @@ def score_bearing(wanted: LocationReferencePoint, candidate: Line, is_last_lrp: 
         return score_angle_difference(expected_bearing, bear - 180)
     return score_angle_difference(expected_bearing, bear)
 
-def score_lrp_candidate(wanted: LocationReferencePoint, candidate: Line, radius: float,
-                        is_last_lrp: bool) -> float:
+
+def score_lrp_candidate(
+    wanted: LocationReferencePoint, candidate: Line, radius: float, is_last_lrp: bool
+) -> float:
     """Scores the candidate (line) for the LRP.
 
     This is the average of fow, frc, geo and bearing score."""
-    score = (FOW_WEIGHT * score_fow(wanted.fow, candidate.fow) +
-             FRC_WEIGHT * score_frc(wanted.frc, candidate.frc) +
-             GEO_WEIGHT * score_geolocation(wanted, candidate, radius, is_last_lrp) +
-             BEAR_WEIGHT * score_bearing(wanted, candidate, is_last_lrp))
+    score = (
+        FOW_WEIGHT * score_fow(wanted.fow, candidate.fow)
+        + FRC_WEIGHT * score_frc(wanted.frc, candidate.frc)
+        + GEO_WEIGHT * score_geolocation(wanted, candidate, radius, is_last_lrp)
+        + BEAR_WEIGHT * score_bearing(wanted, candidate, is_last_lrp)
+    )
     debug(f"scoring line {candidate.line_id}")
     debug(f"geo score: {score_geolocation(wanted, candidate, radius, is_last_lrp)}")
     debug(f"fow score: {score_fow(wanted.fow, candidate.fow)}")

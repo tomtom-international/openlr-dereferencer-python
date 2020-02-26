@@ -7,14 +7,15 @@ from queue import PriorityQueue
 from ..abstract import MapReader, Line, Node
 from .tools import heuristic, reconstruct_path, find_minimum, LRPathNotFoundError, tautology
 
+
 def shortest_path(
-        reader: MapReader,
-        start: Node,
-        end: Node,
-        linefilter: Callable[[Line], bool] = tautology,
-        maxlen: float = float("inf")
-    ) -> List[Line]:
-    '''
+    reader: MapReader,
+    start: Node,
+    end: Node,
+    linefilter: Callable[[Line], bool] = tautology,
+    maxlen: float = float("inf"),
+) -> List[Line]:
+    """
     Returns a shortest path on the map between two nodes, as list of lines.
 
     Uses the A* algorithm for this.
@@ -28,7 +29,8 @@ def shortest_path(
     a line is allowed to be part of the path. If the function returns `False`, the line
     will not be taken into account.
     This is used for the 'lowest frc next point' attribute of openLR line references.
-    '''
+    """
+
     def g_score(node: Node) -> float:
         "Returns the cost from the start node to this node, if available, else infinity"
         return g_dict.get(node.node_id, float("inf"))

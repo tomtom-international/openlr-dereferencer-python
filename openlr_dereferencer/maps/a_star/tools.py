@@ -5,8 +5,10 @@ from typing import Dict, List, Any, TypeVar, AbstractSet
 from ..abstract import MapReader, Line, Node
 from ..wgs84 import distance
 
+
 class LRPathNotFoundError(Exception):
     "No path was found through the map"
+
 
 @lru_cache(maxsize=2)
 def heuristic(current: Node, target: Node) -> float:
@@ -15,10 +17,8 @@ def heuristic(current: Node, target: Node) -> float:
     We use geographical distance here as heuristic here."""
     return distance(current.coordinates, target.coordinates)
 
-def reconstruct_path(
-        reader: MapReader,
-        came_from: Dict[Any, int],
-        current: Node) -> List[Line]:
+
+def reconstruct_path(reader: MapReader, came_from: Dict[Any, int], current: Node) -> List[Line]:
     "When a path is found, it has to be reconstructed from the way the A* algorithm took."
     cur = current
     total_path = []
@@ -29,7 +29,9 @@ def reconstruct_path(
         cur = line.start_node
     return total_path
 
-T = TypeVar('T')
+
+T = TypeVar("T")
+
 
 def find_minimum(score: Dict[T, Any], filter_set: AbstractSet[T]) -> T:
     """

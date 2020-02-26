@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Iterable, Hashable
 from openlr import Coordinates, FOW, FRC
 
+
 class Line(ABC):
     "Abstract Line class, modelling a line coming from a map reader"
 
@@ -15,13 +16,13 @@ class Line(ABC):
 
     @property
     @abstractmethod
-    def start_node(self) -> 'Node':
+    def start_node(self) -> "Node":
         "Returns the node from which this line starts"
         pass
 
     @property
     @abstractmethod
-    def end_node(self) -> 'Node':
+    def end_node(self) -> "Node":
         "Returns the node on which this line ends"
         pass
 
@@ -56,6 +57,7 @@ class Line(ABC):
         "Compute the point-to-line distance"
         pass
 
+
 class Node(ABC):
     "Abstract class modelling a node returned by a map reader"
 
@@ -86,10 +88,12 @@ class Node(ABC):
         "Returns the id of this node."
         pass
 
+
 class MapReader(ABC):
     """Abstract base class for map readers.
 
     This is an adapter class that fulfills the map requirements of OpenLR."""
+
     @abstractmethod
     def get_line(self, line_id: Hashable) -> Line:
         "Returns a line by its id"
@@ -133,6 +137,7 @@ class MapReader(ABC):
 
         No order specified here."""
         pass
+
 
 def path_length(lines: Iterable[Line]) -> float:
     "Length of a path in the map, in meters"

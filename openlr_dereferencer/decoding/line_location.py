@@ -4,7 +4,9 @@ from typing import List
 from openlr import Coordinates, LineLocation as LineLocationRef
 from ..maps import Line
 from .tools import add_offsets, remove_unnecessary_lines
-class LineLocation():
+
+
+class LineLocation:
     """A dereferenced line location. Create it from a list of lines along with the line reference.
 
     The line location path is saved in the attribute `lines`
@@ -27,6 +29,7 @@ class LineLocation():
     def coordinates(self) -> List[Coordinates]:
         "Return the exact list of coordinates defining the line location path"
         return add_offsets(self.lines, self.p_off, self.n_off)
+
 
 def build_line_location(lines: List[Line], reference: LineLocationRef) -> LineLocation:
     """Builds a LineLocation object from the location reference path and the offset values.
