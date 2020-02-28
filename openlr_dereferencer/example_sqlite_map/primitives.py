@@ -86,8 +86,8 @@ class Line(AbstractLine):
 
     def near_nodes(self, distance):
         "Yields every point within a certain distance, in meters."
-        stmt = """SELECT id, Distance(nodes.coord, lines.path) FROM nodes,
-        lines WHERE lines.rowid = ? AND Distance(nodes.coord, lines.path) <= distance"""
+        stmt = """SELECT id FROM nodes,
+        lines WHERE lines.rowid = ? AND Distance(nodes.coord, lines.path) <= ?"""
         for (point_id,) in self.map_reader.connection.execute(stmt, (self.line_id, distance)):
             yield self.map_reader.get_node(point_id)
 

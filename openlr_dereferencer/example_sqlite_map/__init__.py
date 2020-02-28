@@ -54,8 +54,8 @@ class ExampleMapReader(MapReader):
             yield Node(self, node_id)
 
     def get_nodecount(self) -> int:
-        result = self.connection.execute("SELECT COUNT(*) FROM nodes")
-        return result.fetchone()
+        (count,) = self.connection.execute("SELECT COUNT(*) FROM nodes").fetchone()
+        return count
 
     def find_nodes_close_to(self, coord: Coordinates, dist: float) -> Iterable[Node]:
         """Finds all nodes in a given radius, given in meters
