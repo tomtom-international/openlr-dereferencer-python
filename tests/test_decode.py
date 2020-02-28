@@ -245,10 +245,10 @@ class DecodingTests(unittest.TestCase):
         self.assertAlmostEqual(coords.lat, 52.5270, delta=0.0001)
         self.assertEqual(poi.poi, Coordinates(13.414, 52.526))
 
-    def decode_invalid_poi(self):
-        "Test if decoding a valid POI with access point location raises an error"
+    def test_decode_invalid_poi(self):
+        "Test if decoding an invalid POI with access point location raises an error"
         reference = get_test_poi()
-        reference.poffs = 1.5
+        reference = reference._replace(poffs=1.5)
         with self.assertRaises(LRDecodeError):
             decode(reference, self.reader)
 
