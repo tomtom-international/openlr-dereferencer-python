@@ -66,15 +66,15 @@ class PoiWithAccessPoint(NamedTuple):
         return project_along_path(list(self.line.coordinates()), self.positive_offset)
 
 
-def decode_poi_with_ap(
+def decode_poi_with_accesspoint(
     reference: PoiWithAccessPointLocation, reader: MapReader, radius: float
 ) -> PoiWithAccessPoint:
     "Decodes a point along line location reference into a Coordinates tuple"
     path = dereference_path(reference.points, reader, radius)
     absolute_offset = path_length(path) * reference.poffs
-    line_object, line_offset = point_along_linelocation(path, absolute_offset)
+    line, line_offset = point_along_linelocation(path, absolute_offset)
     return PoiWithAccessPoint(
-        line_object,
+        line,
         line_offset,
         reference.sideOfRoad,
         reference.orientation,

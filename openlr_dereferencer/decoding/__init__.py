@@ -16,7 +16,7 @@ from .line_location import LineLocation
 from .point_locations import (
     decode_pointalongline,
     PointAlongLine,
-    decode_poi_with_ap,
+    decode_poi_with_accesspoint,
     PoiWithAccessPoint,
 )
 
@@ -52,7 +52,7 @@ def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS) -> M
     elif isinstance(reference, GeoCoordinateLocation):
         return reference.point
     elif isinstance(reference, PoiWithAccessPointLocation):
-        return decode_poi_with_ap(reference, reader, radius)
+        return decode_poi_with_accesspoint(reference, reader, radius)
     else:
         raise LRDecodeError(
             "Currently, the following reference types are supported:\n"
