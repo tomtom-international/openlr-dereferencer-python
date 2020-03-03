@@ -64,6 +64,17 @@ def get_test_linelocation_1():
                                   FOW.SINGLE_CARRIAGEWAY, 0.125, None, None)
     return LineLocationRef([lrp1, lrp2, lrp3], 0.0, 0.0)
 
+def get_test_linelocation_2():
+    "Return a undecodable line location with 2 LRPs"
+    # References node 0 / line 1 / lines 1, 3
+    lrp1 = LocationReferencePoint(13.41, 52.525,
+                                  FRC.FRC0, FOW.SINGLE_CARRIAGEWAY, 90/22,
+                                  FRC.FRC2, 7.0)
+    # References node 7 / line 8
+    lrp2 = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
+                                  FOW.SINGLE_CARRIAGEWAY, 270/22, None, None)
+    return LineLocationRef([lrp1, lrp2], 0.0, 0.0)
+
 def get_test_pointalongline() -> PointAlongLineLocation:
     "Get a test Point Along Line location reference"
     path_ref = get_test_linelocation_1().points[-2:]
@@ -206,6 +217,12 @@ class DecodingTests(unittest.TestCase):
         self.assertListEqual(location.coordinates(),
                              [Coordinates(13.41, 52.525), Coordinates(13.414, 52.525),
                               Coordinates(13.4145, 52.529), Coordinates(13.416, 52.525)])
+
+    def test_decode_nopath(self):
+        "Decode a line location where no short-enough path exists"
+        reference = get_test_linelocation_2()
+        with self.assertRaises(LRDecodeError):
+            decode(reference, self.reader, 15.0)
 
     def test_decode_offsets(self):
         "Decode a line location with offsets"
