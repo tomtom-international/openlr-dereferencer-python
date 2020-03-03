@@ -30,6 +30,8 @@ class SQLiteMapTest(unittest.TestCase):
         "Check if a nonexistent line ID leads to an exception"
         with self.assertRaises(TypeError):
             _ = Line(self.reader, 20).length
+        with self.assertRaises(ExampleMapError):
+            self.reader.get_line(20)
 
     def test_line_length(self):
         "Check the length of the line with ID 1"
