@@ -29,7 +29,7 @@ class SQLiteMapTest(unittest.TestCase):
     def test_line_nonexistent_id(self):
         "Check if a nonexistent line ID leads to an exception"
         with self.assertRaises(TypeError):
-            _ = Line(self.reader, 18).length
+            _ = Line(self.reader, 19).length
 
     def test_line_length(self):
         "Check the length of the line with ID 1"
@@ -39,14 +39,17 @@ class SQLiteMapTest(unittest.TestCase):
     def test_linepoints(self):
         "Test the point count of every line"
         for line in self.reader.get_lines():
-            self.assertEqual(line.num_points(), 2)
+            if line.line_id == 18:
+                self.assertEqual(line.num_points(), 5)
+            else:
+                self.assertEqual(line.num_points(), 2)
 
     def test_nearest(self):
         "Test the find_nodes_close_to with a manually chosen location"
         nodes = []
         nodes = [node.node_id for node \
             in self.reader.find_nodes_close_to(Coordinates(13.41, 52.523), 500)]
-        self.assertSequenceEqual(nodes, [0, 1, 2, 4])
+        self.assertSequenceEqual(nodes, [0, 1, 2, 4, 14])
 
     def test_line_coords(self):
         "Test known line coordinates()"
@@ -65,8 +68,8 @@ class SQLiteMapTest(unittest.TestCase):
         "Test if a sorted list of line IDs is as expected"
         lines = []
         lines = [line.line_id for line in self.reader.get_lines()]
-        self.assertEqual(len(lines), 17)
-        self.assertSequenceEqual(sorted(lines), range(1, 18))
+        self.assertEqual(len(lines), 18)
+        self.assertSequenceEqual(sorted(lines), range(1, 19))
 
     def test_get_line(self):
         "Get a test line"
@@ -80,14 +83,14 @@ class SQLiteMapTest(unittest.TestCase):
     def test_node_nonexistent_id(self):
         "Check if a nonexistent node ID leads to an exception"
         with self.assertRaises(TypeError):
-            _ = Node(self.reader, 14).coordinates
+            _ = Node(self.reader, 15).coordinates
 
     def test_node_enumeration(self):
         "Test if a sorted list of point IDs is as expected"
         nodes = []
         nodes = [node.node_id for node in self.reader.get_nodes()]
-        self.assertEqual(len(nodes), 14)
-        self.assertSequenceEqual(sorted(nodes), range(14))
+        self.assertEqual(len(nodes), 15)
+        self.assertSequenceEqual(range(15), sorted(nodes))
 
     def test_get_near_nodes(self):
         "Test if connected nodes are near to a connecting line"
@@ -109,11 +112,11 @@ class SQLiteMapTest(unittest.TestCase):
 
     def test_nodecount(self):
         "Test node count"
-        self.assertEqual(self.reader.get_nodecount(), 14)
+        self.assertEqual(self.reader.get_nodecount(), 15)
 
     def test_linecount(self):
         "Test line count"
-        self.assertEqual(self.reader.get_linecount(), 17)
+        self.assertEqual(self.reader.get_linecount(), 18)
 
     def tearDown(self):
         self.reader.connection.close()
