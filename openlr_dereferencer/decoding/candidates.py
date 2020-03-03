@@ -85,8 +85,6 @@ def match_tail(
     If any pair matches, the function calls itself for the rest of `tail` and returns.
 
     If not, a `LRDecodeError` exception is raised."""
-    if not tail:
-        return []
     last_lrp = len(tail) == 1
     # The maximum accepted length. This helps A* to save computational time
     maxlen = (1 + MAX_DNP_DEVIATION) * current.dnp
