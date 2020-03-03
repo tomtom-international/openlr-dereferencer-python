@@ -18,7 +18,7 @@ INSERT INTO nodes (id, coord) VALUES
     (2, MakePoint(13.414, 52.525, {SRID})),
     (3, MakePoint(13.4145, 52.529, {SRID})),
     (4, MakePoint(13.416, 52.525, {SRID})),
-    (5, MakePoint(13.4175, 52.52, {SRID})),
+    (5, MakePoint(13.4175, 52.521, {SRID})),
     (6, MakePoint(13.418, 52.53, {SRID})),
     (7, MakePoint(13.4185, 52.525, {SRID})),
     (8, MakePoint(13.42, 52.527, {SRID})),
@@ -27,7 +27,7 @@ INSERT INTO nodes (id, coord) VALUES
     (11, MakePoint(13.425, 52.525, {SRID})),
     (12, MakePoint(13.427, 52.53, {SRID})),
     (13, MakePoint(13.429, 52.523, {SRID})),
-    (14, MakePoint(13.41, 52.5248, {SRID}));
+    (14, MakePoint(13.41, 52.5245, {SRID}));
 
 INSERT INTO lines (startnode, endnode, frc, fow, path) VALUES
     (0, 2, 1, 3, ST_GeomFromText("LINESTRING(13.41 52.525, 13.414 52.525)", {SRID})),
@@ -35,8 +35,8 @@ INSERT INTO lines (startnode, endnode, frc, fow, path) VALUES
     (2, 3, 2, 3, ST_GeomFromText("LINESTRING(13.414 52.525, 13.4145 52.529)", {SRID})),
     (3, 4, 2, 3, ST_GeomFromText("LINESTRING(13.4145 52.529, 13.416 52.525)", {SRID})),
     (2, 4, 1, 3, ST_GeomFromText("LINESTRING(13.414 52.525, 13.416 52.525)", {SRID})),
-    (4, 5, 2, 3, ST_GeomFromText("LINESTRING(13.416 52.525, 13.4175 52.52)", {SRID})),
-    (5, 7, 2, 3, ST_GeomFromText("LINESTRING(13.4175 52.52, 13.4185 52.525)", {SRID})),
+    (4, 5, 2, 3, ST_GeomFromText("LINESTRING(13.416 52.525, 13.4175 52.521)", {SRID})),
+    (5, 7, 2, 3, ST_GeomFromText("LINESTRING(13.4175 52.521, 13.4185 52.525)", {SRID})),
     (4, 7, 1, 3, ST_GeomFromText("LINESTRING(13.416 52.525, 13.4185 52.525)", {SRID})),
     (7, 8, 2, 3, ST_GeomFromText("LINESTRING(13.4185 52.525, 13.42 52.527)", {SRID})),
     (8, 9, 2, 3, ST_GeomFromText("LINESTRING(13.42 52.527, 13.421 52.53)", {SRID})),
@@ -47,7 +47,8 @@ INSERT INTO lines (startnode, endnode, frc, fow, path) VALUES
     (10, 11, 2, 3, ST_GeomFromText("LINESTRING(13.4215 52.522, 13.425 52.525)", {SRID})),
     (11, 12, 2, 3, ST_GeomFromText("LINESTRING(13.425 52.525, 13.427 52.53)", {SRID})),
     (11, 13, 1, 3, ST_GeomFromText("LINESTRING(13.425 52.525, 13.429 52.523)", {SRID})),
-    (13, 14, 3, 3, ST_GeomFromText("LINESTRING(13.429 52.523, 13.425 52.521, 13.42 52.52, 13.4125 52.52, 13.41 52.5248)", {SRID}));
+    (13, 14, 3, 3, ST_GeomFromText("LINESTRING(13.429 52.523, 13.425 52.521, 13.42 52.52, 13.4123 52.52, 13.41 52.5245)", {SRID})),
+    (14, 5, 1, 3, ST_GeomFromText("LINESTRING(13.41 52.5245, 13.4125 52.521, 13.4175 52.521)", {SRID}));
 """
 
 def setup_testdb(db_file: str):

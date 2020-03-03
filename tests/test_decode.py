@@ -53,7 +53,7 @@ def get_test_linelocation_1():
     "Return a prepared line location with 3 LRPs"
     # References node 0 / line 1 / lines 1, 3
     lrp1 = LocationReferencePoint(13.41, 52.525,
-                                  FRC.FRC0, FOW.SINGLE_CARRIAGEWAY, 0.75,
+                                  FRC.FRC0, FOW.SINGLE_CARRIAGEWAY, 90/22,
                                   FRC.FRC2, 837.0)
     # References node 3 / line 4
     lrp2 = LocationReferencePoint(13.4145, 52.529,
@@ -188,13 +188,13 @@ class DecodingTests(unittest.TestCase):
     def test_generate_candidates_1(self):
         "Generate candidates and pick the best"
         reference = get_test_linelocation_1()
-        candidates = list(generate_candidates(reference.points[0], self.reader, 40.0, False))
+        candidates = list(generate_candidates(reference.points[0], self.reader, 500.0, False))
         # Sort by score
         candidates.sort(key=lambda candidate: candidate[1], reverse=True)
         # Get only the line ids
         candidates = [line.line_id for (line, score) in candidates]
         # Now assert the best
-        self.assertEqual(candidates[0], 1)
+        self.assertEqual(candidates[0:2], [1, 19])
 
     def test_decode_3_lrps(self):
         "Decode a line location of 3 LRPs"
