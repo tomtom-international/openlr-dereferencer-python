@@ -53,7 +53,7 @@ def get_test_linelocation_1():
     "Return a prepared line location with 3 LRPs"
     # References node 0 / line 1 / lines 1, 3
     lrp1 = LocationReferencePoint(13.41, 52.525,
-                                  FRC.FRC0, FOW.SINGLE_CARRIAGEWAY, 90/22,
+                                  FRC.FRC0, FOW.SINGLE_CARRIAGEWAY, 90/11.25,
                                   FRC.FRC2, 837.0)
     # References node 3 / line 4
     lrp2 = LocationReferencePoint(13.4145, 52.529,
