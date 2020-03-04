@@ -13,6 +13,7 @@ The output will be written to 'output.png'."""
 import sys
 from warnings import warn
 from openlr_dereferencer.example_sqlite_map import ExampleMapReader
+from openlr_dereferencer.maps.wgs84 import project_along_path
 from shapely.geometry import Point, LineString
 import matplotlib.pylab as pylab
 import geopandas
@@ -28,29 +29,27 @@ def get_graph_lines(reader: ExampleMapReader) -> geopandas.GeoSeries:
     return geopandas.GeoSeries(lines)
 
 
-def render_map(reader: ExampleMapReader, outfile: str, labels: bool = True):
-    gs = get_graph_lines(reader)
-    ax = gs.plot()
+def render_map(reader: ExampleMapReader, outfile: str, showlabels: bool = True):
+    plot = get_graph_lines(reader).plot()
 
-    if labels:
+    if showlabels:
         # Text labels
         for point in reader.get_nodes():
-            ax.text(*point.coordinates, point.node_id, weight="bold")
+            plot.text(*point.coordinates, point.node_id, weight="bold")
 
         for line in reader.get_lines():
-            (lon0, lat0) = line.start_node.coordinates
-            (lon1, lat1) = line.end_node.coordinates
-            lon = (lon0 + lon1) / 2
-            lat = (lat0 + lat1) / 2
-            ax.text(lon, lat, line.line_id, color="darkred", ma="center")
+            length = line.length
+            path = list(line.coordinates())
+            textpos = project_along_path(path, length / 3)
+            plot.text(textpos.lon, textpos.lat, line.line_id, color="darkred", ma="center")
 
-    fig = ax.get_figure()
+    fig = plot.get_figure()
     fig.savefig(outfile)
 
 
-def render_sqlite(db: str, labels: bool = True):
+def render_sqlite(db: str, showlabels: bool = True):
     reader = ExampleMapReader(db)
-    render_map(reader, "output.png", labels)
+    render_map(reader, "output.png", showlabels)
 
 
 if __name__ == "__main__":
