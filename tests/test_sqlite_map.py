@@ -40,13 +40,11 @@ class SQLiteMapTest(unittest.TestCase):
 
     def test_linepoints(self):
         "Test the point count of every line"
-        for line in self.reader.get_lines():
-            if line.line_id == 18:
-                self.assertEqual(line.num_points(), 5)
-            elif line.line_id == 19:
-                self.assertEqual(line.num_points(), 3)
-            else:
-                self.assertEqual(line.num_points(), 2)
+        pointcounts = {line.line_id: line.num_points() for line in self.reader.get_lines()}
+        self.assertEqual(pointcounts.pop(18), 5)
+        self.assertEqual(pointcounts.pop(19), 3)
+        for pointcount in pointcounts.values():
+            self.assertEqual(pointcount, 2)
 
     def test_nearest(self):
         "Test find_nodes_close_to with a manually chosen location"
