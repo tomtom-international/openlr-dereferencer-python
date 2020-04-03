@@ -3,6 +3,7 @@
 from itertools import chain
 from typing import Iterable
 from openlr import Coordinates, FRC, FOW
+from shapely.geometry import LineString
 from ..maps import Line as AbstractLine, Node as AbstractNode
 
 # https://epsg.io/4326
@@ -54,11 +55,11 @@ class Line(AbstractLine):
         (frc,) = self.map_reader.connection.execute(stmt, (self.line_id,)).fetchone()
         return FRC(frc)
 
-    def coordinates(self) -> Iterable[Coordinates]:
-        "Yields every point in the path geometry as Coordinates"
-        for index in range(self.num_points()):
-            lon, lat = self.point_n(index + 1)
-            yield Coordinates(lon=lon, lat=lat)
+    @property
+    def shape(self) -> LineString:
+        "Returns the line geometry"
+        points = [self.point_n(index + 1) for index in range(self.num_points())]
+        return LineString(points)
 
     def distance_to(self, coord) -> float:
         "Returns the distance of this line to `coord` in meters"

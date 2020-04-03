@@ -1,9 +1,9 @@
 """An abstract `MapReader` base class, which must be implemented for each
 map format to decode location references on."""
 from abc import ABC, abstractmethod
-from typing import Iterable, Hashable
+from typing import Iterable, Hashable, Sequence
 from openlr import Coordinates, FOW, FRC
-
+from shapely.geometry import LineString
 
 class Line(ABC):
     "Abstract Line class, modelling a line coming from a map reader"
@@ -33,10 +33,14 @@ class Line(ABC):
     def fow(self) -> FOW:
         "Returns the form of way of this line"
 
+    @property
     @abstractmethod
-    def coordinates(self) -> Iterable[Coordinates]:
-        """Returns the shape of the line.
-        Yields GeoCoordinate values."""
+    def shape(self) -> LineString:
+        "Returns the geometric shape as a linestring"
+
+    def coordinates(self) -> Sequence[Coordinates]:
+        """Returns the shape of the line as list of Coordinates"""
+        return [Coordinates(*point) for point in self.shape.coords]
 
     @property
     def length(self) -> float:
