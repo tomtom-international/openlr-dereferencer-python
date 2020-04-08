@@ -3,9 +3,16 @@ map format to decode location references on."""
 from abc import ABC, abstractmethod
 from typing import Iterable, Hashable, Sequence
 from openlr import Coordinates, FOW, FRC
-from shapely.geometry import LineString
+from shapely.geometry import LineString, Point
+from shapely.geometry.base import BaseGeometry
 
-class Line(ABC):
+class GeometricObject(ABC):
+    @property
+    @abstractmethod
+    def geometry(self) -> BaseGeometry:
+        "Returns the geometry of this object"
+
+class Line(GeometricObject):
     "Abstract Line class, modelling a line coming from a map reader"
 
     @property
@@ -35,12 +42,12 @@ class Line(ABC):
 
     @property
     @abstractmethod
-    def shape(self) -> LineString:
+    def geometry(self) -> LineString:
         "Returns the geometric shape as a linestring"
 
     def coordinates(self) -> Sequence[Coordinates]:
         """Returns the shape of the line as list of Coordinates"""
-        return [Coordinates(*point) for point in self.shape.coords]
+        return [Coordinates(*point) for point in self.geometry.coords]
 
     @property
     def length(self) -> float:
@@ -51,13 +58,18 @@ class Line(ABC):
         "Compute the point-to-line distance"
 
 
-class Node(ABC):
+class Node(GeometricObject):
     "Abstract class modelling a node returned by a map reader"
 
     @property
     @abstractmethod
     def coordinates(self) -> Coordinates:
-        "Returns the position of this node as lon, lat"
+        "Returns the lon, lat coordinates of this node"
+
+    @property
+    def geometry(self) -> Point:
+        "Returns the position of this node as shapely point"
+        return Point(*self.coordinates)
 
     @abstractmethod
     def outgoing_lines(self) -> Iterable[Line]:

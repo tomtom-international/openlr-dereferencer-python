@@ -56,7 +56,7 @@ class Line(AbstractLine):
         return FRC(frc)
 
     @property
-    def shape(self) -> LineString:
+    def geometry(self) -> LineString:
         "Returns the line geometry"
         points = [self.point_n(index + 1) for index in range(self.num_points())]
         return LineString(points)
