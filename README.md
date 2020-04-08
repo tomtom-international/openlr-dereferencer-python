@@ -5,19 +5,17 @@
 [![Coverage Status](https://img.shields.io/codecov/c/github/tomtom-international/openlr-dereferencer-python/master.svg)](https://codecov.io/github/tomtom-international/openlr-dereferencer-python?branch=master)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/openlr-dereferencer)](https://pypi.org/project/openlr-dereferencer)
 [![PyPI](https://img.shields.io/pypi/v/openlr-dereferencer)](https://pypi.org/project/openlr-dereferencer)
+[![Documentation](https://readthedocs.org/projects/openlr-dereferencer-python/badge/)](https://openlr-dereferencer-python.readthedocs.io)
 
 
 This is a Python package for decoding OpenLR™ location references on target maps.
 ## Dependencies
 - Python ≥ 3.6
 - geographiclib (PyPi package)
+- shapely (PyPi package)
 - [openlr](https://github.com/tomtom-international/openlr-python) (PyPi package)
 - For unittests, SQlite with spatialite extension is required
 ## State
-- ☑ Example map format
-- ☑ Routing
-- ☑ Candidate route rating
-- ☑ Backtracking to get correct routes
 - ☑ Decoding line locations
 - ☑ Decoding 'point along line' locations
 - ☑ Decoding 'POI with access point' locations
@@ -34,6 +32,11 @@ The actual logic for matching references onto a map.
 
 This includes finding candidate lines and scoring them, and assembling a dereferenced location.
 
+# Installation
+This project is available on PyPi:
+```sh
+pip3 install openlr-dereferencer
+```
 
 ## Usage
 The `decode(reference, mapreader)` function will take a location reference and return map objects.
@@ -89,3 +92,6 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG)
 ```
+
+## More Documentation
+Read the generated API documentation at https://openlr-dereferencer-python.readthedocs.io.
