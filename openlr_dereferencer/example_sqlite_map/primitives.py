@@ -76,7 +76,7 @@ class Line(AbstractLine):
         return count
 
     def point_n(self, index) -> Coordinates:
-        "Returns the `n`th point in the path geometry, starting at 0"
+        "Returns the `n` th point in the path geometry, starting at 0"
         stmt = "SELECT X(PointN(path, ?)), Y(PointN(path, ?)) FROM lines WHERE lines.rowid = ?"
         (lon, lat) = self.map_reader.connection.execute(
             stmt, (index, index, self.line_id)

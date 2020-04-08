@@ -38,12 +38,17 @@ def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS) -> M
         This function will return one or more map object, optionally wrapped into some class.
         Here is an overview for what reference type will result in which return type:
 
-        reference                         | returns
-        ----------------------------------|-------------------------------
-        openlr.GeoCoordinateLocation      | Coordinates
-        openlr.LineLocation               | openlr_dereferencer.LineLocation
-        openlr.PointAlongLine             | PointAlongLineLocation
-        openlr.PoiWithAccessPointLocation | PoiWithAccessPoint
+        +-----------------------------------+----------------------------------+
+        | reference                         | returns                          |
+        +===================================+==================================+
+        | openlr.GeoCoordinateLocation      | Coordinates                      |
+        +-----------------------------------+----------------------------------+
+        | openlr.LineLocation               | openlr_dereferencer.LineLocation |
+        +-----------------------------------+----------------------------------+
+        | openlr.PointAlongLine             | PointAlongLineLocation           |
+        +-----------------------------------+----------------------------------+
+        | openlr.PoiWithAccessPointLocation | PoiWithAccessPoint               |
+        +-----------------------------------+----------------------------------+
     """
     if isinstance(reference, LineLocationRef):
         return decode_line(reference, reader, radius)

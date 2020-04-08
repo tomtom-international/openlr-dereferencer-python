@@ -48,7 +48,7 @@ def get_candidate_route(
 
     Returns:
         If a matching shortest path is found, it is returned as a list of Line objects.
-            The returned path includes line1, but not line2.
+        The returned path includes line1, but not line2.
         If there is no matching path found, None is returned.
     """
     debug(f"Try to find path between lines {line1.line_id, line2.line_id}")
