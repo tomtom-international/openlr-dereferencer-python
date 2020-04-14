@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="73.855721mm"
+   height="26.817186mm"
+   viewBox="0 0 73.855723 26.817186"
+   version="1.1"
+   id="svg8"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   sodipodi:docname="Legend.svg">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.979899"
+     inkscape:cx="193.81011"
+     inkscape:cy="27.663758"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     fit-margin-top="2"
+     fit-margin-left="2"
+     fit-margin-right="2"
+     fit-margin-bottom="2"
+     inkscape:window-width="1853"
+     inkscape:window-height="1016"
+     inkscape:window-x="67"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-3.6272341,-11.685194)">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:2.84533024px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.17783314"
+       x="5.6174383"
+       y="15.846978"
+       id="text817"><tspan
+         sodipodi:role="line"
+         id="tspan815"
+         x="5.6174383"
+         y="15.846978"
+         style="stroke-width:0.17783314">Dotted line</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.67212528;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1.34425066, 0.67212533;stroke-dashoffset:0;stroke-opacity:1"
+       d="m 24.838771,14.679327 7.54482,0.08982"
+       id="path819"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:2.84533024px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.17783314"
+       x="38.850578"
+       y="16.296074"
+       id="text823"><tspan
+         sodipodi:role="line"
+         id="tspan821"
+         x="38.850578"
+         y="16.296074"
+         style="stroke-width:0.17783314">Certain FOW</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:2.84533024px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.17783314"
+       x="5.3479805"
+       y="21.86487"
+       id="text827"><tspan
+         sodipodi:role="line"
+         id="tspan825"
+         x="5.3479805"
+         y="21.86487"
+         style="stroke-width:0.17783314">Line thickness</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1.34425056;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 29.060277,18.900835 4.850243,5.1197"
+       id="path829"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:2.84533024px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.17783314"
+       x="40.467331"
+       y="23.3918"
+       id="text833"><tspan
+         sodipodi:role="line"
+         id="tspan831"
+         x="40.467331"
+         y="23.3918"
+         style="stroke-width:0.17783314">Certain FRC</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:2.84533024px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.17783314"
+       x="5.7970772"
+       y="29.48868"
+       id="text837"><tspan
+         sodipodi:role="line"
+         id="tspan835"
+         x="5.7970772"
+         y="29.48868"
+         style="stroke-width:0.17783314">Blue line</tspan></text>
+    <path
+       style="fill:none;fill-opacity:1;stroke:#0000ff;stroke-width:0.67212528;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 23.042384,29.937777 4.670604,-0.808374 0.179639,-2.425121 3.233495,0.269458 0.179639,1.706567 1.706566,0.898193"
+       id="path839"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:2.84533024px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.17783314"
+       x="40.197868"
+       y="29.309042"
+       id="text843"><tspan
+         sodipodi:role="line"
+         id="tspan841"
+         x="40.197868"
+         y="29.309042"
+         style="stroke-width:0.17783314">Line location path</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:2.84533024px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.17783314"
+       x="6.1563544"
+       y="35.876682"
+       id="text847"><tspan
+         sodipodi:role="line"
+         id="tspan845"
+         x="6.1563544"
+         y="35.876682"
+         style="stroke-width:0.17783314">Red point</tspan></text>
+    <circle
+       style="fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:0.67212528;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path849"
+       cx="27.802807"
+       cy="35.158131"
+       r="1.3442506" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:2.84533024px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.17783314"
+       x="40.108051"
+       y="35.247948"
+       id="text853"><tspan
+         sodipodi:role="line"
+         id="tspan851"
+         x="40.108051"
+         y="35.247948"
+         style="stroke-width:0.17783314">Location Reference point</tspan></text>
+  </g>
+</svg>
