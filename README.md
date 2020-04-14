@@ -74,7 +74,7 @@ There are four scoring weight parameters:
 
 They determine how much influence a single aspect has on an overall candidate's score.
  
-You may just change them before decoding:
+You may just change these before decoding:
 ```py
 from openlr_dereferencer.decoding import scoring
 
@@ -83,6 +83,8 @@ scoring.FRC_WEIGHT = 0.17
 scoring.FOW_WEIGHT = 0.17
 scoring.BEAR_WEIGHT = 0
 ```
+
+A value of 0 means that the aspect has no influence on the candidate score, while a value of 1 means that it is the only aspect that matters.
 ### Logging
 `openlr-dereferencer` logs all mapmatching decisions using the standard library `logging` module.
 
@@ -94,4 +96,4 @@ logging.basicConfig(level=logging.DEBUG)
 ```
 
 ## More Documentation
-Read the generated API documentation at https://openlr-dereferencer-python.readthedocs.io.
+You are welcomed to read the generated API documentation at https://openlr-dereferencer-python.readthedocs.io.
