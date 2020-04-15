@@ -18,3 +18,5 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+See an in-depth elaboration on the :doc:`decoding algorithm <Decoding>`.
