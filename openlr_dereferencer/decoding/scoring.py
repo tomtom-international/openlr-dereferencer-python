@@ -35,9 +35,6 @@ FOW_STAND_IN_SCORE = [
     [0.50, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.0],  # Other FOW
 ]
 
-# LocationReferencePoint.bear is angle / 11.25°, so has to be multiplied to get the degree value
-BEAR_MULTIPLIER = 11.25
-
 
 def score_fow(wanted: FOW, actual: FOW) -> float:
     "Return a score for a FOW value"
@@ -64,17 +61,6 @@ def score_geolocation(
         return 1.0 - dist / radius
     return 0.0
 
-
-def get_bearing_point(candidate: Line, reverse: bool = False) -> Coordinates:
-    "Gets the point to which the bearing angle is computed."
-    if candidate.length < BEAR_DIST:
-        return candidate.end_node.coordinates
-    coordinates = list(candidate.coordinates())
-    if reverse:
-        coordinates.reverse()
-    return project_along_path(coordinates, BEAR_DIST)
-
-
 def score_angle_difference(angle1: float, angle2: float) -> float:
     """Helper for `score_bearing` which scores the angle difference.
 
@@ -91,13 +77,13 @@ def score_bearing(wanted: LocationReferencePoint, candidate: Line, is_last_lrp: 
     """Scores the difference between expected and actual bearing angle.
 
     A difference of 0° will result in a 1.0 score, while 180° will cause a score of 0.0."""
-    point1 = candidate.start_node.coordinates
-    point2 = get_bearing_point(candidate)
-    bear = degrees(bearing(point1, point2))
-    expected_bearing = BEAR_MULTIPLIER * wanted.bear
+    coordinates = list(candidate.coordinates())
     if is_last_lrp:
-        return score_angle_difference(expected_bearing, bear - 180)
-    return score_angle_difference(expected_bearing, bear)
+        coordinates.reverse()
+    point1 = coordinates[0]
+    point2 = project_along_path(coordinates, BEAR_DIST)
+    bear = degrees(bearing(point1, point2))
+    return score_angle_difference(wanted.bear, bear)
 
 
 def score_lrp_candidate(

@@ -1,5 +1,6 @@
 "Contains the unit tests for the decoding logic"
 import unittest
+from math import degrees
 from itertools import zip_longest
 from typing import List, Iterable, TypeVar
 
@@ -167,7 +168,7 @@ class DecodingTests(unittest.TestCase):
         node1 = DummyNode(Coordinates(0.0, 0.0))
         node2 = DummyNode(Coordinates(0.0, 90.0))
         node3 = DummyNode(Coordinates(1.0, 0.0))
-        wanted_bearing = bearing(node1.coordinates, node2.coordinates)
+        wanted_bearing = degrees(bearing(node1.coordinates, node2.coordinates))
         wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
                                         FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
         score = score_bearing(wanted, DummyLine(1, node1, node3), False)
@@ -178,19 +179,53 @@ class DecodingTests(unittest.TestCase):
         node1 = DummyNode(Coordinates(0.0, 0.0))
         node2 = DummyNode(Coordinates(0.0, 90.0))
         node3 = DummyNode(Coordinates(-1.0, 0.0))
-        wanted_bearing = bearing(node1.coordinates, node2.coordinates)
+        wanted_bearing = degrees(bearing(node1.coordinates, node2.coordinates))
         wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
                                         FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
         score = score_bearing(wanted, DummyLine(1, node1, node3), False)
         self.assertEqual(score, 0.5)
 
     def test_bearingscore_3(self):
+        "Test bearing difference of +90°"
+        node1 = DummyNode(Coordinates(0.0, 0.0))
+        node2 = DummyNode(Coordinates(0.0, 90.0))
+        node3 = DummyNode(Coordinates(1.0, 0.0))
+        wanted_bearing = degrees(bearing(node1.coordinates, node2.coordinates))
+        wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
+                                        FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
+        score = score_bearing(wanted, DummyLine(1, node1, node3), True)
+        self.assertEqual(score, 0.5)
+
+    def test_bearingscore_4(self):
+        "Test bearing difference of -90°"
+        node1 = DummyNode(Coordinates(0.0, 0.0))
+        node2 = DummyNode(Coordinates(0.0, 90.0))
+        node3 = DummyNode(Coordinates(-1.0, 0.0))
+        wanted_bearing = degrees(bearing(node1.coordinates, node2.coordinates))
+        wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
+                                        FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
+        score = score_bearing(wanted, DummyLine(1, node1, node3), True)
+        self.assertEqual(score, 0.5)
+
+    def test_bearingscore_5(self):
+        "Test perfect/worst possible bearing"
+        node1 = DummyNode(Coordinates(1.0, 0.0))
+        node2 = DummyNode(Coordinates(0.0, 0.0))
+        wanted_bearing = degrees(bearing(node1.coordinates, node2.coordinates))
+        wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
+                                        FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
+        score = score_bearing(wanted, DummyLine(1, node1, node2), False)
+        self.assertAlmostEqual(score, 1.0)
+        score = score_bearing(wanted, DummyLine(1, node1, node2), True)
+        self.assertAlmostEqual(score, 0.0)
+
+    def test_anglescore_1(self):
         "Test the angle scoring function from 0"
         sub_testcases = [-360, -720, 0, 180, 540, 720]
         scores = map(lambda arc: score_angle_difference(0, arc), sub_testcases)
         self.assertIterableAlmostEqual([1.0, 1.0, 1.0, 0.0, 0.0, 1.0], list(scores), 0.001)
 
-    def test_bearingscore_4(self):
+    def test_anglescore_2(self):
         "Test the angle scoring function from 271°"
         sub_testcases = [-89, 91, 181, 226]
         scores = map(lambda arc: score_angle_difference(271, arc), sub_testcases)
@@ -205,7 +240,7 @@ class DecodingTests(unittest.TestCase):
         # Get only the line ids
         candidates = [line.line_id for (line, score) in candidates]
         # Now assert the best
-        self.assertEqual(candidates[0:2], [1, 19])
+        self.assertEqual(candidates[0], 1)
 
     def test_decode_3_lrps(self):
         "Decode a line location of 3 LRPs"
