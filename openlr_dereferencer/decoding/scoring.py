@@ -35,9 +35,6 @@ FOW_STAND_IN_SCORE = [
     [0.50, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.0],  # Other FOW
 ]
 
-# LocationReferencePoint.bear is angle / 11.25°, so has to be multiplied to get the degree value
-BEAR_MULTIPLIER = 11.25
-
 
 def score_fow(wanted: FOW, actual: FOW) -> float:
     "Return a score for a FOW value"
