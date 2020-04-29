@@ -63,7 +63,7 @@ class Line(AbstractLine):
 
     def distance_to(self, coord) -> float:
         "Returns the distance of this line to `coord` in meters"
-        stmt = """SELECT Distance(Makepoint(?, ?), lines.path)
+        stmt = """SELECT Distance(Makepoint(?, ?), lines.path, 1)
             FROM nodes, lines WHERE lines.rowid = ?"""
         con = self.map_reader.connection
         (dist,) = con.execute(stmt, (coord.lon, coord.lat, self.line_id)).fetchone()
