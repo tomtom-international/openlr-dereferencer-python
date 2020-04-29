@@ -120,13 +120,13 @@ class MapReader(ABC):
 
     @abstractmethod
     def find_nodes_close_to(self, coord: Coordinates, dist: float) -> Iterable[Node]:
-        """Iterates over all nodes in radius `distance` around `coord`.
+        """Iterates over all nodes within `dist` meters around `coord`.
 
         No order specified here."""
 
     @abstractmethod
     def find_lines_close_to(self, coord: Coordinates, dist: float) -> Iterable[Line]:
-        """Iterates over all lines in radius `distance` around `coord`.
+        """Iterates over all lines within `dist` meters around `coord`.
 
         No order specified here."""
 

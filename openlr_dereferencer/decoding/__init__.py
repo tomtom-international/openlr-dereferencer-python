@@ -20,6 +20,7 @@ from .point_locations import (
     PoiWithAccessPoint,
 )
 
+#: Configures the default radius to search for map objects around an LRP. This value is in meters.
 SEARCH_RADIUS = 100.0
 
 LR = TypeVar("LocationReference", LineLocationRef, PointAlongLineLocation, GeoCoordinateLocation)
@@ -30,9 +31,12 @@ def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS) -> M
     """Translates an openLocationReference into a real location on your map.
 
     Args:
-        reference: The location reference you want to decode
-        reader: A reader class for the map on which you want to decode
-        radius: The search path for the location's components' candidates
+        reference:
+            The location reference you want to decode
+        reader:
+            A reader class for the map on which you want to decode
+        radius:
+            The search path for the location's components' candidates
 
     Returns:
         This function will return one or more map object, optionally wrapped into some class.
