@@ -113,4 +113,4 @@ def match_tail(
         for line in path[-1].end_node.outgoing_lines():
             next_candidates.append((line, score_lrp_candidate(next_lrp, line, radius, last_lrp)))
         return path + match_tail(next_lrp, next_candidates, tail[1:], reader, radius)
-    raise LRDecodeError()
+    raise LRDecodeError("Decoding was unsuccessful: No candidates left or available.")
