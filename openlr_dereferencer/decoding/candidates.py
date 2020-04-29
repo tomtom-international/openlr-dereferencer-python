@@ -9,11 +9,19 @@ from ..maps.a_star import LRPathNotFoundError
 from .scoring import score_lrp_candidate
 from .tools import LRDecodeError, coords
 
-# Filters candidate paths with too high DNP deviation from expected value
-# The value here is relative to the expected distance to next point
+#: Tolerable relative DNP deviation of a path
+#:
+#: A path may deviate from the DNP by this relative value plus TOLERATED_DNP_DEV in order to be
+#: considered. The value here is relative to the expected distance to next point.
 MAX_DNP_DEVIATION = 0.3
 
-# A filter for candidates with insufficient score
+#: Additional buffer to the range of allowed path distance
+#:
+#: In order to be considered, a path must not deviate from the DNP value by more than
+#: MAX_DNP_DEVIATION (relative value) plus TOLERATED_DNP_DEV. This value is in meters.
+TOLERATED_DNP_DEV = 30
+
+#: A filter for candidates with insufficient score
 MIN_SCORE = 0.3
 
 
@@ -86,8 +94,9 @@ def match_tail(
 
     If not, a `LRDecodeError` exception is raised."""
     last_lrp = len(tail) == 1
-    # The maximum accepted length. This helps A* to save computational time
-    maxlen = (1 + MAX_DNP_DEVIATION) * current.dnp
+    # The accepted distance to next point. This helps to save computations and filter bad paths
+    minlen = (1 - MAX_DNP_DEVIATION) * current.dnp - TOLERATED_DNP_DEV
+    maxlen = (1 + MAX_DNP_DEVIATION) * current.dnp + TOLERATED_DNP_DEV
     # Generate all pairs of candidates for the first two lrps
     next_lrp = tail[0]
     next_candidates = list(generate_candidates(next_lrp, reader, radius, last_lrp))
@@ -100,11 +109,11 @@ def match_tail(
         if not path:
             debug("No path for candidate found")
             continue
-        deviation = abs(current.dnp - path_length(path)) / current.dnp
-        debug(f"DNP should be {current.dnp} m, is {path_length(path)} m. ({deviation} rel. dev)")
+        length = path_length(path)
+        debug(f"DNP should be {current.dnp} m, is {length} m.")
         # If path does not match DNP, continue with the next candidate pair
-        if deviation > MAX_DNP_DEVIATION:
-            debug("Shortest path deviation is too large, trying next candidate")
+        if length < minlen or length > maxlen:
+            debug("Shortest path deviation from DNP is too large, trying next candidate")
             continue
         if last_lrp:
             return path
