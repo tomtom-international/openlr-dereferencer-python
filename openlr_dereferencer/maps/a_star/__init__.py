@@ -2,16 +2,24 @@
 Provides the shortest_path(map, start, end) -> List[Line] function, which
 finds a shortest path between two nodes.
 """
-from typing import List, Optional, Callable
+from typing import List, Optional, Callable, NamedTuple
 from heapq import heapify, heappush, heappop
-from collections import namedtuple
 from ..abstract import Node, Line
 from .tools import heuristic, LRPathNotFoundError, tautology
 
 
-# Named tuples to represent a priority queue item and its score
-PQItem = namedtuple('PQItem', ['score', 'node', 'line', 'previous'])
-Score = namedtuple('Score', ['f', 'g'])
+class Score(NamedTuple):
+    """The score of a single item in the search priority queue"""
+    f: float
+    g: float
+
+
+class PQItem(NamedTuple):
+    """A single item in the search priority queue"""
+    score: Score
+    node: Node
+    line: Line
+    previous: "PQItem"
 
 
 def shortest_path(

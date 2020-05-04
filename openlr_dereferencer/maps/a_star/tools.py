@@ -18,9 +18,6 @@ def heuristic(current: Node, target: Node) -> float:
     return distance(current.coordinates, target.coordinates)
 
 
-T = TypeVar("T")
-
-
 def tautology(_) -> bool:
     "Returns always True, used as default line filter function."
     return True
