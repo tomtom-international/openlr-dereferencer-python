@@ -70,7 +70,7 @@ def get_candidate_route(
     linefilter = lambda line: line.frc <= lfrc
     debug(f"Finding path between nodes {line1.end_node.node_id, target_node.node_id}")
     try:
-        path = shortest_path(map_reader, line1.end_node, target_node, linefilter, maxlen=maxlen)
+        path = shortest_path(line1.end_node, target_node, linefilter, maxlen=maxlen)
         debug(f"Returning {[line1] + path}")
         return [line1] + path
     except LRPathNotFoundError:
