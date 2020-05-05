@@ -24,6 +24,8 @@ TOLERATED_DNP_DEV = 30
 #: A filter for candidates with insufficient score
 MIN_SCORE = 0.3
 
+# The lowest tolerated FRC along a route given the LFRC value in the location reference point
+TOLERATED_LFRC = {frc:frc for frc in FRC}
 
 def generate_candidates(
     lrp: LocationReferencePoint, reader: MapReader, radius: float, is_last_lrp: bool
@@ -97,6 +99,8 @@ def match_tail(
     # The accepted distance to next point. This helps to save computations and filter bad paths
     minlen = (1 - MAX_DNP_DEVIATION) * current.dnp - TOLERATED_DNP_DEV
     maxlen = (1 + MAX_DNP_DEVIATION) * current.dnp + TOLERATED_DNP_DEV
+    lfrc = TOLERATED_LFRC[current.lfrcnp]
+
     # Generate all pairs of candidates for the first two lrps
     next_lrp = tail[0]
     next_candidates = list(generate_candidates(next_lrp, reader, radius, last_lrp))
@@ -105,7 +109,7 @@ def match_tail(
     pairs.sort(key=lambda pair: (pair[0][1], pair[1][1]), reverse=True)
     # For every pair of candidate lines, search for a matching path
     for ((line1, _), (line2, _)) in pairs:
-        path = get_candidate_route(reader, line1, line2, current.lfrcnp, last_lrp, maxlen)
+        path = get_candidate_route(reader, line1, line2, lfrc, last_lrp, maxlen)
         if not path:
             debug("No path for candidate found")
             continue
