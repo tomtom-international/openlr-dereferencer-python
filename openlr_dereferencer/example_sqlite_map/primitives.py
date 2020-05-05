@@ -67,7 +67,10 @@ class Line(AbstractLine):
             FROM nodes, lines WHERE lines.rowid = ?"""
         con = self.map_reader.connection
         (dist,) = con.execute(stmt, (coord.lon, coord.lat, self.line_id)).fetchone()
-        return dist
+        if dist is None:
+            return 0.0
+        else:
+            return dist
 
     def num_points(self) -> int:
         "Returns how many points the path geometry contains"
