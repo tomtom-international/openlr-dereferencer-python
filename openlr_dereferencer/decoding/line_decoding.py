@@ -12,13 +12,13 @@ def dereference_path(
 ) -> List[Line]:
     "Decode the location reference path, without considering any offsets"
     first_lrp = lrps[0]
-    first_lines = list(generate_candidates(first_lrp, reader, radius, False))
-    return match_tail(first_lrp, first_lines, lrps[1:], reader, radius)
+    first_candidates = list(generate_candidates(first_lrp, reader, radius, False))
+    return match_tail(first_lrp, first_candidates, lrps[1:], reader, radius)
 
 
 def decode_line(reference: LineLocationRef, reader: MapReader, radius: float) -> LineLocation:
     """Decodes an openLR line location reference
 
     Candidates are searched in a radius of `radius` meters around an LRP."""
-    path = dereference_path(reference.points, reader, radius)
-    return build_line_location(path, reference)
+    parts = dereference_path(reference.points, reader, radius)
+    return build_line_location(parts, reference)

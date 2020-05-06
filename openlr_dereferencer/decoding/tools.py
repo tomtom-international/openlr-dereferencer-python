@@ -1,10 +1,25 @@
 "Some tooling functions for path and offset handling"
 
-from typing import List, Tuple
+from typing import List, Tuple, NamedTuple
 from logging import debug
+from shapely.geometry import LineString, Point
 from openlr import Coordinates, LocationReferencePoint
 from ..maps import Line
 from ..maps.wgs84 import project_along_path
+
+
+class PointOnLine(NamedTuple):
+    "A point on the road network"
+    line: Line
+    "The line element on which the point resides"
+    relative_offset: float
+    """Specifies the relative offset of the point.
+    It's value is member of the interval [0.0, 1.0].
+    A value of 0 references the starting point of the line."""
+
+    def coordinates(self) -> Coordinates:
+        "Returns the actual geo position"
+        return project_along_path(list(self.line.coordinates()), self.relative_offset)
 
 
 def add_offsets(path: List[Line], p_off: float, n_off: float) -> List[Coordinates]:
@@ -51,3 +66,7 @@ class LRDecodeError(Exception):
 def coords(lrp: LocationReferencePoint) -> Coordinates:
     "Return the coordinates of an LRP"
     return Coordinates(lrp.lon, lrp.lat)
+
+def project(line_string: LineString, coord: Coordinates) -> float:
+    "The nearest point to `coord` on the line, as relative distance along it"
+    return line_string.project(Point(coord.lon, coord.lat), normalized=True)

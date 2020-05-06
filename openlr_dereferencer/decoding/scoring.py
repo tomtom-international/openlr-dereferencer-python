@@ -10,7 +10,7 @@ from logging import debug
 from openlr import Coordinates, FRC, FOW, LocationReferencePoint
 from ..maps.wgs84 import project_along_path, distance, bearing
 from ..maps import Line
-from .tools import coords
+from .tools import coords, PointOnLine
 
 FOW_WEIGHT = 1 / 4
 FRC_WEIGHT = 1 / 4
@@ -47,16 +47,13 @@ def score_frc(wanted: FRC, actual: FRC) -> float:
 
 
 def score_geolocation(
-    wanted: LocationReferencePoint, actual: Line, radius: float, is_last_lrp: bool
+    wanted: LocationReferencePoint, actual: PointOnLine, radius: float, is_last_lrp: bool
 ) -> float:
     """Scores the geolocation of a candidate.
 
     A distance of `radius` or more will result in a 0.0 score."""
-    if is_last_lrp:
-        actual_point = actual.end_node.coordinates
-    else:
-        actual_point = actual.start_node.coordinates
-    dist = distance(coords(wanted), actual_point)
+    c = actual.coordinates()
+    dist = distance(coords(wanted), actual.coordinates())
     if dist < radius:
         return 1.0 - dist / radius
     return 0.0
@@ -73,21 +70,21 @@ def score_angle_difference(angle1: float, angle2: float) -> float:
     return 1 - abs(difference) / 180
 
 
-def score_bearing(wanted: LocationReferencePoint, candidate: Line, is_last_lrp: bool) -> float:
+def score_bearing(wanted: LocationReferencePoint, actual: PointOnLine, is_last_lrp: bool) -> float:
     """Scores the difference between expected and actual bearing angle.
 
     A difference of 0° will result in a 1.0 score, while 180° will cause a score of 0.0."""
-    coordinates = list(candidate.coordinates())
+    coordinates = list(actual.coordinates())
     if is_last_lrp:
         coordinates.reverse()
-    point1 = coordinates[0]
-    point2 = project_along_path(coordinates, BEAR_DIST)
-    bear = degrees(bearing(point1, point2))
+    absolute_offset = actual.line.length * actual.relative_offset
+    bearing_point = project_along_path(actual.coordinates(), absolute_offset + BEAR_DIST)
+    bear = degrees(bearing(actual.coordinates(), bearing_point))
     return score_angle_difference(wanted.bear, bear)
 
 
 def score_lrp_candidate(
-    wanted: LocationReferencePoint, candidate: Line, radius: float, is_last_lrp: bool
+    wanted: LocationReferencePoint, candidate: PointOnLine, radius: float, is_last_lrp: bool
 ) -> float:
     """Scores the candidate (line) for the LRP.
 

@@ -4,6 +4,19 @@ from typing import List
 from openlr import Coordinates, LineLocation as LineLocationRef
 from ..maps import Line
 from .tools import add_offsets, remove_unnecessary_lines
+from .candidates import Route
+
+
+def get_lines(line_location_path: List[Route]) -> List[Line]:
+    "Convert a line location path to its sequence of line elements"
+    result = []
+    for part in line_location_path:
+        if not part.start.line in result:
+            result.append(part.start.line)
+        result += part.path_inbetween
+        if not part.end.line in result:
+            result.append(part.end.line)
+    return result        
 
 
 class LineLocation:
@@ -31,11 +44,12 @@ class LineLocation:
         return add_offsets(self.lines, self.p_off, self.n_off)
 
 
-def build_line_location(lines: List[Line], reference: LineLocationRef) -> LineLocation:
+def build_line_location(path: List[Route], reference: LineLocationRef) -> LineLocation:
     """Builds a LineLocation object from the location reference path and the offset values.
 
     The result will be a trimmed list of Line objects, with minimized offset values"""
-    p_off = reference.poffs * reference.points[0].dnp
-    n_off = reference.noffs * reference.points[-2].dnp
+    p_off = reference.poffs * path[0].length
+    n_off = reference.noffs * path[-1].length
+    lines = get_lines(path)
     adjusted_lines, p_off, n_off = remove_unnecessary_lines(lines, p_off, n_off)
     return LineLocation(adjusted_lines, p_off, n_off)
