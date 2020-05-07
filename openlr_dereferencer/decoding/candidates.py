@@ -1,13 +1,17 @@
 "Contains functions for candidate searching and map matching"
 
 from itertools import product
-from typing import Sequence, Tuple, Optional, Iterable, List
 from logging import debug
+from typing import Sequence, Tuple, Optional, Iterable, List
+
 from openlr import FRC, LocationReferencePoint
-from ..maps import shortest_path, MapReader, Line, path_length
-from ..maps.a_star import LRPathNotFoundError
+
+from .candidate import Candidate
 from .scoring import score_lrp_candidate
 from .tools import LRDecodeError, coords
+from ..maps import shortest_path, MapReader, Line, path_length
+from ..maps.a_star import LRPathNotFoundError
+from ..observer import DecoderObserver
 
 # Filters candidate paths with too high DNP deviation from expected value
 # The value here is relative to the expected distance to next point
@@ -19,7 +23,7 @@ MIN_SCORE = 0.3
 
 def generate_candidates(
     lrp: LocationReferencePoint, reader: MapReader, radius: float, is_last_lrp: bool
-) -> Iterable[Tuple[Line, float]]:
+) -> Iterable[Candidate]:
     """Convenience function for decoding, that returns a list of candidate lines for the LRP along
     with their score."""
     debug(f"Finding candidates for LRP {lrp} at {coords(lrp)} in radius {radius}")
@@ -27,7 +31,7 @@ def generate_candidates(
     for candidate in candidates:
         score = score_lrp_candidate(lrp, candidate, radius, is_last_lrp)
         if score >= MIN_SCORE:
-            yield (candidate, score)
+            yield Candidate(candidate, score)
 
 
 def get_candidate_route(
@@ -76,6 +80,7 @@ def match_tail(
     tail: List[LocationReferencePoint],
     reader: MapReader,
     radius: float,
+    observer: DecoderObserver
 ) -> List[Line]:
     """Searches for the rest of the line location.
 
@@ -91,6 +96,8 @@ def match_tail(
     # Generate all pairs of candidates for the first two lrps
     next_lrp = tail[0]
     next_candidates = list(generate_candidates(next_lrp, reader, radius, last_lrp))
+    if observer is not None:
+        observer.on_candidates_found(next_lrp, next_candidates)
     pairs = list(product(candidates, next_candidates))
     # Sort by line score pair
     pairs.sort(key=lambda pair: (pair[0][1], pair[1][1]), reverse=True)
@@ -99,7 +106,11 @@ def match_tail(
         path = get_candidate_route(reader, line1, line2, current.lfrcnp, last_lrp, maxlen)
         if not path:
             debug("No path for candidate found")
+            if observer is not None:
+                observer.on_route_fail(current, next_lrp, line1, line2)
             continue
+        if observer is not None:
+            observer.on_route_success(current, next_lrp, line1, line2, path)
         deviation = abs(current.dnp - path_length(path)) / current.dnp
         debug(f"DNP should be {current.dnp} m, is {path_length(path)} m. ({deviation} rel. dev)")
         # If path does not match DNP, continue with the next candidate pair
@@ -112,5 +123,5 @@ def match_tail(
         next_candidates = []
         for line in path[-1].end_node.outgoing_lines():
             next_candidates.append((line, score_lrp_candidate(next_lrp, line, radius, last_lrp)))
-        return path + match_tail(next_lrp, next_candidates, tail[1:], reader, radius)
+        return path + match_tail(next_lrp, next_candidates, tail[1:], reader, radius, observer)
     raise LRDecodeError()

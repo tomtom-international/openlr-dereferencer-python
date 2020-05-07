@@ -9,6 +9,7 @@ from openlr_dereferencer.decoding import decode, LineLocation, PointAlongLine, L
 from openlr_dereferencer.decoding.candidates import generate_candidates
 from openlr_dereferencer.decoding.scoring import score_geolocation, score_frc, score_fow, \
     score_bearing, score_angle_difference
+from openlr_dereferencer.observer import SimpleObserver
 from openlr_dereferencer.example_sqlite_map import ExampleMapReader
 from openlr_dereferencer.maps.wgs84 import distance, bearing
 
@@ -64,6 +65,7 @@ def get_test_linelocation_1():
                                   FOW.SINGLE_CARRIAGEWAY, 0.125, None, None)
     return LineLocationRef([lrp1, lrp2, lrp3], 0.0, 0.0)
 
+
 def get_test_linelocation_2():
     "Return a undecodable line location with 2 LRPs"
     # References node 0 / line 1 / lines 1, 3
@@ -75,17 +77,20 @@ def get_test_linelocation_2():
                                   FOW.SINGLE_CARRIAGEWAY, 270/11.25, None, None)
     return LineLocationRef([lrp1, lrp2], 0.0, 0.0)
 
+
 def get_test_pointalongline() -> PointAlongLineLocation:
     "Get a test Point Along Line location reference"
     path_ref = get_test_linelocation_1().points[-2:]
     return PointAlongLineLocation(path_ref, 0.5, Orientation.WITH_LINE_DIRECTION, \
                                   SideOfRoad.RIGHT)
-    
+
+
 def get_test_invalid_pointalongline() -> PointAlongLineLocation:
     "Get a test Point Along Line location reference"
     path_ref = get_test_linelocation_1().points[-2:]
     return PointAlongLineLocation(path_ref, 1.5, Orientation.WITH_LINE_DIRECTION, \
                                   SideOfRoad.RIGHT)
+
 
 def get_test_poi() -> PoiWithAccessPointLocation:
     "Get a test POI with access point location reference"
@@ -95,6 +100,7 @@ def get_test_poi() -> PoiWithAccessPointLocation:
         SideOfRoad.RIGHT)
 
 T = TypeVar("T")
+
 
 class DecodingTests(unittest.TestCase):
     "Unittests for the decoding logic"
@@ -268,6 +274,30 @@ class DecodingTests(unittest.TestCase):
         reference = reference._replace(poffs=1.5)
         with self.assertRaises(LRDecodeError):
             decode(reference, self.reader)
+
+    def test_observer_decode_3_lrps(self):
+        "Add a simple observer for decoding a line location of 3 lrps "
+        observer = SimpleObserver()
+        reference = get_test_linelocation_1()
+        location = decode(reference, self.reader, 15.0, observer)
+        self.assertTrue(observer.candidates)
+        self.assertListEqual([route.success for route in observer.attempted_routes], [True, True])
+
+    def test_observer_decode_pointalongline(self):
+        "Add a simple observer for decoding a valid point along line location"
+        reference = get_test_pointalongline()
+        observer = SimpleObserver()
+        pal: PointAlongLine = decode(reference, self.reader, observer=observer)
+        self.assertTrue(observer.candidates)
+        self.assertListEqual([route.success for route in observer.attempted_routes], [True])
+
+    def test_observer_decode_poi(self):
+        "Add a simple observer for decoding a valid POI with access point location"
+        reference = get_test_poi()
+        observer = SimpleObserver()
+        poi: PoiWithAccessPoint = decode(reference, self.reader, observer=observer)
+        self.assertTrue(observer.candidates)
+        self.assertListEqual([route.success for route in observer.attempted_routes], [True])
 
     def tearDown(self):
         self.reader.connection.close()

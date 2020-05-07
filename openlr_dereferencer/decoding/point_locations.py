@@ -10,6 +10,7 @@ from openlr import (
 )
 from ..maps import MapReader, path_length
 from ..maps.abstract import Line
+from ..observer import DecoderObserver
 from ..maps.wgs84 import project_along_path
 from .line_decoding import dereference_path
 from . import LRDecodeError
@@ -44,10 +45,10 @@ def point_along_linelocation(path: List[Line], length: float) -> Tuple[Line, flo
 
 
 def decode_pointalongline(
-    reference: PointAlongLineLocation, reader: MapReader, radius: float
+    reference: PointAlongLineLocation, reader: MapReader, radius: float, observer: DecoderObserver
 ) -> PointAlongLine:
     "Decodes a point along line location reference"
-    path = dereference_path(reference.points, reader, radius)
+    path = dereference_path(reference.points, reader, radius, observer)
     absolute_offset = path_length(path) * reference.poffs
     line_object, line_offset = point_along_linelocation(path, absolute_offset)
     return PointAlongLine(line_object, line_offset, reference.sideOfRoad, reference.orientation)
@@ -67,10 +68,10 @@ class PoiWithAccessPoint(NamedTuple):
 
 
 def decode_poi_with_accesspoint(
-    reference: PoiWithAccessPointLocation, reader: MapReader, radius: float
+    reference: PoiWithAccessPointLocation, reader: MapReader, radius: float, observer: DecoderObserver
 ) -> PoiWithAccessPoint:
     "Decodes a point along line location reference into a Coordinates tuple"
-    path = dereference_path(reference.points, reader, radius)
+    path = dereference_path(reference.points, reader, radius, observer)
     absolute_offset = path_length(path) * reference.poffs
     line, line_offset = point_along_linelocation(path, absolute_offset)
     return PoiWithAccessPoint(
