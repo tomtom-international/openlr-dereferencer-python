@@ -1,6 +1,6 @@
 "Decoding logic for point (along line, ...) locations"
 
-from typing import NamedTuple, List, Tuple
+from typing import NamedTuple, List, Tuple, Optional
 from openlr import (
     Coordinates,
     PointAlongLineLocation,
@@ -45,7 +45,7 @@ def point_along_linelocation(path: List[Line], length: float) -> Tuple[Line, flo
 
 
 def decode_pointalongline(
-    reference: PointAlongLineLocation, reader: MapReader, radius: float, observer: DecoderObserver
+    reference: PointAlongLineLocation, reader: MapReader, radius: float, observer: Optional[DecoderObserver]
 ) -> PointAlongLine:
     "Decodes a point along line location reference"
     path = dereference_path(reference.points, reader, radius, observer)
@@ -68,8 +68,8 @@ class PoiWithAccessPoint(NamedTuple):
 
 
 def decode_poi_with_accesspoint(
-    reference: PoiWithAccessPointLocation, reader: MapReader, radius: float, observer: DecoderObserver
-) -> PoiWithAccessPoint:
+    reference: PoiWithAccessPointLocation, reader: MapReader, radius: float, observer: Optional[DecoderObserver]
+    ) -> PoiWithAccessPoint:
     "Decodes a point along line location reference into a Coordinates tuple"
     path = dereference_path(reference.points, reader, radius, observer)
     absolute_offset = path_length(path) * reference.poffs

@@ -1,7 +1,7 @@
 """The module doing the actual decoding work.
 This includes finding candidates, rating them and choosing the best path"""
 
-from typing import TypeVar
+from typing import TypeVar, Optional
 from openlr import (
     LineLocation as LineLocationRef,
     PointAlongLineLocation,
@@ -9,6 +9,7 @@ from openlr import (
     GeoCoordinateLocation,
     PoiWithAccessPointLocation,
 )
+from ..observer import DecoderObserver
 from ..maps import MapReader, Line
 from .tools import LRDecodeError
 from .line_decoding import decode_line
@@ -25,7 +26,8 @@ SEARCH_RADIUS = 100.0
 LR = TypeVar("LocationReference", LineLocationRef, PointAlongLineLocation, GeoCoordinateLocation)
 MAP_OBJECTS = TypeVar("MapObjects", LineLocation, Coordinates, PointAlongLine)
 
-def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS, observer = None) -> MAP_OBJECTS:
+def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS, observer: Optional[DecoderObserver] = None
+    ) -> MAP_OBJECTS:
     """Translates an openLocationReference into a real location on your map.
 
     Args:

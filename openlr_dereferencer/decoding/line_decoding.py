@@ -1,6 +1,6 @@
 "Contains the decoding logic for line location"
 
-from typing import List
+from typing import List, Optional
 from openlr import LineLocation as LineLocationRef, LocationReferencePoint
 from ..maps import MapReader, Line
 from .candidates import generate_candidates, match_tail
@@ -9,8 +9,8 @@ from ..observer import DecoderObserver
 
 
 def dereference_path(
-    lrps: List[LocationReferencePoint], reader: MapReader, radius: float, observer: DecoderObserver
-) -> List[Line]:
+    lrps: List[LocationReferencePoint], reader: MapReader, radius: float, observer: Optional[DecoderObserver]
+    ) -> List[Line]:
     "Decode the location reference path, without considering any offsets"
     first_lrp = lrps[0]
     first_lines = list(generate_candidates(first_lrp, reader, radius, False))
@@ -19,7 +19,8 @@ def dereference_path(
     return match_tail(first_lrp, first_lines, lrps[1:], reader, radius, observer)
 
 
-def decode_line(reference: LineLocationRef, reader: MapReader, radius: float, observer: DecoderObserver) -> LineLocation:
+def decode_line(reference: LineLocationRef, reader: MapReader, radius: float, observer: Optional[DecoderObserver]
+    ) -> LineLocation:
     """Decodes an openLR line location reference
 
     Candidates are searched in a radius of `radius` meters around an LRP."""

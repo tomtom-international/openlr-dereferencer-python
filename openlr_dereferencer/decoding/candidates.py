@@ -80,7 +80,7 @@ def match_tail(
     tail: List[LocationReferencePoint],
     reader: MapReader,
     radius: float,
-    observer: DecoderObserver
+    observer: Optional[DecoderObserver]
 ) -> List[Line]:
     """Searches for the rest of the line location.
 
