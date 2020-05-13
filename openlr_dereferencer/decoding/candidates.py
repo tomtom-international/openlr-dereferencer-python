@@ -149,7 +149,7 @@ def match_tail(
             debug("Shortest path deviation from DNP is too large, trying next candidate")
             continue
         if last_lrp:
-            return route
+            return [route]
         # If not last LRP, match also the rest of tail
         next_candidates = [
             Candidate(c2.line, c2.relative_offset,

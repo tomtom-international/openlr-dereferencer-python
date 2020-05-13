@@ -10,6 +10,7 @@ from openlr_dereferencer.decoding import decode, LineLocation, PointAlongLine, L
 from openlr_dereferencer.decoding.candidates import generate_candidates
 from openlr_dereferencer.decoding.scoring import score_geolocation, score_frc, score_fow, \
     score_bearing, score_angle_difference
+from openlr_dereferencer.decoding.tools import PointOnLine
 from openlr_dereferencer.example_sqlite_map import ExampleMapReader
 from openlr_dereferencer.maps.wgs84 import distance, bearing
 
@@ -127,7 +128,8 @@ class DecodingTests(unittest.TestCase):
         lrp = LocationReferencePoint(0.0, 0.0, None, None, None, None, None)
         node1 = DummyNode(Coordinates(0.0, 0.0))
         node2 = DummyNode(Coordinates(0.0, 90.0))
-        score = score_geolocation(lrp, DummyLine(None, node1, node2), 1.0, False)
+        pal = PointOnLine(DummyLine(None, node1, node2), 0.0)
+        score = score_geolocation(lrp, pal, 1.0, False)
         self.assertEqual(score, 1.0)
 
     def test_geoscore_0(self):
@@ -135,7 +137,8 @@ class DecodingTests(unittest.TestCase):
         lrp = LocationReferencePoint(0.0, 0.0, None, None, None, None, None)
         node1 = DummyNode(Coordinates(0.0, 0.0))
         node2 = DummyNode(Coordinates(0.0, 90.0))
-        score = score_geolocation(lrp, DummyLine(None, node1, node2), 1.0, True)
+        pal = PointOnLine(DummyLine(None, node1, node2), 1.0)
+        score = score_geolocation(lrp, pal, 1.0, True)
         self.assertEqual(score, 0.0)
 
     def test_frcscore_0(self):
@@ -236,9 +239,9 @@ class DecodingTests(unittest.TestCase):
         reference = get_test_linelocation_1()
         candidates = list(generate_candidates(reference.points[0], self.reader, 500.0, False))
         # Sort by score
-        candidates.sort(key=lambda candidate: candidate[1], reverse=True)
+        candidates.sort(key=lambda candidate: candidate.score, reverse=True)
         # Get only the line ids
-        candidates = [line.line_id for (line, score) in candidates]
+        candidates = [candidate.line.line_id for candidate in candidates]
         # Now assert the best
         self.assertEqual(candidates[0], 1)
 

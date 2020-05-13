@@ -1,8 +1,9 @@
 "Some tooling functions for path and offset handling"
 
-from typing import List, Tuple, NamedTuple
+from typing import List, Tuple, NamedTuple, Optional
 from logging import debug
-from shapely.geometry import LineString, Point
+from shapely.geometry import LineString, Point, GeometryCollection
+from shapely.ops import substring, nearest_points
 from openlr import Coordinates, LocationReferencePoint
 from ..maps import Line
 from ..maps.wgs84 import project_along_path
@@ -14,12 +15,23 @@ class PointOnLine(NamedTuple):
     "The line element on which the point resides"
     relative_offset: float
     """Specifies the relative offset of the point.
-    It's value is member of the interval [0.0, 1.0].
+    Its value is member of the interval [0.0, 1.0].
     A value of 0 references the starting point of the line."""
 
-    def coordinates(self) -> Coordinates:
+    def position(self) -> Coordinates:
         "Returns the actual geo position"
         return project_along_path(list(self.line.coordinates()), self.relative_offset)
+
+    def split(self) -> Tuple[Optional[LineString], Optional[LineString]]:
+        "Splits the Line element that this point is along and returns the halfs"
+        print(self.relative_offset)
+        if self.relative_offset == 0.0:
+            return (None, self.line.geometry)
+        elif self.relative_offset == 1.0:
+            return (self.line.geometry, None)
+        line1 = substring(self.line.geometry, 0.0, self.relative_offset, True)
+        line2 = substring(self.line.geometry, self.relative_offset, 1.0, True)
+        return (line1, line2)
 
 
 def add_offsets(path: List[Line], p_off: float, n_off: float) -> List[Coordinates]:
@@ -70,3 +82,7 @@ def coords(lrp: LocationReferencePoint) -> Coordinates:
 def project(line_string: LineString, coord: Coordinates) -> float:
     "The nearest point to `coord` on the line, as relative distance along it"
     return line_string.project(Point(coord.lon, coord.lat), normalized=True)
+
+def linestring_coords(line: LineString) -> List[Coordinates]:
+    "Returns the edges of the line geometry as Coordinate list"
+    return [Coordinates(*point) for point in line.coords]

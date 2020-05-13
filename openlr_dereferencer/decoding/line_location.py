@@ -1,22 +1,30 @@
 "This module contains the LineLocation class and a builder function for it"
 
-from typing import List
+from typing import List, Iterable
 from openlr import Coordinates, LineLocation as LineLocationRef
 from ..maps import Line
 from .tools import add_offsets, remove_unnecessary_lines
-from .candidates import Route
+from .candidates import Route, PointOnLine
 
 
-def get_lines(line_location_path: List[Route]) -> List[Line]:
+def get_lines(line_location_path: Iterable[Route]) -> List[Line]:
     "Convert a line location path to its sequence of line elements"
     result = []
     for part in line_location_path:
+        print("Route: ", part)
         if not part.start.line in result:
             result.append(part.start.line)
         result += part.path_inbetween
         if not part.end.line in result:
             result.append(part.end.line)
-    return result        
+    return result
+
+
+def combine_routes(line_location_path: Iterable[Route]) -> Route:
+    path = get_lines(line_location_path)
+    start = PointOnLine(path.pop(0), line_location_path[0].start.relative_offset)
+    end = PointOnLine(path.pop(), line_location_path[-1].end.relative_offset)
+    return Route(start, path, end)
 
 
 class LineLocation:
