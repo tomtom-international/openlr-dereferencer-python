@@ -45,15 +45,15 @@ TomTom provides an implementation for readability of the decoding process in the
 In the previous section, we described the map-matching process and broke it down into its fundamental steps. Now we show examples of how those steps can be implemented.
 
 ## Example line location decoding with explanations
-![Figure 1](Legend.svg)
+![Figure 1](_static/Legend.svg)
 
 Here is an example road network that shows line segments along with their FRC and the FOW, according the legend (previously shown).
 
-![Figure 2](1_Example_Map.svg)
+![Figure 2](_static/1_Example_Map.svg)
 
 Imagine that the encoder references the following line location path (the blue line):
 
-![Figure 3](2_LRP_Attributes.svg)
+![Figure 3](_static/2_LRP_Attributes.svg)
 
 The red dots in the previous figure represent LRPs. The arrows in the figure represent attributes of the next line starting from the LRP. The direction is computed by a certain distance into the path. The last arrow points in the direction of the origin (rather than the destination).
 
@@ -61,7 +61,7 @@ The red dots in the previous figure represent LRPs. The arrows in the figure rep
 
 We now list lines around each LRP. 
 
-![Figure 4](3_Candidate_Lines.svg)
+![Figure 4](_static/3_Candidate_Lines.svg)
 
 In the previous figure we found candidate lines for each of the LRPs.
 
@@ -83,12 +83,12 @@ The decoder should include some configuration that determines the weighting of e
 
 Let's assume that our configuration weights the FOW higher than the geo location, because we don't trust the map similarity. In this case, the best-scored candidate for the first LRP is not the proper one. This will be corrected by backtracking.
 
-![Figure 5](Example_map_sorted_candidates.svg)
+![Figure 5](_static/Example_map_sorted_candidates.svg)
 
 ### Routing between the candidates
 For each consecutive LRP the decoder searches for a route between the best candidate roads, like described above. In certain circumstances, the route may not be found or may not have the right length. In this case, we try to use the next best candidates.
 
-![Figure 6](Example_map_secondbest.svg)
+![Figure 6](_static/Example_map_secondbest.svg)
 
 If we have exhausted the entire list for that specific LRP, we must go back to find the next best candidate for the origin. This backtracking may or may not include the entire path we've determined to this point.
 

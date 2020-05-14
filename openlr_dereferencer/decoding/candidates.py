@@ -13,13 +13,23 @@ from ..maps import shortest_path, MapReader, Line, path_length
 from ..maps.a_star import LRPathNotFoundError
 from ..observer import DecoderObserver
 
-# Filters candidate paths with too high DNP deviation from expected value
-# The value here is relative to the expected distance to next point
+#: Tolerable relative DNP deviation of a path
+#:
+#: A path may deviate from the DNP by this relative value plus TOLERATED_DNP_DEV in order to be
+#: considered. The value here is relative to the expected distance to next point.
 MAX_DNP_DEVIATION = 0.3
 
-# A filter for candidates with insufficient score
+#: Additional buffer to the range of allowed path distance
+#:
+#: In order to be considered, a path must not deviate from the DNP value by more than
+#: MAX_DNP_DEVIATION (relative value) plus TOLERATED_DNP_DEV. This value is in meters.
+TOLERATED_DNP_DEV = 30
+
+#: A filter for candidates with insufficient score
 MIN_SCORE = 0.3
 
+# The lowest tolerated FRC along a route given the LFRC value in the location reference point
+TOLERATED_LFRC = {frc:frc for frc in FRC}
 
 def generate_candidates(
     lrp: LocationReferencePoint, reader: MapReader, radius: float, is_last_lrp: bool
@@ -66,7 +76,7 @@ def get_candidate_route(
     linefilter = lambda line: line.frc <= lfrc
     debug(f"Finding path between nodes {line1.end_node.node_id, target_node.node_id}")
     try:
-        path = shortest_path(map_reader, line1.end_node, target_node, linefilter, maxlen=maxlen)
+        path = shortest_path(line1.end_node, target_node, linefilter, maxlen=maxlen)
         debug(f"Returning {[line1] + path}")
         return [line1] + path
     except LRPathNotFoundError:
@@ -91,8 +101,11 @@ def match_tail(
 
     If not, a `LRDecodeError` exception is raised."""
     last_lrp = len(tail) == 1
-    # The maximum accepted length. This helps A* to save computational time
-    maxlen = (1 + MAX_DNP_DEVIATION) * current.dnp
+    # The accepted distance to next point. This helps to save computations and filter bad paths
+    minlen = (1 - MAX_DNP_DEVIATION) * current.dnp - TOLERATED_DNP_DEV
+    maxlen = (1 + MAX_DNP_DEVIATION) * current.dnp + TOLERATED_DNP_DEV
+    lfrc = TOLERATED_LFRC[current.lfrcnp]
+
     # Generate all pairs of candidates for the first two lrps
     next_lrp = tail[0]
     next_candidates = list(generate_candidates(next_lrp, reader, radius, last_lrp))
@@ -103,7 +116,7 @@ def match_tail(
     pairs.sort(key=lambda pair: (pair[0][1], pair[1][1]), reverse=True)
     # For every pair of candidate lines, search for a matching path
     for ((line1, _), (line2, _)) in pairs:
-        path = get_candidate_route(reader, line1, line2, current.lfrcnp, last_lrp, maxlen)
+        path = get_candidate_route(reader, line1, line2, lfrc, last_lrp, maxlen)
         if not path:
             debug("No path for candidate found")
             if observer is not None:
@@ -111,11 +124,11 @@ def match_tail(
             continue
         if observer is not None:
             observer.on_route_success(current, next_lrp, line1, line2, path)
-        deviation = abs(current.dnp - path_length(path)) / current.dnp
-        debug(f"DNP should be {current.dnp} m, is {path_length(path)} m. ({deviation} rel. dev)")
+        length = path_length(path)
+        debug(f"DNP should be {current.dnp} m, is {length} m.")
         # If path does not match DNP, continue with the next candidate pair
-        if deviation > MAX_DNP_DEVIATION:
-            debug("Shortest path deviation is too large, trying next candidate")
+        if length < minlen or length > maxlen:
+            debug("Shortest path deviation from DNP is too large, trying next candidate")
             continue
         if last_lrp:
             return path
@@ -124,4 +137,4 @@ def match_tail(
         for line in path[-1].end_node.outgoing_lines():
             next_candidates.append((line, score_lrp_candidate(next_lrp, line, radius, last_lrp)))
         return path + match_tail(next_lrp, next_candidates, tail[1:], reader, radius, observer)
-    raise LRDecodeError()
+    raise LRDecodeError("Decoding was unsuccessful: No candidates left or available.")

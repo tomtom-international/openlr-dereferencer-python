@@ -2,14 +2,27 @@
 Provides the shortest_path(map, start, end) -> List[Line] function, which
 finds a shortest path between two nodes.
 """
-from typing import AbstractSet, List, Dict, Optional, Callable
-from queue import PriorityQueue
-from ..abstract import MapReader, Line, Node
-from .tools import heuristic, reconstruct_path, find_minimum, LRPathNotFoundError, tautology
+from typing import List, Optional, Callable, NamedTuple
+from heapq import heapify, heappush, heappop
+from ..abstract import Node, Line
+from .tools import heuristic, LRPathNotFoundError, tautology
+
+
+class Score(NamedTuple):
+    """The score of a single item in the search priority queue"""
+    f: float
+    g: float
+
+
+class PQItem(NamedTuple):
+    """A single item in the search priority queue"""
+    score: Score
+    node: Node
+    line: Line
+    previous: "PQItem"
 
 
 def shortest_path(
-    reader: MapReader,
     start: Node,
     end: Node,
     linefilter: Callable[[Line], bool] = tautology,
@@ -31,43 +44,59 @@ def shortest_path(
     This is used for the 'lowest frc next point' attribute of openLR line references.
     """
 
-    def g_score(node: Node) -> float:
-        "Returns the cost from the start node to this node, if available, else infinity"
-        return g_dict.get(node.node_id, float("inf"))
+    # The initial queue item
+    initial = PQItem(Score(heuristic(start, end), 0), start, None, None)
 
-    open_set = {start.node_id}
+    # The queue
+    open_set = [initial]
+    heapify(open_set)
+
+    # The seen items
     closed_set = set()
-    came_from = {}
-    g_dict = {start.node_id: 0}
-    f_dict = {start.node_id: heuristic(start, end)}
 
+    # Keep trying while the queue is not empty
     while open_set:
-        # Getting the below minimum would be much cheaper in a heap.
-        # Unfortunately, there is no updatable heap in the standard library.
-        current_id = find_minimum(f_dict, open_set)
-        current = reader.get_node(current_id)
-        if current_id == end.node_id:
-            return reconstruct_path(reader, came_from, current)
+        # Pop the next item from the queue
+        current = heappop(open_set)
+        current_node = current.node
 
-        open_set.remove(current_id)
-        closed_set.add(current_id)
+        # Check if the goal node has been reached
+        if current_node.node_id == end.node_id:
+            # Build the result path
+            lines = []
+            c = current
 
-        for line in current.outgoing_lines():
+            while c.previous:
+                lines.insert(0, c.line)
+                c = c.previous
+
+            return lines
+
+        # Check if the item has been seen already
+        if current_node.node_id in closed_set:
+            continue
+
+        # Add neighbors to the queue
+        for line in current_node.outgoing_lines():
             if not linefilter(line):
                 continue
-            neighbor = line.end_node
-            neighbor_id = neighbor.node_id
-            if neighbor_id in closed_set:
+
+            neighbor_node = line.end_node
+
+            if neighbor_node.node_id in closed_set:
                 continue
 
-            tentative_score = g_score(current) + line.length
-            if tentative_score > maxlen:
+            neighbor_g_score = current.score.g + line.length
+            neighbor_f_score = neighbor_g_score + heuristic(neighbor_node, end)
+
+            if neighbor_f_score > maxlen:
                 continue
-            elif tentative_score < g_score(neighbor) + heuristic(neighbor, end):
-                # The path to neighbor is better than any known. Save it.
-                came_from[neighbor_id] = line.line_id
-                g_dict[neighbor_id] = tentative_score
-                f_dict[neighbor_id] = tentative_score + heuristic(neighbor, end)
-                open_set.add(neighbor_id)
+
+            neighbor = PQItem(Score(neighbor_f_score, neighbor_g_score), neighbor_node, line, current)
+
+            heappush(open_set, neighbor)
+
+        # Add the current item to the closed set
+        closed_set.add(current_node.node_id)
 
     raise LRPathNotFoundError("No path found")

@@ -95,5 +95,33 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 ```
 
+## Development environment
+
+Firstly create a Python virtual environment for the project.
+```sh
+python3 -m venv .venv
+```
+
+Activate the virtual environment.
+```sh
+source .venv/bin/activate
+```
+
+Install the dependency packages into the virtual environment.
+```sh
+pip install openlr geographiclib shapely
+
+```
+
+You may need to install the spatialite module for sqlite if this is not already present.
+```sh
+sudo apt install libsqlite3-mod-spatialite
+```
+
+To run the decoding tests.
+```sh
+python3 -m unittest tests.test_decode
+```
+
 ## More Documentation
 You are welcomed to read the generated API documentation at https://openlr-dereferencer-python.readthedocs.io.

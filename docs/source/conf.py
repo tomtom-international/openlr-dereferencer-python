@@ -30,7 +30,8 @@ author = 'Jan Ole Zabel'
 extensions = [
         "sphinx.ext.autodoc",
         "sphinx.ext.viewcode",
-        "sphinx_rtd_theme"
+        "sphinx_rtd_theme",
+        "recommonmark"
 ]
 
 master_doc = 'index'

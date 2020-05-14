@@ -10,7 +10,7 @@ from openlr import (
     PoiWithAccessPointLocation,
 )
 from ..observer import DecoderObserver
-from ..maps import MapReader, Line
+from ..maps import MapReader
 from .tools import LRDecodeError
 from .line_decoding import decode_line
 from .line_location import LineLocation
@@ -21,6 +21,7 @@ from .point_locations import (
     PoiWithAccessPoint,
 )
 
+#: Configures the default radius to search for map objects around an LRP. This value is in meters.
 SEARCH_RADIUS = 100.0
 
 LR = TypeVar("LocationReference", LineLocationRef, PointAlongLineLocation, GeoCoordinateLocation)
@@ -31,10 +32,15 @@ def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS, obse
     """Translates an openLocationReference into a real location on your map.
 
     Args:
-        reference: The location reference you want to decode
-        reader: A reader class for the map on which you want to decode
-        radius: The search path for the location's components' candidates
-        observer: An observer that collects information when events of interest happen at the decoder
+
+        reference:
+            The location reference you want to decode
+        reader:
+            A reader class for the map on which you want to decode
+        radius:
+            The search path for the location's components' candidates
+        observer:
+            An observer that collects information when events of interest happen at the decoder
 
     Returns:
         This function will return one or more map object, optionally wrapped into some class.
