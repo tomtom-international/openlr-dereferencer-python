@@ -2,12 +2,14 @@
 import unittest
 from math import degrees
 from itertools import zip_longest
-from typing import List, Iterable, TypeVar
+from typing import List, Iterable, TypeVar, NamedTuple
+
+from shapely.geometry import LineString
 
 from openlr import Coordinates, FRC, FOW, LineLocation as LineLocationRef, LocationReferencePoint\
     , PointAlongLineLocation, Orientation, SideOfRoad, PoiWithAccessPointLocation
 from openlr_dereferencer.decoding import decode, LineLocation, PointAlongLine, LRDecodeError, PoiWithAccessPoint
-from openlr_dereferencer.decoding.candidates import generate_candidates
+from openlr_dereferencer.decoding.candidates import nominate_candidates
 from openlr_dereferencer.decoding.scoring import score_geolocation, score_frc, score_fow, \
     score_bearing, score_angle_difference
 from openlr_dereferencer.decoding.tools import PointOnLine
@@ -29,12 +31,11 @@ class DummyNode():
         "Return the saved coordinates"
         return self.coord
 
-class DummyLine():
+class DummyLine(NamedTuple):
     "Fake Line class for unit testing"
-    def __init__(self, l_id, start: DummyNode, end: DummyNode):
-        self.line_id = l_id
-        self.start_node = start
-        self.end_node = end
+    line_id: int
+    start_node: DummyNode
+    end_node: DummyNode
 
     def __str__(self) -> str:
         return (
@@ -50,6 +51,10 @@ class DummyLine():
     def length(self) -> float:
         "Return distance between star and end node"
         return distance(self.start_node.coord, self.end_node.coord)
+
+    @property
+    def geometry(self) -> LineString:
+        return LineString([(c.lon, c.lat) for c in self.coordinates()])
 
 def get_test_linelocation_1():
     "Return a prepared line location with 3 LRPs"
@@ -174,7 +179,8 @@ class DecodingTests(unittest.TestCase):
         wanted_bearing = degrees(bearing(node1.coordinates, node2.coordinates))
         wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
                                         FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
-        score = score_bearing(wanted, DummyLine(1, node1, node3), False)
+        line = DummyLine(1, node1, node3)
+        score = score_bearing(wanted, PointOnLine(line, 0.0), False)
         self.assertEqual(score, 0.5)
 
     def test_bearingscore_2(self):
@@ -185,7 +191,8 @@ class DecodingTests(unittest.TestCase):
         wanted_bearing = degrees(bearing(node1.coordinates, node2.coordinates))
         wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
                                         FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
-        score = score_bearing(wanted, DummyLine(1, node1, node3), False)
+        line = DummyLine(1, node1, node3)
+        score = score_bearing(wanted, PointOnLine(line, 0.0), False)
         self.assertEqual(score, 0.5)
 
     def test_bearingscore_3(self):
@@ -196,8 +203,9 @@ class DecodingTests(unittest.TestCase):
         wanted_bearing = degrees(bearing(node1.coordinates, node2.coordinates))
         wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
                                         FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
-        score = score_bearing(wanted, DummyLine(1, node1, node3), True)
-        self.assertEqual(score, 0.5)
+        line = DummyLine(1, node1, node3)
+        score = score_bearing(wanted, PointOnLine(line, 1.0), True)
+        self.assertAlmostEqual(score, 0.5)
 
     def test_bearingscore_4(self):
         "Test bearing difference of -90°"
@@ -207,8 +215,9 @@ class DecodingTests(unittest.TestCase):
         wanted_bearing = degrees(bearing(node1.coordinates, node2.coordinates))
         wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
                                         FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
-        score = score_bearing(wanted, DummyLine(1, node1, node3), True)
-        self.assertEqual(score, 0.5)
+        line = DummyLine(1, node1, node3)
+        score = score_bearing(wanted, PointOnLine(line, 1.0), True)
+        self.assertAlmostEqual(score, 0.5)
 
     def test_bearingscore_5(self):
         "Test perfect/worst possible bearing"
@@ -217,9 +226,10 @@ class DecodingTests(unittest.TestCase):
         wanted_bearing = degrees(bearing(node1.coordinates, node2.coordinates))
         wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
                                         FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
-        score = score_bearing(wanted, DummyLine(1, node1, node2), False)
+        line = DummyLine(1, node1, node2)
+        score = score_bearing(wanted, PointOnLine(line, 0.0), False)
         self.assertAlmostEqual(score, 1.0)
-        score = score_bearing(wanted, DummyLine(1, node1, node2), True)
+        score = score_bearing(wanted, PointOnLine(line, 1.0), True)
         self.assertAlmostEqual(score, 0.0)
 
     def test_anglescore_1(self):
@@ -237,7 +247,7 @@ class DecodingTests(unittest.TestCase):
     def test_generate_candidates_1(self):
         "Generate candidates and pick the best"
         reference = get_test_linelocation_1()
-        candidates = list(generate_candidates(reference.points[0], self.reader, 500.0, False))
+        candidates = list(nominate_candidates(reference.points[0], self.reader, 500.0, False))
         # Sort by score
         candidates.sort(key=lambda candidate: candidate.score, reverse=True)
         # Get only the line ids

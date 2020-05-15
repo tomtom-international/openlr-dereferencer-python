@@ -48,5 +48,4 @@ def project_along_path(path: Sequence[Coordinates], distance_meters: float) -> C
             angle = bearing(point1, point2)
             return project(point1, distance_meters, angle)
         distance_meters -= segment_length
-    print(f"will return {segments[-1][1]}")
     return segments[-1][1]

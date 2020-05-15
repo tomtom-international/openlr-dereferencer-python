@@ -11,7 +11,6 @@ def get_lines(line_location_path: Iterable[Route]) -> List[Line]:
     "Convert a line location path to its sequence of line elements"
     result = []
     for part in line_location_path:
-        print("Route: ", part)
         if not part.start.line in result:
             result.append(part.start.line)
         result += part.path_inbetween

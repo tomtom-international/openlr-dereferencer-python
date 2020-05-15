@@ -78,8 +78,8 @@ def decode_poi_with_accesspoint(
     reference: PoiWithAccessPointLocation, reader: MapReader, radius: float
 ) -> PoiWithAccessPoint:
     "Decodes a point along line location reference into a Coordinates tuple"
-    path = dereference_path(reference.points, reader, radius)
-    absolute_offset = path_length(get_lines(path)) * reference.poffs
+    path = combine_routes(dereference_path(reference.points, reader, radius))
+    absolute_offset = path_length(get_lines([path])) * reference.poffs
     line, line_offset = point_along_linelocation(path, absolute_offset)
     return PoiWithAccessPoint(
         line,

@@ -24,7 +24,6 @@ class PointOnLine(NamedTuple):
 
     def split(self) -> Tuple[Optional[LineString], Optional[LineString]]:
         "Splits the Line element that this point is along and returns the halfs"
-        print(self.relative_offset)
         if self.relative_offset == 0.0:
             return (None, self.line.geometry)
         elif self.relative_offset == 1.0:

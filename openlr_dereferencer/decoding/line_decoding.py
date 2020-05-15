@@ -3,7 +3,7 @@
 from typing import List
 from openlr import LineLocation as LineLocationRef, LocationReferencePoint
 from ..maps import MapReader, Line
-from .candidates import generate_candidates, match_tail
+from .candidates import nominate_candidates, match_tail
 from .line_location import build_line_location, LineLocation, Route
 
 
@@ -12,9 +12,8 @@ def dereference_path(
 ) -> List[Route]:
     "Decode the location reference path, without considering any offsets"
     first_lrp = lrps[0]
-    first_candidates = list(generate_candidates(first_lrp, reader, radius, False))
+    first_candidates = list(nominate_candidates(first_lrp, reader, radius, False))
     linelocationpath = match_tail(first_lrp, first_candidates, lrps[1:], reader, radius)
-    print("line location path: ", linelocationpath)
     return linelocationpath
 
 
