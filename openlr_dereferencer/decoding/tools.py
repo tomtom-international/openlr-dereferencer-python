@@ -20,7 +20,8 @@ class PointOnLine(NamedTuple):
 
     def position(self) -> Coordinates:
         "Returns the actual geo position"
-        return project_along_path(list(self.line.coordinates()), self.relative_offset)
+        point = self.line.geometry.interpolate(self.relative_offset, normalized=True)
+        return Coordinates(point.x, point.y)
 
     def split(self) -> Tuple[Optional[LineString], Optional[LineString]]:
         "Splits the Line element that this point is along and returns the halfs"

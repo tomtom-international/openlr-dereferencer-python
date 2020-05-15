@@ -52,6 +52,13 @@ def score_geolocation(
     """Scores the geolocation of a candidate.
 
     A distance of `radius` or more will result in a 0.0 score."""
+    debug(f"Candidate coords are {actual.position()}")
+    if actual.line.line_id == 4:
+        print(f"Now comes 4! With {actual} and last_lrp = {is_last_lrp}")
+        print(coords(wanted), actual.position())
+    else:
+        print(f"Totally not 4! {actual.line.line_id}")
+
     dist = distance(coords(wanted), actual.position())
     if dist < radius:
         return 1.0 - dist / radius
@@ -75,9 +82,13 @@ def score_bearing(wanted: LocationReferencePoint, actual: PointOnLine, is_last_l
     A difference of 0° will result in a 1.0 score, while 180° will cause a score of 0.0."""
     line1, line2 = actual.split()
     if is_last_lrp:
+        if line1 is None:
+            return 0.0
         coordinates = linestring_coords(line1)
         coordinates.reverse()
     else:
+        if line2 is None:
+            return 0.0
         coordinates = linestring_coords(line2)
     absolute_offset = actual.line.length * actual.relative_offset
     bearing_point = project_along_path(coordinates, absolute_offset + BEAR_DIST)
@@ -97,7 +108,7 @@ def score_lrp_candidate(
         + GEO_WEIGHT * score_geolocation(wanted, candidate, radius, is_last_lrp)
         + BEAR_WEIGHT * score_bearing(wanted, candidate, is_last_lrp)
     )
-    debug(f"scoring line {candidate}")
+    debug(f"scoring {candidate}")
     debug(f"geo score: {score_geolocation(wanted, candidate, radius, is_last_lrp)}")
     debug(f"fow score: {score_fow(wanted.fow, candidate.line.fow)}")
     debug(f"frc score: {score_frc(wanted.frc, candidate.line.frc)}")

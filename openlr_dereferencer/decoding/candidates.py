@@ -41,6 +41,7 @@ def make_candidates(lrp: LocationReferencePoint, line: Line, radius: float, is_l
     "Return zero or more LRP candidates based on the given line"
     dist = line.length
     reloff = project(line.geometry, coords(lrp))
+    print(f"projecting {coords(lrp)} against line {line.line_id}")
     # Snap to the relevant end of the line
     if not is_last_lrp and reloff * dist <= CANDIDATE_THRESHOLD:
         reloff = 0.0
@@ -71,11 +72,28 @@ class Route(NamedTuple):
     end: PointOnLine
     "The point on which this location is ending"
 
+    @property
+    def lines(self) -> List[Line]:
+        print("HALLO")
+        result = [self.start.line]
+        for line in self.path_inbetween:
+            if line.line_id != result[-1].line_id:
+                result.append(line)
+        if self.end.line.line_id == result[-1].line_id:
+            result.pop()
+        result.append(self.end.line)
+        return result
+
     def length(self) -> float:
         "Length of this line location part in meters"
-        return path_length(self.path_inbetween) \
-            + (1 - self.start.relative_offset) * self.start.line.length \
-            + self.end.relative_offset * self.end.line.length
+        lines = self.lines
+        print(f"Getting length, my lines are {lines}.")
+        result = path_length(lines)
+        if self.start.relative_offset > 0.0:
+            result -= lines[0].length * self.start.relative_offset
+        if self.end.relative_offset < 1.0:
+            result -= lines[-1].length * (1.0 - self.end.relative_offset)
+        return result
 
 
 def get_candidate_route(
@@ -103,6 +121,8 @@ def get_candidate_route(
         If there is no matching path found, None is returned.
     """
     debug(f"Try to find path between lines {c1.line.line_id, c2.line.line_id}")
+    if c1.line.line_id == c2.line.line_id:
+        return Route(c1, [], c2)
     debug(f"Finding path between nodes {c1.line.end_node.node_id, c2.line.start_node.node_id}")
     linefilter = lambda line: line.frc <= lfrc
     try:
@@ -136,6 +156,12 @@ def match_tail(
     # Generate all pairs of candidates for the first two lrps
     next_lrp = tail[0]
     next_candidates = list(nominate_candidates(next_lrp, reader, radius, last_lrp))
+    print("Current:")
+    for c in candidates:
+        print(c)
+    print("Next:")
+    for c in next_candidates:
+        print(c)
     pairs = list(product(candidates, next_candidates))
     # Sort by line score pair
     pairs.sort(key=lambda pair: (pair[0].score + pair[1].score), reverse=True)
@@ -147,22 +173,21 @@ def match_tail(
         route = get_candidate_route(reader, c1, c2, current.lfrcnp, last_lrp, maxlen)
         if not route:
             debug("No path for candidate found")
+            print("No path for candidate found")
             continue
         length = route.length()
         debug(f"DNP should be {current.dnp} m, is {length} m.")
+        print(f"DNP should be {current.dnp} m, is {length} m.")
         # If the path does not match DNP, continue with the next candidate pair
         if length < minlen or length > maxlen:
             debug("Shortest path deviation from DNP is too large, trying next candidate")
+            print("Shortest path deviation from DNP is too large, trying next candidate")
             continue
+        print(f"Looks like {c1} and {c2} were the right ones. The path was {route.lines}.")
         if last_lrp:
             return [route]
         # If not last LRP, match also the rest of tail
-        if c2.relative_offset > 0.0:
-            # If candidate is not at a node, there are no other possibilities than going further
-            next_candidates = [c2]
-        else:
-            next_candidates = []
-            for line in route.end.line.end_node.outgoing_lines():
-                next_candidates += list(make_candidates(current, line, radius, False))
-        return [route] + match_tail(next_lrp, next_candidates, tail[1:], reader, radius)
+        if len(tail) == 2:
+            c2.score = score_lrp_candidate(next_lrp, c2, radius, True)
+        return [route] + match_tail(next_lrp, [c2], tail[1:], reader, radius)
     raise LRDecodeError("Decoding was unsuccessful: No candidates left or available.")
