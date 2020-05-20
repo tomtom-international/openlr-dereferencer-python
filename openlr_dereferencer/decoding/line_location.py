@@ -3,8 +3,8 @@
 from typing import List, Iterable
 from openlr import Coordinates, LineLocation as LineLocationRef
 from ..maps import Line
-from .tools import add_offsets, remove_unnecessary_lines
-from .candidates import Route, PointOnLine
+from .tools import add_offsets, remove_offsets
+from .routes import Route, PointOnLine
 
 
 def get_lines(line_location_path: Iterable[Route]) -> List[Line]:
@@ -21,7 +21,10 @@ def get_lines(line_location_path: Iterable[Route]) -> List[Line]:
 def combine_routes(line_location_path: Iterable[Route]) -> Route:
     path = get_lines(line_location_path)
     start = PointOnLine(path.pop(0), line_location_path[0].start.relative_offset)
-    end = PointOnLine(path.pop(), line_location_path[-1].end.relative_offset)
+    if path:
+        end = PointOnLine(path.pop(), line_location_path[-1].end.relative_offset)
+    else:
+        end = PointOnLine(start.line, line_location_path[-1].end.relative_offset)
     return Route(start, path, end)
 
 
@@ -47,6 +50,7 @@ class LineLocation:
 
     def coordinates(self) -> List[Coordinates]:
         "Return the exact list of coordinates defining the line location path"
+
         return add_offsets(self.lines, self.p_off, self.n_off)
 
 
@@ -56,6 +60,9 @@ def build_line_location(path: List[Route], reference: LineLocationRef) -> LineLo
     The result will be a trimmed list of Line objects, with minimized offset values"""
     p_off = reference.poffs * path[0].length()
     n_off = reference.noffs * path[-1].length()
-    lines = get_lines(path)
-    adjusted_lines, p_off, n_off = remove_unnecessary_lines(lines, p_off, n_off)
-    return LineLocation(adjusted_lines, p_off, n_off)
+    route = remove_offsets(
+        combine_routes(path),
+        p_off + path[0].absolute_start_offset,
+        n_off + path[-1].absolute_end_offset
+    )
+    return LineLocation(route.lines, route.absolute_start_offset, 1.0 - route.absolute_end_offset)

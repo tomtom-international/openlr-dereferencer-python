@@ -53,12 +53,6 @@ def score_geolocation(
 
     A distance of `radius` or more will result in a 0.0 score."""
     debug(f"Candidate coords are {actual.position()}")
-    if actual.line.line_id == 4:
-        print(f"Now comes 4! With {actual} and last_lrp = {is_last_lrp}")
-        print(coords(wanted), actual.position())
-    else:
-        print(f"Totally not 4! {actual.line.line_id}")
-
     dist = distance(coords(wanted), actual.position())
     if dist < radius:
         return 1.0 - dist / radius

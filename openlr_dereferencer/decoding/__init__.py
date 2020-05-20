@@ -19,9 +19,6 @@ from .point_locations import (
     decode_poi_with_accesspoint,
     PoiWithAccessPoint,
 )
-import logging
-
-logging.basicConfig(level=logging.DEBUG)
 
 #: Configures the default radius to search for map objects around an LRP. This value is in meters.
 SEARCH_RADIUS = 100.0

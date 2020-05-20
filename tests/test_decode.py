@@ -76,9 +76,9 @@ def get_test_linelocation_2():
     # References node 0 / line 1 / lines 1, 3
     lrp1 = LocationReferencePoint(13.41, 52.525,
                                   FRC.FRC0, FOW.SINGLE_CARRIAGEWAY, 90/11.25,
-                                  FRC.FRC2, 7.0)
-    # References node 7 / line 8
-    lrp2 = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
+                                  FRC.FRC2, 0.0)
+    # References node 13 / ~ line 17
+    lrp2 = LocationReferencePoint(13.429, 52.523, FRC.FRC2,
                                   FOW.SINGLE_CARRIAGEWAY, 270/11.25, None, None)
     return LineLocationRef([lrp1, lrp2], 0.0, 0.0)
 
@@ -91,7 +91,7 @@ def get_test_pointalongline() -> PointAlongLineLocation:
 def get_test_invalid_pointalongline() -> PointAlongLineLocation:
     "Get a test Point Along Line location reference"
     path_ref = get_test_linelocation_1().points[-2:]
-    return PointAlongLineLocation(path_ref, 1.5, Orientation.WITH_LINE_DIRECTION, \
+    return PointAlongLineLocation(path_ref, 1500, Orientation.WITH_LINE_DIRECTION, \
                                   SideOfRoad.RIGHT)
 
 def get_test_poi() -> PoiWithAccessPointLocation:
@@ -262,9 +262,11 @@ class DecodingTests(unittest.TestCase):
         self.assertTrue(location, LineLocation)
         lines = [l.line_id for l in location.lines]
         self.assertListEqual([1, 3, 4], lines)
-        self.assertListEqual(location.coordinates(),
+        for (a, b) in zip(location.coordinates(),
                              [Coordinates(13.41, 52.525), Coordinates(13.414, 52.525),
-                              Coordinates(13.4145, 52.529), Coordinates(13.416, 52.525)])
+                              Coordinates(13.4145, 52.529), Coordinates(13.416, 52.525)]):
+            self.assertAlmostEqual(a.lon, b.lon, delta=0.00001)
+            self.assertAlmostEqual(a.lat, b.lat, delta=0.00001)
 
     def test_decode_nopath(self):
         "Decode a line location where no short-enough path exists"
@@ -277,10 +279,11 @@ class DecodingTests(unittest.TestCase):
         reference = get_test_linelocation_1()
         reference = reference._replace(poffs=0.25)
         reference = reference._replace(noffs=0.75)
-        path = decode(reference, self.reader, 15.0).coordinates()
-        self.assertTrue(path, LineLocation)
+        path = decode(reference, self.reader, 15.0)
+        self.assertTrue(isinstance(path, LineLocation))
+        path = path.coordinates()
         self.assertEqual(len(path), 4)
-        self.assertAlmostEqual(path[0].lon, 13.414, delta=0.001)
+        self.assertAlmostEqual(path[0].lon, 13.4126, delta=0.001)
         self.assertAlmostEqual(path[0].lat, 52.525, delta=0.001)
         self.assertAlmostEqual(path[1].lon, 13.414, delta=0.001)
         self.assertAlmostEqual(path[1].lat, 52.525, delta=0.001)
@@ -313,7 +316,7 @@ class DecodingTests(unittest.TestCase):
     def test_decode_invalid_poi(self):
         "Test if decoding an invalid POI with access point location raises an error"
         reference = get_test_poi()
-        reference = reference._replace(poffs=1.5)
+        reference = reference._replace(poffs=1500)
         with self.assertRaises(LRDecodeError):
             decode(reference, self.reader)
 
