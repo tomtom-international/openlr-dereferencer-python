@@ -139,6 +139,7 @@ def match_tail(
         if length < minlen or length > maxlen:
             debug("Shortest path deviation from DNP is too large, trying next candidate")
             continue
+        debug(f"Taking route {route}.")
         if last_lrp:
             return [route]
         # If not last LRP, match also the rest of tail

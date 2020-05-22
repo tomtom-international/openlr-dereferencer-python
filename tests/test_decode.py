@@ -8,13 +8,14 @@ from shapely.geometry import LineString
 
 from openlr import Coordinates, FRC, FOW, LineLocation as LineLocationRef, LocationReferencePoint\
     , PointAlongLineLocation, Orientation, SideOfRoad, PoiWithAccessPointLocation
-from openlr_dereferencer.decoding import decode, LineLocation, PointAlongLine, LRDecodeError, PoiWithAccessPoint
+from openlr_dereferencer.decoding import decode, PointAlongLine, LRDecodeError, PoiWithAccessPoint
 from openlr_dereferencer.decoding.candidates import nominate_candidates
 from openlr_dereferencer.decoding.scoring import score_geolocation, score_frc, score_fow, \
     score_bearing, score_angle_difference
 from openlr_dereferencer.decoding.tools import PointOnLine
 from openlr_dereferencer.example_sqlite_map import ExampleMapReader
 from openlr_dereferencer.maps.wgs84 import distance, bearing
+from openlr_dereferencer.decoding.routes import Route
 
 from .example_mapformat import setup_testdb, remove_db_file
 
@@ -60,7 +61,7 @@ def get_test_linelocation_1():
     "Return a prepared line location with 3 LRPs"
     # References node 0 / line 1 / lines 1, 3
     lrp1 = LocationReferencePoint(13.41, 52.525,
-                                  FRC.FRC0, FOW.SINGLE_CARRIAGEWAY, 90/11.25,
+                                  FRC.FRC0, FOW.SINGLE_CARRIAGEWAY, 90,
                                   FRC.FRC2, 837.0)
     # References node 3 / line 4
     lrp2 = LocationReferencePoint(13.4145, 52.529,
@@ -80,6 +81,19 @@ def get_test_linelocation_2():
     # References node 13 / ~ line 17
     lrp2 = LocationReferencePoint(13.429, 52.523, FRC.FRC2,
                                   FOW.SINGLE_CARRIAGEWAY, 270/11.25, None, None)
+    return LineLocationRef([lrp1, lrp2], 0.0, 0.0)
+
+def get_test_linelocation_3():
+    """Returns a line location that is within a line.
+    
+    This simulates that the start and end junction are missing on the target map."""
+    # References a point on line 1
+    lrp1 = LocationReferencePoint(13.411, 52.525,
+                                  FRC.FRC1, FOW.SINGLE_CARRIAGEWAY, 90,
+                                  FRC.FRC1, 135)
+    # References another point on line 1
+    lrp2 = LocationReferencePoint(13.413, 52.525, FRC.FRC1,
+                                  FOW.SINGLE_CARRIAGEWAY, 270, None, None)
     return LineLocationRef([lrp1, lrp2], 0.0, 0.0)
 
 def get_test_pointalongline() -> PointAlongLineLocation:
@@ -259,7 +273,7 @@ class DecodingTests(unittest.TestCase):
         "Decode a line location of 3 LRPs"
         reference = get_test_linelocation_1()
         location = decode(reference, self.reader, 15.0)
-        self.assertTrue(location, LineLocation)
+        self.assertTrue(isinstance(location, Route))
         lines = [l.line_id for l in location.lines]
         self.assertListEqual([1, 3, 4], lines)
         for (a, b) in zip(location.coordinates(),
@@ -280,7 +294,7 @@ class DecodingTests(unittest.TestCase):
         reference = reference._replace(poffs=0.25)
         reference = reference._replace(noffs=0.75)
         path = decode(reference, self.reader, 15.0)
-        self.assertTrue(isinstance(path, LineLocation))
+        self.assertTrue(isinstance(path, Route))
         path = path.coordinates()
         self.assertEqual(len(path), 4)
         self.assertAlmostEqual(path[0].lon, 13.4126, delta=0.001)
@@ -319,6 +333,15 @@ class DecodingTests(unittest.TestCase):
         reference = reference._replace(poffs=1500)
         with self.assertRaises(LRDecodeError):
             decode(reference, self.reader)
+
+    def test_decode_midline(self):
+        reference = get_test_linelocation_3()
+        route = decode(reference, self.reader)
+        coords = route.coordinates()
+        self.assertEqual(len(coords), 2)
+        for ((lon1, lat1), (lon2, lat2)) in zip(coords, [(13.411, 52.525), (13.413, 52.525)]):
+            self.assertAlmostEqual(lon1, lon2)
+            self.assertAlmostEqual(lat1, lat2)
 
     def tearDown(self):
         self.reader.connection.close()

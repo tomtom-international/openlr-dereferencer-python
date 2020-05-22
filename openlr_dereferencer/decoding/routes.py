@@ -1,6 +1,6 @@
 from typing import NamedTuple, Tuple, Optional, List
-from shapely.geometry import LineString
-from shapely.ops import substring
+from shapely.geometry import LineString, MultiLineString
+from shapely.ops import substring, linemerge
 from openlr import Coordinates
 from ..maps.abstract import Line, path_length
 
@@ -68,3 +68,18 @@ class Route(NamedTuple):
     def absolute_end_offset(self) -> float:
         "Offset on the ending line in meters"
         return self.end.line.length * (1.0 - self.end.relative_offset)
+
+    @property
+    def shape(self) -> LineString:
+        "Returns the shape of the route. The route is has to be continuous."
+        if self.start.line.line_id == self.end.line.line_id:
+            return substring(self.start.line.geometry, self.start.relative_offset, self.end.relative_offset, normalized=True)
+        return linemerge(
+            [self.start.split()[1]] +
+            [line.geometry for line in self.path_inbetween] +
+            [self.end.split()[0]]
+        )
+
+    def coordinates(self) -> List[Coordinates]:
+        "Returns all Coordinates of this line location"
+        return [Coordinates(lon, lat) for (lon, lat) in self.shape.coords]

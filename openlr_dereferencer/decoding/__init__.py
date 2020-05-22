@@ -12,7 +12,7 @@ from openlr import (
 from ..maps import MapReader, Line
 from .tools import LRDecodeError
 from .line_decoding import decode_line
-from .line_location import LineLocation
+from .routes import Route
 from .point_locations import (
     decode_pointalongline,
     PointAlongLine,
@@ -24,7 +24,7 @@ from .point_locations import (
 SEARCH_RADIUS = 100.0
 
 LR = TypeVar("LocationReference", LineLocationRef, PointAlongLineLocation, GeoCoordinateLocation)
-MAP_OBJECTS = TypeVar("MapObjects", LineLocation, Coordinates, PointAlongLine)
+MAP_OBJECTS = TypeVar("MapObjects", Route, Coordinates, PointAlongLine)
 
 
 def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS) -> MAP_OBJECTS:
@@ -47,7 +47,7 @@ def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS) -> M
         +===================================+==================================+
         | openlr.GeoCoordinateLocation      | Coordinates                      |
         +-----------------------------------+----------------------------------+
-        | openlr.LineLocation               | openlr_dereferencer.LineLocation |
+        | openlr.LineLocation               | openlr_dereferencer.Route        |
         +-----------------------------------+----------------------------------+
         | openlr.PointAlongLine             | PointAlongLineLocation           |
         +-----------------------------------+----------------------------------+

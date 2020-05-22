@@ -10,21 +10,6 @@ from ..maps.wgs84 import project_along_path
 from .routes import Route, PointOnLine
 
 
-def add_offsets(path: List[Line], p_off: float, n_off: float) -> List[Coordinates]:
-    "Add the absolute meter offsets to `path` and return the resulting coordinate list"
-    coordinates = [path[0].start_node.coordinates]
-    for line in path:
-        coordinates.append(line.end_node.coordinates)
-    # If offsets available, correct first / last coordinate
-    if p_off > 0.0:
-        # first LRP to second one
-        coordinates[0] = project_along_path(coordinates, p_off)
-    if n_off > 0.0:
-        # last LRP to second-last LRP
-        coordinates[-1] = project_along_path(coordinates[::-1], n_off)
-    return coordinates
-
-
 def remove_offsets(
     path: Route, p_off: float, n_off: float
 ) -> Route:
@@ -35,6 +20,7 @@ def remove_offsets(
     lines = path.lines
     rel_start_off = path.start.relative_offset
     rel_end_off = path.end.relative_offset
+    # Remove positive offset
     remaining_poff = p_off
     while remaining_poff > 0.0:
         len0 = lines[0].length * (1.0 - rel_start_off)
@@ -44,6 +30,7 @@ def remove_offsets(
             rel_start_off = 0.0
         else:
             break
+    # Remove negative offset
     remaining_noff = n_off
     while remaining_noff < 1.0:
         len0 = lines[-1].length * rel_end_off
@@ -61,7 +48,7 @@ def remove_offsets(
     return Route(
         PointOnLine(start_line, remaining_poff / start_line.length),
         lines,
-        PointOnLine(end_line, remaining_noff / end_line.length)
+        PointOnLine(end_line, 1.0 - remaining_noff / end_line.length)
     )
 
 
