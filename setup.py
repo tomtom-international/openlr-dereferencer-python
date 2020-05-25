@@ -23,7 +23,7 @@ setup(
         'openlr_dereferencer.maps.a_star',
         'openlr_dereferencer.decoding',
         'openlr_dereferencer'],
-    install_requires=["openlr", "geographiclib", "shapely"],
+    install_requires=["openlr==1.0.0", "geographiclib", "shapely"],
     test_suite="tests",
     python_requires=">=3.6",
     classifiers=[
