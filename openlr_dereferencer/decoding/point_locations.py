@@ -1,6 +1,6 @@
 "Decoding logic for point (along line, ...) locations"
 
-from typing import NamedTuple, List, Tuple
+from typing import NamedTuple, List, Tuple, Optional
 from openlr import (
     Coordinates,
     PointAlongLineLocation,
@@ -10,6 +10,7 @@ from openlr import (
 )
 from ..maps import MapReader, path_length
 from ..maps.abstract import Line
+from ..observer import DecoderObserver
 from ..maps.wgs84 import project_along_path
 from .line_decoding import dereference_path
 from .line_location import get_lines, Route, combine_routes
@@ -52,10 +53,10 @@ def point_along_linelocation(route: Route, length: float) -> Tuple[Line, float]:
 
 
 def decode_pointalongline(
-    reference: PointAlongLineLocation, reader: MapReader, radius: float
+    reference: PointAlongLineLocation, reader: MapReader, radius: float, observer: Optional[DecoderObserver]
 ) -> PointAlongLine:
     "Decodes a point along line location reference"
-    path = combine_routes(dereference_path(reference.points, reader, radius))
+    path = combine_routes(dereference_path(reference.points, reader, radius, observer))
     absolute_offset = path.length() * reference.poffs
     line_object, line_offset = point_along_linelocation(path, absolute_offset)
     return PointAlongLine(line_object, line_offset, reference.sideOfRoad, reference.orientation)
@@ -75,10 +76,10 @@ class PoiWithAccessPoint(NamedTuple):
 
 
 def decode_poi_with_accesspoint(
-    reference: PoiWithAccessPointLocation, reader: MapReader, radius: float
-) -> PoiWithAccessPoint:
+    reference: PoiWithAccessPointLocation, reader: MapReader, radius: float, observer: Optional[DecoderObserver]
+    ) -> PoiWithAccessPoint:
     "Decodes a point along line location reference into a Coordinates tuple"
-    path = combine_routes(dereference_path(reference.points, reader, radius))
+    path = combine_routes(dereference_path(reference.points, reader, radius, observer))
     absolute_offset = path_length(get_lines([path])) * reference.poffs
     line, line_offset = point_along_linelocation(path, absolute_offset)
     return PoiWithAccessPoint(

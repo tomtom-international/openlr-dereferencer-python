@@ -1,12 +1,14 @@
 "Contains functions for candidate searching and map matching"
 
 from itertools import product
-from typing import Sequence, Tuple, Optional, Iterable, List, NamedTuple
 from logging import debug
+from typing import Sequence, Tuple, Optional, Iterable, List, NamedTuple
 from openlr import FRC, LocationReferencePoint
 from ..maps import shortest_path, MapReader, Line, path_length
 from ..maps.a_star import LRPathNotFoundError
 from ..maps.wgs84 import project_along_path, Coordinates
+from ..observer import DecoderObserver
+from .candidate import Candidate
 from .scoring import score_lrp_candidate
 from .tools import LRDecodeError, coords, project
 from .routes import Route, PointOnLine
@@ -26,17 +28,14 @@ TOLERATED_DNP_DEV = 30
 #: A filter for candidates with insufficient score. Candidates below this score are not considered
 MIN_SCORE = 0.3
 
+TOLERATED_LFRC = {frc:frc for frc in FRC}
+
 #: Partial candidate line threshold, measured in meters
 #:
 #: To find candidates, the LRP coordinates are projected against any line in the local area.
 #: If the distance from the starting point is greater than this threshold, the partial line
 #: beginning at the projection point is considered to be the candidate.
 CANDIDATE_THRESHOLD = 20
-
-class Candidate(PointOnLine):
-    "An LRP candidate, represented by a point on the road network along with its score"
-    score: Optional[float] = None
-    "The candidate may be bundled together with it's precomputed score."
 
 def make_candidates(lrp: LocationReferencePoint, line: Line, radius: float, is_last_lrp: bool) -> Iterable[Candidate]:
     "Return zero or more LRP candidates based on the given line"
@@ -62,7 +61,6 @@ def nominate_candidates(
     debug(f"Finding candidates for LRP {lrp} at {coords(lrp)} in radius {radius}")
     for line in reader.find_lines_close_to(coords(lrp), radius):
         yield from make_candidates(lrp, line, radius, is_last_lrp)
-
 
 def get_candidate_route(
     map_reader: MapReader, c1: Candidate, c2: Candidate, lfrc: FRC, last_lrp: bool, maxlen: float
@@ -108,7 +106,9 @@ def match_tail(
     tail: List[LocationReferencePoint],
     reader: MapReader,
     radius: float,
+    observer: Optional[DecoderObserver]
 ) -> List[Route]:
+
     """Searches for the rest of the line location.
 
     Every element of `candidates` is routed to every candidate for `tail[0]` (best scores first).
@@ -121,29 +121,51 @@ def match_tail(
     # The accepted distance to next point. This helps to save computations and filter bad paths
     minlen = (1 - MAX_DNP_DEVIATION) * current.dnp - TOLERATED_DNP_DEV
     maxlen = (1 + MAX_DNP_DEVIATION) * current.dnp + TOLERATED_DNP_DEV
+    lfrc = TOLERATED_LFRC[current.lfrcnp]
+
     # Generate all pairs of candidates for the first two lrps
     next_lrp = tail[0]
+
     next_candidates = list(nominate_candidates(next_lrp, reader, radius, last_lrp))
+
+    if observer is not None:
+        observer.on_candidates_found(next_lrp, next_candidates)
+
     pairs = list(product(candidates, next_candidates))
+
     # Sort by line score pair
     pairs.sort(key=lambda pair: (pair[0].score + pair[1].score), reverse=True)
+
     # For every pair of candidates, search for a path matching our requirements
     for (c1, c2) in pairs:
-        route = get_candidate_route(reader, c1, c2, current.lfrcnp, last_lrp, maxlen)
+        route = get_candidate_route(reader, c1, c2, lfrc, last_lrp, maxlen)
+
         if not route:
             debug("No path for candidate found")
+            if observer is not None:
+                observer.on_route_fail(current, next_lrp, c1, c2)
             continue
+
         length = route.length()
+
+        if observer is not None:
+            observer.on_route_success(current, next_lrp, c1, c2, route)
+
         debug(f"DNP should be {current.dnp} m, is {length} m.")
         # If the path does not match DNP, continue with the next candidate pair
         if length < minlen or length > maxlen:
             debug("Shortest path deviation from DNP is too large, trying next candidate")
             continue
+
         debug(f"Taking route {route}.")
+
         if last_lrp:
             return [route]
+
         # If not last LRP, match also the rest of tail
         if len(tail) == 2:
             c2.score = score_lrp_candidate(next_lrp, c2, radius, True)
-        return [route] + match_tail(next_lrp, [c2], tail[1:], reader, radius)
+
+        return [route] + match_tail(next_lrp, [c2], tail[1:], reader, radius, observer)
+
     raise LRDecodeError("Decoding was unsuccessful: No candidates left or available.")
