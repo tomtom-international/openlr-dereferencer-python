@@ -13,7 +13,7 @@ from ..observer import DecoderObserver
 from ..maps import MapReader
 from .tools import LRDecodeError
 from .line_decoding import decode_line
-from .routes import Route
+from .line_location import LineLocation
 from .point_locations import (
     decode_pointalongline,
     PointAlongLine,
@@ -25,7 +25,7 @@ from .point_locations import (
 SEARCH_RADIUS = 100.0
 
 LR = TypeVar("LocationReference", LineLocationRef, PointAlongLineLocation, GeoCoordinateLocation)
-MAP_OBJECTS = TypeVar("MapObjects", Route, Coordinates, PointAlongLine)
+MAP_OBJECTS = TypeVar("MapObjects", LineLocation, Coordinates, PointAlongLine)
 
 def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS, observer: Optional[DecoderObserver] = None
     ) -> MAP_OBJECTS:

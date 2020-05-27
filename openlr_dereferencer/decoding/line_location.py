@@ -3,8 +3,29 @@
 from typing import List, Iterable
 from openlr import Coordinates, LineLocation as LineLocationRef
 from ..maps import Line
-from .tools import remove_offsets
+from .tools import add_offsets, remove_offsets
 from .routes import Route, PointOnLine
+
+class LineLocation:
+    """A dereferenced line location. Create it from a list of lines along with the line reference.
+    The line location path is saved in the attribute `lines`
+    and is a list of `Line` elements coming from the map reader, on which it was decoded.
+    The attributes `p_off` and `n_off` contain the absolute offset at the start/end of the
+    line location path. They are measured in meters.
+    The method `coordinates()` returns the exact coordinates of the line location."""
+
+    lines: List[Line]
+    p_off: float
+    n_off: float
+
+    def __init__(self, lines: List[Line], p_off: float, n_off: float):
+        self.lines = lines
+        self.p_off = p_off
+        self.n_off = n_off
+
+    def coordinates(self) -> List[Coordinates]:
+        "Return the exact list of coordinates defining the line location path"
+        return add_offsets(self.lines, self.p_off, self.n_off)
 
 
 def get_lines(line_location_path: Iterable[Route]) -> List[Line]:
@@ -27,10 +48,13 @@ def combine_routes(line_location_path: Iterable[Route]) -> Route:
         end = PointOnLine(start.line, line_location_path[-1].end.relative_offset)
     return Route(start, path, end)
 
-def build_line_location(path: List[Route], reference: LineLocationRef) -> Route:
+def build_line_location(path: List[Route], reference: LineLocationRef) -> LineLocation:
     """Builds a LineLocation object from the location reference path and the offset values.
 
     The result will be a trimmed list of Line objects, with minimized offset values"""
     p_off = reference.poffs * path[0].length()
     n_off = reference.noffs * path[-1].length()
-    return remove_offsets(combine_routes(path), p_off, n_off)
+
+    route = remove_offsets(combine_routes(path), p_off, n_off)
+
+    return LineLocation(route.lines, route.absolute_start_offset, route.absolute_end_offset)

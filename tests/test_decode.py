@@ -6,9 +6,8 @@ from typing import List, Iterable, TypeVar, NamedTuple
 from shapely.geometry import LineString
 from openlr import Coordinates, FRC, FOW, LineLocation as LineLocationRef, LocationReferencePoint\
     , PointAlongLineLocation, Orientation, SideOfRoad, PoiWithAccessPointLocation
-from openlr_dereferencer.decoding import decode, PointAlongLine, LRDecodeError, PoiWithAccessPoint
+from openlr_dereferencer.decoding import decode, PointAlongLine, LineLocation, LRDecodeError, PoiWithAccessPoint
 from openlr_dereferencer.decoding.candidates import nominate_candidates
-from openlr_dereferencer.decoding.routes import Route
 from openlr_dereferencer.decoding.scoring import score_geolocation, score_frc, score_fow, \
     score_bearing, score_angle_difference
 from openlr_dereferencer.decoding.tools import PointOnLine
@@ -278,7 +277,7 @@ class DecodingTests(unittest.TestCase):
         "Decode a line location of 3 LRPs"
         reference = get_test_linelocation_1()
         location = decode(reference, self.reader, 15.0)
-        self.assertTrue(isinstance(location, Route))
+        self.assertTrue(isinstance(location, LineLocation))
         lines = [l.line_id for l in location.lines]
         self.assertListEqual([1, 3, 4], lines)
         for (a, b) in zip(location.coordinates(),
@@ -299,7 +298,7 @@ class DecodingTests(unittest.TestCase):
         reference = reference._replace(poffs=0.25)
         reference = reference._replace(noffs=0.75)
         path = decode(reference, self.reader, 15.0)
-        self.assertTrue(isinstance(path, Route))
+        self.assertTrue(isinstance(path, LineLocation))
         path = path.coordinates()
         self.assertEqual(len(path), 4)
         self.assertAlmostEqual(path[0].lon, 13.4126, delta=0.001)
@@ -342,8 +341,8 @@ class DecodingTests(unittest.TestCase):
 
     def test_decode_midline(self):
         reference = get_test_linelocation_3()
-        route = decode(reference, self.reader)
-        coords = route.coordinates()
+        line_location = decode(reference, self.reader)
+        coords = line_location.coordinates()
         self.assertEqual(len(coords), 2)
         for ((lon1, lat1), (lon2, lat2)) in zip(coords, [(13.411, 52.525), (13.413, 52.525)]):
             self.assertAlmostEqual(lon1, lon2)
