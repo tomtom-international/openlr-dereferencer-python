@@ -2,16 +2,15 @@
 
 from itertools import product
 from logging import debug
-from typing import Sequence, Tuple, Optional, Iterable, List, NamedTuple
+from typing import Optional, Iterable, List
 from openlr import FRC, LocationReferencePoint
-from ..maps import shortest_path, MapReader, Line, path_length
+from ..maps import shortest_path, MapReader, Line
 from ..maps.a_star import LRPathNotFoundError
-from ..maps.wgs84 import project_along_path, Coordinates
 from ..observer import DecoderObserver
 from .candidate import Candidate
 from .scoring import score_lrp_candidate
 from .tools import LRDecodeError, coords, project
-from .routes import Route, PointOnLine
+from .routes import Route
 
 #: Tolerable relative DNP deviation of a path
 #:

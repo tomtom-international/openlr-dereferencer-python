@@ -1,9 +1,8 @@
 "Some tooling functions for path and offset handling"
 
-from typing import List, Tuple, NamedTuple, Optional
+from typing import List
 from logging import debug
-from shapely.geometry import LineString, Point, GeometryCollection
-from shapely.ops import substring, nearest_points
+from shapely.geometry import LineString, Point
 from openlr import Coordinates, LocationReferencePoint
 from ..maps import Line
 from ..maps.wgs84 import project_along_path

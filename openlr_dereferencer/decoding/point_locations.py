@@ -1,6 +1,6 @@
 "Decoding logic for point (along line, ...) locations"
 
-from typing import NamedTuple, List, Tuple, Optional
+from typing import NamedTuple, Tuple, Optional
 from openlr import (
     Coordinates,
     PointAlongLineLocation,

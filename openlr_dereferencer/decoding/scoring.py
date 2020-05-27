@@ -7,9 +7,8 @@ with `1.0` being an exact match and 0.0 being a non-match."""
 
 from math import degrees
 from logging import debug
-from openlr import Coordinates, FRC, FOW, LocationReferencePoint
+from openlr import FRC, FOW, LocationReferencePoint
 from ..maps.wgs84 import project_along_path, distance, bearing
-from ..maps import Line
 from .tools import coords, PointOnLine, linestring_coords
 
 FOW_WEIGHT = 1 / 4

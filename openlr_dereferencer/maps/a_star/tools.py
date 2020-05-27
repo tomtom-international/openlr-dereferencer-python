@@ -1,7 +1,6 @@
 "Helper functions for A*"
 
 from functools import lru_cache
-from typing import TypeVar
 from ..abstract import Node
 from ..wgs84 import distance
 

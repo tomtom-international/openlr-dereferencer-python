@@ -352,7 +352,7 @@ class DecodingTests(unittest.TestCase):
         "Add a simple observer for decoding a line location of 3 lrps "
         observer = SimpleObserver()
         reference = get_test_linelocation_1()
-        location = decode(reference, self.reader, 15.0, observer)
+        decode(reference, self.reader, 15.0, observer)
         self.assertTrue(observer.candidates)
         self.assertListEqual([route.success for route in observer.attempted_routes], [True, True])
 
@@ -360,7 +360,7 @@ class DecodingTests(unittest.TestCase):
         "Add a simple observer for decoding a valid point along line location"
         reference = get_test_pointalongline()
         observer = SimpleObserver()
-        pal: PointAlongLine = decode(reference, self.reader, observer=observer)
+        decode(reference, self.reader, observer=observer)
         self.assertTrue(observer.candidates)
         self.assertListEqual([route.success for route in observer.attempted_routes], [True])
 
@@ -368,7 +368,7 @@ class DecodingTests(unittest.TestCase):
         "Add a simple observer for decoding a valid POI with access point location"
         reference = get_test_poi()
         observer = SimpleObserver()
-        poi: PoiWithAccessPoint = decode(reference, self.reader, observer=observer)
+        decode(reference, self.reader, observer=observer)
         self.assertTrue(observer.candidates)
         self.assertListEqual([route.success for route in observer.attempted_routes], [True])
 

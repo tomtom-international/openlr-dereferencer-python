@@ -2,7 +2,7 @@
 
 from typing import List, Optional
 from openlr import LineLocation as LineLocationRef, LocationReferencePoint
-from ..maps import MapReader, Line
+from ..maps import MapReader
 from ..observer import DecoderObserver
 from .candidates import nominate_candidates, match_tail
 from .line_location import build_line_location, LineLocation

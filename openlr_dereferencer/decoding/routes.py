@@ -1,5 +1,5 @@
 from typing import NamedTuple, Tuple, Optional, List
-from shapely.geometry import LineString, MultiLineString
+from shapely.geometry import LineString
 from shapely.ops import substring, linemerge
 from openlr import Coordinates
 from ..maps.abstract import Line, path_length
