@@ -49,7 +49,7 @@ def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS, obse
         +-----------------------------------+----------------------------------+
         | reference                         | returns                          |
         +===================================+==================================+
-        | openlr.GeoCoordinateLocation      | Coordinates                      |
+        | openlr.GeoCoordinateLocation      | openlr.Coordinates               |
         +-----------------------------------+----------------------------------+
         | openlr.LineLocation               | openlr_dereferencer.LineLocation |
         +-----------------------------------+----------------------------------+
