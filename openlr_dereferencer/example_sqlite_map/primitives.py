@@ -67,6 +67,8 @@ class Line(AbstractLine):
             FROM nodes, lines WHERE lines.rowid = ?"""
         con = self.map_reader.connection
         (dist,) = con.execute(stmt, (coord.lon, coord.lat, self.line_id)).fetchone()
+        # Details about a bug in mod_spatialite:
+        # https://gis.stackexchange.com/questions/359993/spatialite-distance-returns-null-when-geometries-touch
         if dist is None:
             return 0.0
         else:
