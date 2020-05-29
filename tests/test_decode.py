@@ -6,9 +6,11 @@ from typing import List, Iterable, TypeVar, NamedTuple
 from shapely.geometry import LineString
 from openlr import Coordinates, FRC, FOW, LineLocation as LineLocationRef, LocationReferencePoint\
     , PointAlongLineLocation, Orientation, SideOfRoad, PoiWithAccessPointLocation
-from openlr_dereferencer.decoding import decode, PointAlongLine, LineLocation, LRDecodeError, PoiWithAccessPoint
+
+from openlr_dereferencer import decode, Config
+from openlr_dereferencer.decoding import PointAlongLine, LineLocation, LRDecodeError, PoiWithAccessPoint
 from openlr_dereferencer.decoding.candidates import nominate_candidates
-from openlr_dereferencer.decoding.scoring import score_geolocation, score_frc, score_fow, \
+from openlr_dereferencer.decoding.scoring import score_geolocation, score_frc, \
     score_bearing, score_angle_difference
 from openlr_dereferencer.decoding.tools import PointOnLine
 from openlr_dereferencer.observer import SimpleObserver
@@ -145,6 +147,7 @@ class DecodingTests(unittest.TestCase):
         remove_db_file(self.db)
         setup_testdb(self.db)
         self.reader = ExampleMapReader(self.db)
+        self.config = Config()
 
     def test_geoscore_1(self):
         "Test scoring an excactly matching LRP candidate line"
@@ -181,13 +184,13 @@ class DecodingTests(unittest.TestCase):
         "Test scoring two non-matching FOWs"
         fow_a = FOW.UNDEFINED
         fow_b = FOW.OTHER
-        self.assertAlmostEqual(score_fow(fow_a, fow_b), 0.5)
-        self.assertAlmostEqual(score_fow(fow_b, fow_a), 0.5)
+        self.assertAlmostEqual(self.config.fow_standin_score[fow_a][fow_b], 0.5)
+        self.assertAlmostEqual(self.config.fow_standin_score[fow_b][fow_a], 0.5)
 
     def test_fowscore_1(self):
         "Test scoring two equal FOWs"
         fow = FOW.MOTORWAY
-        self.assertEqual(score_fow(fow, fow), 1.0)
+        self.assertEqual(self.config.fow_standin_score[fow][fow], 1.0)
 
     def test_bearingscore_1(self):
         "Test bearing difference of +90°"
@@ -198,7 +201,7 @@ class DecodingTests(unittest.TestCase):
         wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
                                         FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
         line = DummyLine(1, node1, node3)
-        score = score_bearing(wanted, PointOnLine(line, 0.0), False)
+        score = score_bearing(wanted, PointOnLine(line, 0.0), False, self.config.bear_dist)
         self.assertEqual(score, 0.5)
 
     def test_bearingscore_2(self):
@@ -210,7 +213,7 @@ class DecodingTests(unittest.TestCase):
         wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
                                         FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
         line = DummyLine(1, node1, node3)
-        score = score_bearing(wanted, PointOnLine(line, 0.0), False)
+        score = score_bearing(wanted, PointOnLine(line, 0.0), False, self.config.bear_dist)
         self.assertEqual(score, 0.5)
 
     def test_bearingscore_3(self):
@@ -222,7 +225,7 @@ class DecodingTests(unittest.TestCase):
         wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
                                         FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
         line = DummyLine(1, node1, node3)
-        score = score_bearing(wanted, PointOnLine(line, 1.0), True)
+        score = score_bearing(wanted, PointOnLine(line, 1.0), True, self.config.bear_dist)
         self.assertAlmostEqual(score, 0.5)
 
     def test_bearingscore_4(self):
@@ -234,7 +237,7 @@ class DecodingTests(unittest.TestCase):
         wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
                                         FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
         line = DummyLine(1, node1, node3)
-        score = score_bearing(wanted, PointOnLine(line, 1.0), True)
+        score = score_bearing(wanted, PointOnLine(line, 1.0), True, self.config.bear_dist)
         self.assertAlmostEqual(score, 0.5)
 
     def test_bearingscore_5(self):
@@ -245,9 +248,9 @@ class DecodingTests(unittest.TestCase):
         wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
                                         FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
         line = DummyLine(1, node1, node2)
-        score = score_bearing(wanted, PointOnLine(line, 0.0), False)
+        score = score_bearing(wanted, PointOnLine(line, 0.0), False, self.config.bear_dist)
         self.assertAlmostEqual(score, 1.0)
-        score = score_bearing(wanted, PointOnLine(line, 1.0), True)
+        score = score_bearing(wanted, PointOnLine(line, 1.0), True, self.config.bear_dist)
         self.assertAlmostEqual(score, 0.0)
 
     def test_anglescore_1(self):
@@ -265,7 +268,7 @@ class DecodingTests(unittest.TestCase):
     def test_generate_candidates_1(self):
         "Generate candidates and pick the best"
         reference = get_test_linelocation_1()
-        candidates = list(nominate_candidates(reference.points[0], self.reader, 500.0, False))
+        candidates = list(nominate_candidates(reference.points[0], self.reader, self.config, False))
         # Sort by score
         candidates.sort(key=lambda candidate: candidate.score, reverse=True)
         # Get only the line ids
@@ -276,7 +279,7 @@ class DecodingTests(unittest.TestCase):
     def test_decode_3_lrps(self):
         "Decode a line location of 3 LRPs"
         reference = get_test_linelocation_1()
-        location = decode(reference, self.reader, 15.0)
+        location = decode(reference, self.reader)
         self.assertTrue(isinstance(location, LineLocation))
         lines = [l.line_id for l in location.lines]
         self.assertListEqual([1, 3, 4], lines)
@@ -290,14 +293,14 @@ class DecodingTests(unittest.TestCase):
         "Decode a line location where no short-enough path exists"
         reference = get_test_linelocation_2()
         with self.assertRaises(LRDecodeError):
-            decode(reference, self.reader, 15.0)
+            decode(reference, self.reader)
 
     def test_decode_offsets(self):
         "Decode a line location with offsets"
         reference = get_test_linelocation_1()
         reference = reference._replace(poffs=0.25)
         reference = reference._replace(noffs=0.75)
-        path = decode(reference, self.reader, 15.0)
+        path = decode(reference, self.reader)
         self.assertTrue(isinstance(path, LineLocation))
         path = path.coordinates()
         self.assertEqual(len(path), 4)
@@ -352,7 +355,7 @@ class DecodingTests(unittest.TestCase):
         "Add a simple observer for decoding a line location of 3 lrps "
         observer = SimpleObserver()
         reference = get_test_linelocation_1()
-        decode(reference, self.reader, 15.0, observer)
+        decode(reference, self.reader, observer=observer)
         self.assertTrue(observer.candidates)
         self.assertListEqual([route.success for route in observer.attempted_routes], [True, True])
 

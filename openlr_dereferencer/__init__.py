@@ -3,7 +3,7 @@
 OpenLR line decoder package.
 """
 
-from .decoding import decode_line, decode, SEARCH_RADIUS
+from .decoding import decode, Config
 
 from ._version import (
     __title__,
