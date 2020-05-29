@@ -53,9 +53,9 @@ def get_candidate_route(
         line2:
             The end line.
         lfrc:
-            "lowest frc".
-            Line objects from map_reader with an FRC lower than lfrc will be ignored.
-        maxlen: Pathfinding will be canceled after exceeding a length of maxlen.
+            "lowest frc". Line objects from map_reader with an FRC lower than lfrc will be ignored.
+        maxlen:
+            Pathfinding will be canceled after exceeding a length of maxlen.
 
     Returns:
         If a matching shortest path is found, it is returned as a list of Line objects.

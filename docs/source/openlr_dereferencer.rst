@@ -10,6 +10,7 @@ Subpackages
    openlr_dereferencer.decoding
    openlr_dereferencer.example_sqlite_map
    openlr_dereferencer.maps
+   openlr_dereferencer.observer
 
 Module contents
 ---------------
