@@ -72,7 +72,7 @@ class Config(NamedTuple):
 
 DEFAULT_CONFIG = Config()
 
-def load(source: Union[str, TextIOBase, dict]) -> Config:
+def load_config(source: Union[str, TextIOBase, dict]) -> Config:
     """Load config from a source
     
     Args:
@@ -113,7 +113,7 @@ def load(source: Union[str, TextIOBase, dict]) -> Config:
     )
 
 
-def save(config: Config, dest: Union[str, TextIOBase, type(None)] = None) -> Optional[dict]:
+def save_config(config: Config, dest: Union[str, TextIOBase, type(None)] = None) -> Optional[dict]:
     """Saves a config to a file or a dictionary
     
     Args:
@@ -125,6 +125,6 @@ def save(config: Config, dest: Union[str, TextIOBase, type(None)] = None) -> Opt
         return config._asdict()
     if isinstance(dest, str):
         with open(dest, "w") as fp:
-            fp.write(dumps(save(config)))
+            save_config(fp)
     if isinstance(dest, TextIOBase):
-        dest.write(dumps(save(config)))
+        dest.write(dumps(save_config(config)))

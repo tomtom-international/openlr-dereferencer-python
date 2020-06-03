@@ -20,7 +20,7 @@ from .point_locations import (
     decode_poi_with_accesspoint,
     PoiWithAccessPoint,
 )
-from .configuration import Config, DEFAULT_CONFIG
+from .configuration import Config, DEFAULT_CONFIG, load_config, save_config
 
 LR = TypeVar("LocationReference", LineLocationRef, PointAlongLineLocation, GeoCoordinateLocation)
 MAP_OBJECTS = TypeVar("MapObjects", LineLocation, Coordinates, PointAlongLine)
