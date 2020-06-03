@@ -88,7 +88,14 @@ logging.basicConfig(level=logging.DEBUG)
 ```
 
 ## Observing
-Via implementing the [Observer](https://openlr-dereferencer-python.readthedocs.io/en/latest/openlr_dereferencer.observer.html#openlr_dereferencer.observer.simple_observer.SimpleObserver) interface
+Via implementing the [Observer](https://openlr-dereferencer-python.readthedocs.io/en/latest/openlr_dereferencer.observer.html#openlr_dereferencer.observer.simple_observer.SimpleObserver) interface, you can hook onto certain events happening while decoding, and inspect the situation:
+```py
+from openlr_dereferencer import DecoderObserver, SimpleObserver
+
+# Look at SimpleObserver for an example implementation
+my_observer = SimpleObserver()
+decode(reference, mapreader, observer=my_observer)
+```
 
 ## Development environment
 

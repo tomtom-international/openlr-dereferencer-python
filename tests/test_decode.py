@@ -19,6 +19,8 @@ from openlr_dereferencer.maps.wgs84 import distance, bearing
 
 from .example_mapformat import setup_testdb, remove_db_file
 
+from openlr_dereferencer import load_config, save_config, DEFAULT_CONFIG
+
 class DummyNode():
     "Fake Node class for unit testing"
     def __init__(self, coord: Coordinates):
@@ -374,6 +376,14 @@ class DecodingTests(unittest.TestCase):
         decode(reference, self.reader, observer=observer)
         self.assertTrue(observer.candidates)
         self.assertListEqual([route.success for route in observer.attempted_routes], [True])
+
+    def test_load_saved_config(self):
+        "Save and load a Config object"
+        filename = "test-config.json"
+        save_config(DEFAULT_CONFIG, filename)
+        config = load_config(filename)
+        self.assertDictEqual(config.tolerated_lfrc, DEFAULT_CONFIG.tolerated_lfrc)
+        self.assertEqual(config.bear_dist, DEFAULT_CONFIG.bear_dist)
 
     def tearDown(self):
         self.reader.connection.close()
