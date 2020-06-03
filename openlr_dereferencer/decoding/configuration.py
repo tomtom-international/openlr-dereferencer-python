@@ -125,6 +125,6 @@ def save_config(config: Config, dest: Union[str, TextIOBase, type(None)] = None)
         return config._asdict()
     if isinstance(dest, str):
         with open(dest, "w") as fp:
-            save_config(fp)
+            save_config(config, fp)
     if isinstance(dest, TextIOBase):
         dest.write(dumps(save_config(config)))
