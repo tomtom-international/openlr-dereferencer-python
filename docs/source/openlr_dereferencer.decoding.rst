@@ -27,7 +27,6 @@ openlr\_dereferencer.decoding.configuration module
    :members:
    :undoc-members:
    :show-inheritance:
-   :autodoc_member_order:
 
 openlr\_dereferencer.decoding.line\_decoding module
 ---------------------------------------------------
