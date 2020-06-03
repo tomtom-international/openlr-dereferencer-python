@@ -1,4 +1,7 @@
-from typing import NamedTuple, List, Dict
+"Contains the configuration object that can be passed to the decoder, as well as default values"
+from typing import NamedTuple, List, Dict, Union, Optional
+from io import TextIOBase
+from json import loads, dumps
 from openlr import FRC, FOW
 
 #: The default value for the `fow_standin_score` config option.
@@ -48,8 +51,8 @@ class Config(NamedTuple):
     #: To find candidates, the LRP coordinates are projected against any line in the local area.
     #: If the distance from the starting point is greater than this threshold, the partial line
     #: beginning at the projection point is considered to be the candidate. Else, the candidate
-    #: snaps onto the startng point (or ending point, when it is the last LRP)
-    candidate_threshold = 20
+    #: snaps onto the starting point (or ending point, when it is the last LRP)
+    candidate_threshold: int = 20
     #: Defines the weight the FOW score has on the overall score of a candidate.
     fow_weight: float = 1 / 4
     #: Defines the weight the FRC score has on the overall score of a candidate.
@@ -66,4 +69,59 @@ class Config(NamedTuple):
     #: The bearing angle is computed along this distance on a given line. Given in meters.
     bear_dist: int = 20
 
+
 DEFAULT_CONFIG = Config()
+
+def load(source: Union[str, TextIOBase, dict]) -> Config:
+    """Load config from a source
+    
+    Args:
+        source:
+            Either an open text file containing a JSON dict, or the path to it, or a dictionary
+    Returns:
+        The read Config object
+    """
+    file_open = None
+    opened_source = source
+    if isinstance(opened_source, str):
+        opened_source = open(source, "r")
+        file_open = opened_source
+    if isinstance(opened_source, TextIOBase):
+        opened_source = loads(opened_source.read())
+    if file_open is not None:
+        file_open.close()
+    if not isinstance(opened_source, dict):
+        raise TypeError("Surprising type")
+    return Config._make(
+        [
+            opened_source['search_radius'],
+            opened_source['max_dnp_deviation'],
+            opened_source['tolerated_dnp_dev'],
+            opened_source['min_score'],
+            opened_source['tolerated_lfrc'],
+            opened_source['candidate_threshold'],
+            opened_source['fow_weight'],
+            opened_source['frc_weight'],
+            opened_source['geo_weight'],
+            opened_source['bear_weight'],
+            opened_source['fow_standin_score'],
+            opened_source['bear_dist']
+        ]
+    )
+
+
+def save(config: Config, dest: Union[str, TextIOBase, type(None)] = None) -> Optional[dict]:
+    """Saves a config to a file or a dictionary
+    
+    Args:
+        dest:
+            Either a path, or an already write-opened text file, or nothing.
+    Returns:
+        If no destination was given, returns the config as dictionary"""
+    if dest is None:
+        return config._asdict()
+    if isinstance(dest, str):
+        with open(dest, "w") as fp:
+            fp.write(dumps(save(config)))
+    if isinstance(dest, TextIOBase):
+        dest.write(dumps(save(config)))
