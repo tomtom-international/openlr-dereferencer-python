@@ -60,32 +60,24 @@ real_location.lines # <- A list of map objects
 ```
 
 ## Configuration
-### Candidates
-The configuration value `openlr_dereferencer.SEARCH_RADIUS` determines how far away from the LRP road candidates are searched.
-The unit is meters, the default 100.
-### Scores
-Every candidate line gets a score from `0` (bad) to `1` (perfect).
-
-There are four scoring weight parameters:
- - GEO_WEIGHT = 0.25
- - FRC_WEIGHT = 0.25
- - FOW_WEIGHT = 0.25
- - BEAR_WEIGHT = 0.25
-
-They determine how much influence a single aspect has on an overall candidate's score.
- 
+The `decode` function takes in an optional `Config` object contaning decoding settings.
 You may just change these before decoding:
 ```py
-from openlr_dereferencer.decoding import scoring
+from openlr_dereferencer import decode, Config
 
-scoring.GEO_WEIGHT = 0.66
-scoring.FRC_WEIGHT = 0.17
-scoring.FOW_WEIGHT = 0.17
-scoring.BEAR_WEIGHT = 0
+my_config = Config(
+    geo_weight = 0.66,
+    frc_height = 0.17,
+    fow_height = 0.17,
+    bear_weight = 0.0
+)
+
+decode(reference, mapreader, config=my_config)
 ```
 
-A value of 0 means that the aspect has no influence on the candidate score, while a value of 1 means that it is the only aspect that matters.
-### Logging
+The full list of available options is located [here](https://openlr-dereferencer-python.readthedocs.io/en/latest/openlr_dereferencer.decoding.html#openlr_dereferencer.decoding.configuration.Config).
+
+## Logging
 `openlr-dereferencer` logs all mapmatching decisions using the standard library `logging` module.
 
 Use it to turn on debugging:
@@ -94,6 +86,9 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG)
 ```
+
+## Observing
+Via implementing the [Observer](https://openlr-dereferencer-python.readthedocs.io/en/latest/openlr_dereferencer.observer.html#openlr_dereferencer.observer.simple_observer.SimpleObserver) interface
 
 ## Development environment
 
