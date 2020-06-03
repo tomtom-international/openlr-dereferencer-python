@@ -98,7 +98,10 @@ def load(source: Union[str, TextIOBase, dict]) -> Config:
             opened_source['max_dnp_deviation'],
             opened_source['tolerated_dnp_dev'],
             opened_source['min_score'],
-            opened_source['tolerated_lfrc'],
+            {
+                FRC(int(key)): FRC(value)
+                for (key, value) in opened_source['tolerated_lfrc'].items() 
+            },
             opened_source['candidate_threshold'],
             opened_source['fow_weight'],
             opened_source['frc_weight'],
