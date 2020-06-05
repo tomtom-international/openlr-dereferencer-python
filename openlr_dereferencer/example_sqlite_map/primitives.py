@@ -63,11 +63,16 @@ class Line(AbstractLine):
 
     def distance_to(self, coord) -> float:
         "Returns the distance of this line to `coord` in meters"
-        stmt = """SELECT Distance(Makepoint(?, ?), lines.path)
+        stmt = """SELECT Distance(Makepoint(?, ?), lines.path, 1)
             FROM nodes, lines WHERE lines.rowid = ?"""
         con = self.map_reader.connection
         (dist,) = con.execute(stmt, (coord.lon, coord.lat, self.line_id)).fetchone()
-        return dist
+        # Details about a bug in mod_spatialite:
+        # https://gis.stackexchange.com/questions/359993/spatialite-distance-returns-null-when-geometries-touch
+        if dist is None:
+            return 0.0
+        else:
+            return dist
 
     def num_points(self) -> int:
         "Returns how many points the path geometry contains"

@@ -60,15 +60,15 @@ class ExampleMapReader(MapReader):
     def find_nodes_close_to(self, coord: Coordinates, dist: float) -> Iterable[Node]:
         """Finds all nodes in a given radius, given in meters
 
-        Yields every node with its meter distance to `coord`."""
+        Yields every node within this distance to `coord`."""
         lon, lat = coord.lon, coord.lat
-        stmt = """SELECT id FROM nodes WHERE Distance(MakePoint(?, ?), coord, 1) < ?"""
+        stmt = """SELECT id FROM nodes WHERE Distance(MakePoint(?, ?), coord, 0) < ?"""
         for (node_id,) in self.connection.execute(stmt, (lon, lat, dist)):
             yield Node(self, node_id)
 
     def find_lines_close_to(self, coord: Coordinates, dist: float) -> Iterable[Line]:
-        "Yields all lines in a given radius"
+        "Yields all lines within `dist` meters around `coord`"
         lon, lat = coord.lon, coord.lat
-        stmt = """SELECT rowid FROM lines WHERE Distance(MakePoint(?, ?), path) < ?"""
+        stmt = """SELECT rowid FROM lines WHERE PtDistWithin(MakePoint(?, ?), path, ?, 0)"""
         for (line_id,) in self.connection.execute(stmt, (lon, lat, dist)):
             yield Line(self, line_id)
