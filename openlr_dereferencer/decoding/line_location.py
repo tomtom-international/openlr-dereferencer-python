@@ -1,7 +1,7 @@
 "This module contains the LineLocation class and a builder function for it"
 
 from typing import List, Iterable
-from openlr import Coordinates, LineLocation as LineLocationRef
+from openlr import Coordinates, LineLocationReference
 from ..maps import Line
 from .tools import add_offsets, remove_offsets
 from .routes import Route, PointOnLine
@@ -48,7 +48,7 @@ def combine_routes(line_location_path: Iterable[Route]) -> Route:
         end = PointOnLine(start.line, line_location_path[-1].end.relative_offset)
     return Route(start, path, end)
 
-def build_line_location(path: List[Route], reference: LineLocationRef) -> LineLocation:
+def build_line_location(path: List[Route], reference: LineLocationReference) -> LineLocation:
     """Builds a LineLocation object from the location reference path and the offset values.
 
     The result will be a trimmed list of Line objects, with minimized offset values"""

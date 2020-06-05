@@ -3,10 +3,10 @@
 from typing import NamedTuple, Tuple, Optional
 from openlr import (
     Coordinates,
-    PointAlongLineLocation,
+    PointAlongLineLocationReference,
     Orientation,
     SideOfRoad,
-    PoiWithAccessPointLocation,
+    PoiWithAccessPointLocationReference,
 )
 from ..maps import MapReader, path_length
 from ..maps.abstract import Line
@@ -54,7 +54,7 @@ def point_along_linelocation(route: Route, length: float) -> Tuple[Line, float]:
 
 
 def decode_pointalongline(
-    reference: PointAlongLineLocation, reader: MapReader, config: Config, observer: Optional[DecoderObserver]
+    reference: PointAlongLineLocationReference, reader: MapReader, config: Config, observer: Optional[DecoderObserver]
 ) -> PointAlongLine:
     "Decodes a point along line location reference"
     path = combine_routes(dereference_path(reference.points, reader, config, observer))
@@ -77,7 +77,7 @@ class PoiWithAccessPoint(NamedTuple):
 
 
 def decode_poi_with_accesspoint(
-    reference: PoiWithAccessPointLocation, reader: MapReader, config: Config, observer: Optional[DecoderObserver]
+    reference: PoiWithAccessPointLocationReference, reader: MapReader, config: Config, observer: Optional[DecoderObserver]
     ) -> PoiWithAccessPoint:
     "Decodes a point along line location reference into a Coordinates tuple"
     path = combine_routes(dereference_path(reference.points, reader, config, observer))

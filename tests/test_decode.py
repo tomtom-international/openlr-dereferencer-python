@@ -4,8 +4,8 @@ from math import degrees
 from itertools import zip_longest
 from typing import List, Iterable, TypeVar, NamedTuple
 from shapely.geometry import LineString
-from openlr import Coordinates, FRC, FOW, LineLocation as LineLocationRef, LocationReferencePoint\
-    , PointAlongLineLocation, Orientation, SideOfRoad, PoiWithAccessPointLocation
+from openlr import Coordinates, FRC, FOW, LineLocationReference, LocationReferencePoint,\
+    PointAlongLineLocationReference, Orientation, SideOfRoad, PoiWithAccessPointLocationReference
 
 from openlr_dereferencer import decode, Config
 from openlr_dereferencer.decoding import PointAlongLine, LineLocation, LRDecodeError, PoiWithAccessPoint
@@ -72,7 +72,7 @@ def get_test_linelocation_1():
     # References node 4 / line 4
     lrp3 = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
                                   FOW.SINGLE_CARRIAGEWAY, 0.125, None, None)
-    return LineLocationRef([lrp1, lrp2, lrp3], 0.0, 0.0)
+    return LineLocationReference([lrp1, lrp2, lrp3], 0.0, 0.0)
 
 
 def get_test_linelocation_2():
@@ -84,7 +84,7 @@ def get_test_linelocation_2():
     # References node 13 / ~ line 17
     lrp2 = LocationReferencePoint(13.429, 52.523, FRC.FRC2,
                                   FOW.SINGLE_CARRIAGEWAY, 270/11.25, None, None)
-    return LineLocationRef([lrp1, lrp2], 0.0, 0.0)
+    return LineLocationReference([lrp1, lrp2], 0.0, 0.0)
 
 
 def get_test_linelocation_3():
@@ -98,27 +98,27 @@ def get_test_linelocation_3():
     # References another point on line 1
     lrp2 = LocationReferencePoint(13.413, 52.525, FRC.FRC1,
                                   FOW.SINGLE_CARRIAGEWAY, 270, None, None)
-    return LineLocationRef([lrp1, lrp2], 0.0, 0.0)
+    return LineLocationReference([lrp1, lrp2], 0.0, 0.0)
 
 
-def get_test_pointalongline() -> PointAlongLineLocation:
+def get_test_pointalongline() -> PointAlongLineLocationReference:
     "Get a test Point Along Line location reference"
     path_ref = get_test_linelocation_1().points[-2:]
-    return PointAlongLineLocation(path_ref, 0.5, Orientation.WITH_LINE_DIRECTION, \
+    return PointAlongLineLocationReference(path_ref, 0.5, Orientation.WITH_LINE_DIRECTION, \
                                   SideOfRoad.RIGHT)
 
 
-def get_test_invalid_pointalongline() -> PointAlongLineLocation:
+def get_test_invalid_pointalongline() -> PointAlongLineLocationReference:
     "Get a test Point Along Line location reference"
     path_ref = get_test_linelocation_1().points[-2:]
-    return PointAlongLineLocation(path_ref, 1500, Orientation.WITH_LINE_DIRECTION, \
+    return PointAlongLineLocationReference(path_ref, 1500, Orientation.WITH_LINE_DIRECTION, \
                                   SideOfRoad.RIGHT)
 
 
-def get_test_poi() -> PoiWithAccessPointLocation:
+def get_test_poi() -> PoiWithAccessPointLocationReference:
     "Get a test POI with access point location reference"
     path_ref = get_test_linelocation_1().points[-2:]
-    return PoiWithAccessPointLocation(
+    return PoiWithAccessPointLocationReference(
         path_ref, 0.5, 13.414, 52.526, Orientation.WITH_LINE_DIRECTION,
         SideOfRoad.RIGHT)
 

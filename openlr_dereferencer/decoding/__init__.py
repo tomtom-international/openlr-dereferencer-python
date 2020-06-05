@@ -3,11 +3,11 @@ This includes finding candidates, rating them and choosing the best path"""
 
 from typing import TypeVar, Optional
 from openlr import (
-    LineLocation as LineLocationRef,
-    PointAlongLineLocation,
+    LineLocationReference,
+    PointAlongLineLocationReference,
     Coordinates,
-    GeoCoordinateLocation,
-    PoiWithAccessPointLocation,
+    GeoCoordinateLocationReference,
+    PoiWithAccessPointLocationReference,
 )
 from ..observer import DecoderObserver
 from ..maps import MapReader
@@ -22,7 +22,12 @@ from .point_locations import (
 )
 from .configuration import Config, DEFAULT_CONFIG, load_config, save_config
 
-LR = TypeVar("LocationReference", LineLocationRef, PointAlongLineLocation, GeoCoordinateLocation)
+LR = TypeVar("LocationReference",
+    LineLocationReference,
+    PointAlongLineLocationReference,
+    PoiWithAccessPointLocationReference,
+    GeoCoordinateLocationReference)
+
 MAP_OBJECTS = TypeVar("MapObjects", LineLocation, Coordinates, PointAlongLine)
 
 def decode(
@@ -50,25 +55,25 @@ def decode(
         This function will return one or more map object, optionally wrapped into some class.
         Here is an overview for what reference type will result in which return type:
 
-        +-----------------------------------+----------------------------------+
-        | reference                         | returns                          |
-        +===================================+==================================+
-        | openlr.GeoCoordinateLocation      | openlr.Coordinates               |
-        +-----------------------------------+----------------------------------+
-        | openlr.LineLocation               | openlr_dereferencer.LineLocation |
-        +-----------------------------------+----------------------------------+
-        | openlr.PointAlongLine             | PointAlongLineLocation           |
-        +-----------------------------------+----------------------------------+
-        | openlr.PoiWithAccessPointLocation | PoiWithAccessPoint               |
-        +-----------------------------------+----------------------------------+
+        +-------------------------------------+------------------------+
+        | reference                           | returns                |
+        +=====================================+========================+
+        | GeoCoordinateLocationReference      | Coordinates            |
+        +-------------------------------------+------------------------+
+        | LineLocationReference               | LineLocation           |
+        +-------------------------------------+------------------------+
+        | PointAlongLineLocationReference     | PointAlongLineLocation |
+        +-------------------------------------+------------------------+
+        | PoiWithAccessPointLocationReference | PoiWithAccessPoint     |
+        +-------------------------------------+------------------------+
     """
-    if isinstance(reference, LineLocationRef):
+    if isinstance(reference, LineLocationReference):
         return decode_line(reference, reader, config, observer)
-    elif isinstance(reference, PointAlongLineLocation):
+    elif isinstance(reference, PointAlongLineLocationReference):
         return decode_pointalongline(reference, reader, config, observer)
-    elif isinstance(reference, GeoCoordinateLocation):
+    elif isinstance(reference, GeoCoordinateLocationReference):
         return reference.point
-    elif isinstance(reference, PoiWithAccessPointLocation):
+    elif isinstance(reference, PoiWithAccessPointLocationReference):
         return decode_poi_with_accesspoint(reference, reader, config, observer)
     else:
         raise LRDecodeError(
