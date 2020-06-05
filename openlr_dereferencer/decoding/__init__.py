@@ -20,15 +20,17 @@ from .point_locations import (
     decode_poi_with_accesspoint,
     PoiWithAccessPoint,
 )
-
-#: Configures the default radius to search for map objects around an LRP. This value is in meters.
-SEARCH_RADIUS = 100.0
+from .configuration import Config, DEFAULT_CONFIG, load_config, save_config
 
 LR = TypeVar("LocationReference", LineLocationRef, PointAlongLineLocation, GeoCoordinateLocation)
 MAP_OBJECTS = TypeVar("MapObjects", LineLocation, Coordinates, PointAlongLine)
 
-def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS, observer: Optional[DecoderObserver] = None
-    ) -> MAP_OBJECTS:
+def decode(
+    reference: LR, 
+    reader: MapReader,
+    observer: Optional[DecoderObserver] = None,
+    config: Config=DEFAULT_CONFIG
+) -> MAP_OBJECTS:
     """Translates an openLocationReference into a real location on your map.
 
     Args:
@@ -41,6 +43,8 @@ def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS, obse
             The search path for the location's components' candidates
         observer:
             An observer that collects information when events of interest happen at the decoder
+        config:
+            A definition of the decoding behaviour providing various settings
 
     Returns:
         This function will return one or more map object, optionally wrapped into some class.
@@ -59,13 +63,13 @@ def decode(reference: LR, reader: MapReader, radius: float = SEARCH_RADIUS, obse
         +-----------------------------------+----------------------------------+
     """
     if isinstance(reference, LineLocationRef):
-        return decode_line(reference, reader, radius, observer)
+        return decode_line(reference, reader, config, observer)
     elif isinstance(reference, PointAlongLineLocation):
-        return decode_pointalongline(reference, reader, radius, observer)
+        return decode_pointalongline(reference, reader, config, observer)
     elif isinstance(reference, GeoCoordinateLocation):
         return reference.point
     elif isinstance(reference, PoiWithAccessPointLocation):
-        return decode_poi_with_accesspoint(reference, reader, radius, observer)
+        return decode_poi_with_accesspoint(reference, reader, config, observer)
     else:
         raise LRDecodeError(
             "Currently, the following reference types are supported:\n"

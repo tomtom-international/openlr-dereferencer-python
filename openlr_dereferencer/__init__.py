@@ -3,7 +3,8 @@
 OpenLR line decoder package.
 """
 
-from .decoding import decode_line, decode, SEARCH_RADIUS
+from .decoding import decode, Config, load_config, save_config, DEFAULT_CONFIG
+from .observer import DecoderObserver, SimpleObserver
 
 from ._version import (
     __title__,

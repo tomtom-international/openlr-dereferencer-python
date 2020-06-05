@@ -4,10 +4,26 @@ openlr\_dereferencer.decoding package
 Submodules
 ----------
 
+openlr\_dereferencer.decoding.candidate module
+----------------------------------------------
+
+.. automodule:: openlr_dereferencer.decoding.candidate
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 openlr\_dereferencer.decoding.candidates module
 -----------------------------------------------
 
 .. automodule:: openlr_dereferencer.decoding.candidates
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openlr\_dereferencer.decoding.configuration module
+--------------------------------------------------
+
+.. automodule:: openlr_dereferencer.decoding.configuration
    :members:
    :undoc-members:
    :show-inheritance:
@@ -32,6 +48,14 @@ openlr\_dereferencer.decoding.point\_locations module
 -----------------------------------------------------
 
 .. automodule:: openlr_dereferencer.decoding.point_locations
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+openlr\_dereferencer.decoding.routes module
+-------------------------------------------
+
+.. automodule:: openlr_dereferencer.decoding.routes
    :members:
    :undoc-members:
    :show-inheritance:
