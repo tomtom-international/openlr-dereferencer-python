@@ -7,38 +7,10 @@ with `1.0` being an exact match and 0.0 being a non-match."""
 
 from math import degrees
 from logging import debug
-from openlr import Coordinates, FRC, FOW, LocationReferencePoint
+from openlr import FRC, FOW, LocationReferencePoint
 from ..maps.wgs84 import project_along_path, distance, bearing
-from ..maps import Line
-from .tools import coords
-
-FOW_WEIGHT = 1 / 4
-FRC_WEIGHT = 1 / 4
-GEO_WEIGHT = 1 / 4
-BEAR_WEIGHT = 1 / 4
-
-BEAR_DIST = 20
-
-# When comparing an LRP FOW with a candidate's FOW, this matrix defines
-# how well the candidate's FOW fits as replacement for the expected value.
-# The usage is `FOW_SCORING[lrp's fow][candidate's fow]`.
-# It returns the score.
-# The values are adopted from the openlr Java implementation.
-FOW_STAND_IN_SCORE = [
-    [0.50, 0.50, 0.50, 0.50, 0.50, 0.50, 0.50, 0.5],  # Undefined FOW
-    [0.50, 1.00, 0.75, 0.00, 0.00, 0.00, 0.00, 0.0],  # Motorway
-    [0.50, 0.75, 1.00, 0.75, 0.50, 0.00, 0.00, 0.0],  # Multiple carriage way
-    [0.50, 0.00, 0.75, 1.00, 0.50, 0.50, 0.00, 0.0],  # Single carriage way
-    [0.50, 0.00, 0.50, 0.50, 1.00, 0.50, 0.00, 0.0],  # Roundabout
-    [0.50, 0.00, 0.00, 0.50, 0.50, 1.00, 0.00, 0.0],  # Traffic quare
-    [0.50, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.0],  # Sliproad
-    [0.50, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.0],  # Other FOW
-]
-
-
-def score_fow(wanted: FOW, actual: FOW) -> float:
-    "Return a score for a FOW value"
-    return FOW_STAND_IN_SCORE[wanted][actual]
+from .tools import coords, PointOnLine, linestring_coords
+from .configuration import Config
 
 
 def score_frc(wanted: FRC, actual: FRC) -> float:
@@ -47,16 +19,13 @@ def score_frc(wanted: FRC, actual: FRC) -> float:
 
 
 def score_geolocation(
-    wanted: LocationReferencePoint, actual: Line, radius: float, is_last_lrp: bool
+    wanted: LocationReferencePoint, actual: PointOnLine, radius: float, is_last_lrp: bool
 ) -> float:
     """Scores the geolocation of a candidate.
 
     A distance of `radius` or more will result in a 0.0 score."""
-    if is_last_lrp:
-        actual_point = actual.end_node.coordinates
-    else:
-        actual_point = actual.start_node.coordinates
-    dist = distance(coords(wanted), actual_point)
+    debug(f"Candidate coords are {actual.position()}")
+    dist = distance(coords(wanted), actual.position())
     if dist < radius:
         return 1.0 - dist / radius
     return 0.0
@@ -73,35 +42,43 @@ def score_angle_difference(angle1: float, angle2: float) -> float:
     return 1 - abs(difference) / 180
 
 
-def score_bearing(wanted: LocationReferencePoint, candidate: Line, is_last_lrp: bool) -> float:
+def score_bearing(wanted: LocationReferencePoint, actual: PointOnLine, is_last_lrp: bool, bear_dist: float) -> float:
     """Scores the difference between expected and actual bearing angle.
 
     A difference of 0° will result in a 1.0 score, while 180° will cause a score of 0.0."""
-    coordinates = list(candidate.coordinates())
+    line1, line2 = actual.split()
     if is_last_lrp:
+        if line1 is None:
+            return 0.0
+        coordinates = linestring_coords(line1)
         coordinates.reverse()
-    point1 = coordinates[0]
-    point2 = project_along_path(coordinates, BEAR_DIST)
-    bear = degrees(bearing(point1, point2))
+    else:
+        if line2 is None:
+            return 0.0
+        coordinates = linestring_coords(line2)
+    absolute_offset = actual.line.length * actual.relative_offset
+    bearing_point = project_along_path(coordinates, absolute_offset + bear_dist)
+    bear = degrees(bearing(actual.position(), bearing_point))
     return score_angle_difference(wanted.bear, bear)
 
 
 def score_lrp_candidate(
-    wanted: LocationReferencePoint, candidate: Line, radius: float, is_last_lrp: bool
+    wanted: LocationReferencePoint,
+    candidate: PointOnLine, config: Config, is_last_lrp: bool
 ) -> float:
     """Scores the candidate (line) for the LRP.
 
     This is the average of fow, frc, geo and bearing score."""
+    debug(f"scoring {candidate} with config {config}")
     score = (
-        FOW_WEIGHT * score_fow(wanted.fow, candidate.fow)
-        + FRC_WEIGHT * score_frc(wanted.frc, candidate.frc)
-        + GEO_WEIGHT * score_geolocation(wanted, candidate, radius, is_last_lrp)
-        + BEAR_WEIGHT * score_bearing(wanted, candidate, is_last_lrp)
+        config.fow_weight * config.fow_standin_score[wanted.fow][candidate.line.fow]
+        + config.frc_weight * score_frc(wanted.frc, candidate.line.frc)
+        + config.geo_weight * score_geolocation(wanted, candidate, config.search_radius, is_last_lrp)
+        + config.bear_weight * score_bearing(wanted, candidate, is_last_lrp, config.bear_dist)
     )
-    debug(f"scoring line {candidate.line_id}")
-    debug(f"geo score: {score_geolocation(wanted, candidate, radius, is_last_lrp)}")
-    debug(f"fow score: {score_fow(wanted.fow, candidate.fow)}")
-    debug(f"frc score: {score_frc(wanted.frc, candidate.frc)}")
-    debug(f"bearing score: {score_bearing(wanted, candidate, is_last_lrp)}")
+    debug(f"geo score: {score_geolocation(wanted, candidate, config.search_radius, is_last_lrp)}")
+    debug(f"fow score: {config.fow_standin_score[wanted.fow][candidate.line.fow]}")
+    debug(f"frc score: {score_frc(wanted.frc, candidate.line.frc)}")
+    debug(f"bearing score: {score_bearing(wanted, candidate, is_last_lrp, config.bear_dist)}")
     debug(f"total score: {score}")
     return score
