@@ -16,9 +16,9 @@ This is a Python package for decoding OpenLR™ location references on target ma
 - [openlr](https://github.com/tomtom-international/openlr-python) (PyPi package)
 - For unittests, SQlite with spatialite extension is required
 ## State
-- ☑ Decoding line locations
-- ☑ Decoding 'point along line' locations
-- ☑ Decoding 'POI with access point' locations
+- [X] Decoding line locations
+- [X] Decoding 'point along line' locations
+- [X] Decoding 'POI with access point' locations
 ## Structure
 It is divided into the following submodules:
 ### maps
