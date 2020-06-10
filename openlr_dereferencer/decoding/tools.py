@@ -10,65 +10,6 @@ from ..maps.wgs84 import project_along_path
 from .routes import Route, PointOnLine
 
 
-def add_offsets(path: List[Line], p_off: float, n_off: float) -> List[Coordinates]:
-    "Add the absolute meter offsets to `path` and return the resulting coordinate list"
-    if len(path) == 1:
-        # Special case where the path has only one line
-        # Trim the single line by the start and end offset
-        line = path[0]
-        geometry = line.geometry
-        length = line.length
-
-        start_fraction = p_off / length
-        stop_fraction = 1.0 - (n_off / length)
-        trimmed_geometry = substring(geometry, start_fraction, stop_fraction, normalized=True)
-
-        return [Coordinates(*c) for c in trimmed_geometry.coords]
-    else:
-        # Path has multiple lines
-
-        # Trim the first line by the start offset
-        first_line = path[0]
-        first_line_geometry = first_line.geometry
-        first_line_length = first_line.length
-
-        start_fraction = p_off / first_line_length
-        first_line_trimmed_geometry = substring(first_line_geometry, start_fraction, 1.0, normalized=True)
-
-        # Trim the last line by the end offset
-        last_line = path[-1]
-        last_line_geometry = last_line.geometry
-        last_line_length = last_line.length
-
-        stop_fraction = 1.0 - (n_off / last_line_length)
-        last_line_trimmed_geometry = substring(last_line_geometry, 0.0, stop_fraction, normalized=True)
-
-        # Gather all coordinates
-        all_coordinates = []
-
-        for c in first_line_trimmed_geometry.coords:
-            all_coordinates.append(Coordinates(*c))
-
-        for intermediate_line in path[1:-1]:
-            for c in intermediate_line.geometry.coords:
-                all_coordinates.append(Coordinates(*c))
-
-        for c in last_line_trimmed_geometry.coords:
-            all_coordinates.append(Coordinates(*c))
-
-        # Remove duplicate consecutive coordinates
-        coordinates_without_duplicates = []
-        previous = None
-
-        for c in all_coordinates:
-            if previous != None and c == previous:
-                continue
-            coordinates_without_duplicates.append(c)
-            previous = c
-
-        return coordinates_without_duplicates
-
-
 def remove_offsets(path: Route, p_off: float, n_off: float) -> Route:
     """Remove start+end offsets, measured in meters, from a route and return the result"""
     debug(f"Will consider positive offset = {p_off} m and negative offset {n_off} m.")
