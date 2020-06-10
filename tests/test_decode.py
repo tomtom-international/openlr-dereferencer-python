@@ -5,17 +5,19 @@ from itertools import zip_longest
 from typing import List, Iterable, TypeVar, NamedTuple
 from shapely.geometry import LineString
 from openlr import Coordinates, FRC, FOW, LineLocationReference, LocationReferencePoint,\
-    PointAlongLineLocationReference, Orientation, SideOfRoad, PoiWithAccessPointLocationReference
+    PointAlongLineLocationReference, Orientation, SideOfRoad, PoiWithAccessPointLocationReference, \
+    GeoCoordinateLocationReference
 
 from openlr_dereferencer import decode, Config
 from openlr_dereferencer.decoding import PointAlongLine, LineLocation, LRDecodeError, PoiWithAccessPoint
 from openlr_dereferencer.decoding.candidates import nominate_candidates
 from openlr_dereferencer.decoding.scoring import score_geolocation, score_frc, \
     score_bearing, score_angle_difference
-from openlr_dereferencer.decoding.tools import PointOnLine
+from openlr_dereferencer.decoding.routes import PointOnLine, Route
+from openlr_dereferencer.decoding.tools import remove_offsets
 from openlr_dereferencer.observer import SimpleObserver
 from openlr_dereferencer.example_sqlite_map import ExampleMapReader
-from openlr_dereferencer.maps.wgs84 import distance, bearing
+from openlr_dereferencer.maps.wgs84 import distance, bearing, project
 
 from .example_mapformat import setup_testdb, remove_db_file
 
@@ -297,6 +299,10 @@ class DecodingTests(unittest.TestCase):
         with self.assertRaises(LRDecodeError):
             decode(reference, self.reader)
 
+    def test_inapt_reference_type(self):
+        with self.assertRaises(LRDecodeError):
+            decode("Hello", self.reader)
+
     def test_decode_offsets(self):
         "Decode a line location with offsets"
         reference = get_test_linelocation_1()
@@ -377,6 +383,19 @@ class DecodingTests(unittest.TestCase):
         self.assertTrue(observer.candidates)
         self.assertListEqual([route.success for route in observer.attempted_routes], [True])
 
+    def test_decode_coord(self):
+        coord = Coordinates(13.0, 51.0)
+        reference = GeoCoordinateLocationReference(coord)
+        location = decode(reference, self.reader)
+        self.assertAlmostEqual(coord.lon, location.lon)
+        self.assertAlmostEqual(coord.lat, location.lat)
+
+    def tearDown(self):
+        self.reader.connection.close()
+        remove_db_file(self.db)
+
+
+class DecodingToolsTests(unittest.TestCase):
     def test_load_saved_config(self):
         "Save and load a Config object"
         filename = "test-config.json"
@@ -385,6 +404,29 @@ class DecodingTests(unittest.TestCase):
         self.assertDictEqual(config.tolerated_lfrc, DEFAULT_CONFIG.tolerated_lfrc)
         self.assertEqual(config.bear_dist, DEFAULT_CONFIG.bear_dist)
 
-    def tearDown(self):
-        self.reader.connection.close()
-        remove_db_file(self.db)
+    def test_remove_offsets(self):
+        "Remove offsets containing lines"
+        node0 = DummyNode(Coordinates(13.128987, 52.494595))
+        node1 = DummyNode(project(node0.coord, 20, 180.0))
+        node2 = DummyNode(project(node1.coord, 90, 90.0))
+        node3 = DummyNode(project(node2.coord, 20, 180.0))
+        lines = [
+            DummyLine(0, node0, node1),
+            DummyLine(1, node1, node2),
+            DummyLine(2, node2, node3)
+        ]
+        route = Route(PointOnLine(lines[0], 0.5), [lines[1]], PointOnLine(lines[2], 0.5))
+        route = remove_offsets(route, 40, 40)
+        self.assertListEqual(route.lines, [lines[1]])
+        self.assertAlmostEqual(route.length(), 30, delta=1)
+
+    def test_remove_offsets_raises(self):
+        "Remove too big offsets"
+        node0 = DummyNode(Coordinates(13.128987, 52.494595))
+        node1 = DummyNode(project(node0.coord, 10, 180.0))
+        line = DummyLine(0, node0, node1)
+        route = Route(PointOnLine(line, 0.0), [], PointOnLine(line, 1.0))
+        with self.assertRaises(LRDecodeError):
+            remove_offsets(route, 11, 0)
+        with self.assertRaises(LRDecodeError):
+            remove_offsets(route, 0, 11)
