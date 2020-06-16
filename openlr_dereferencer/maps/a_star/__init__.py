@@ -23,16 +23,19 @@ class PQItem(NamedTuple):
 
 
 def shortest_path(
-    start: Node,
-    end: Node,
-    linefilter: Callable[[Line], bool] = tautology,
-    maxlen: float = float("inf"),
+        start: Node,
+        end: Node,
+        linefilter: Callable[[Line], bool] = tautology,
+        maxlen: float = float("inf"),
 ) -> List[Line]:
     """
     Returns a shortest path on the map between two nodes, as list of lines.
 
-    Uses the A* algorithm for this.
-    https://en.wikipedia.org/wiki/A*_search_algorithm
+    Uses the `A*`_ algorithm for this.
+
+    You may filter considered lines with `linefilter` and paths with `maxlen`.
+
+    .. _A*: https://en.wikipedia.org/wiki/A*_search_algorithm
 
     Args:
         start:
@@ -55,7 +58,7 @@ def shortest_path(
     Raises:
         LRPathNotFoundError:
             Raised if no path between the nodes could be found.
-            
+
             Even if a path exists, this may happen for two reasons:
 
             * No path exists were all lines pass the `linefilter`
@@ -110,7 +113,12 @@ def shortest_path(
             if neighbor_f_score > maxlen:
                 continue
 
-            neighbor = PQItem(Score(neighbor_f_score, neighbor_g_score), neighbor_node, line, current)
+            neighbor = PQItem(
+                Score(neighbor_f_score, neighbor_g_score),
+                neighbor_node,
+                line,
+                current
+            )
 
             heappush(open_set, neighbor)
 

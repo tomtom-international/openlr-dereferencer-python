@@ -95,9 +95,30 @@ def match_tail(
     Every element of `candidates` is routed to every candidate for `tail[0]` (best scores first).
     Actually not _every_ element, just as many as it needs until some path matches the DNP.
 
-    If any pair matches, the function calls itself for the rest of `tail` and returns.
+    Args:
+        current:
+            The LRP with which this part of the line location reference starts.
+        candidates:
+            The Candidates for the current LRP
+        tail:
+            The LRPs following the current.
+            
+            Contains at least one LRP, as any route has two ends.
+        reader:
+            The map reader on which we are operating. Needed for nominating next candidates.
+        config:
+            The wanted behaviour, as configuration options
+        observer:
+            The optional decoder observer, which emits events and calls back.
 
-    If not, a `LRDecodeError` exception is raised."""
+    Returns:
+        If any candidate pair matches, the function calls itself for the rest of `tail` and
+        returns the resulting list of routes.
+
+    Raises:
+        LRDecodeError:
+            If no candidate pair matches or a recursive call can not resolve a route.
+    """
     last_lrp = len(tail) == 1
     # The accepted distance to next point. This helps to save computations and filter bad paths
     minlen = (1 - config.max_dnp_deviation) * current.dnp - config.tolerated_dnp_dev
