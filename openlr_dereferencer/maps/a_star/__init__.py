@@ -34,14 +34,32 @@ def shortest_path(
     Uses the A* algorithm for this.
     https://en.wikipedia.org/wiki/A*_search_algorithm
 
-    A `LRPathNotFoundError` is raised if there is no path between the nodes.
+    Args:
+        start:
+            The node from which the path shall start
+        end:
+            The destination node of the path
+        linefilter:
+            The optional function parameter `linefilter(Line) -> bool` allows you to decide
+            whether a line is allowed to be part of the path. If the function returns `False`,
+            the line will not be taken into account.
+            This is used for the 'lowest frc next point' attribute of openLR line references.
+        maxlen:
+            Maximum allowed path length.
+            Abort the search for a shortest-path if this length is exceeded.
 
-    An empty path indicates that start and end node are the same.
+    Returns:
+        A shortest path between the both nodes, after exclusion of lines according to `linefilter`
 
-    The optional function parameter `linefilter(Line) -> bool` decides whether
-    a line is allowed to be part of the path. If the function returns `False`, the line
-    will not be taken into account.
-    This is used for the 'lowest frc next point' attribute of openLR line references.
+        An empty path indicates that start and end node are the same.
+    Raises:
+        LRPathNotFoundError:
+            Raised if no path between the nodes could be found.
+            
+            Even if a path exists, this may happen for two reasons:
+
+            * No path exists were all lines pass the `linefilter`
+            * All existing paths are longer than `maxlen`
     """
 
     # The initial queue item

@@ -1,5 +1,7 @@
+"Contains the Candidate class"
 from typing import Optional
 from .routes import PointOnLine
+
 
 class Candidate(PointOnLine):
     "An LRP candidate, represented by a point on the road network along with its score"

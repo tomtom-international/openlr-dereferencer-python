@@ -71,8 +71,7 @@ class Line(AbstractLine):
         # https://gis.stackexchange.com/questions/359993/spatialite-distance-returns-null-when-geometries-touch
         if dist is None:
             return 0.0
-        else:
-            return dist
+        return dist
 
     def num_points(self) -> int:
         "Returns how many points the path geometry contains"

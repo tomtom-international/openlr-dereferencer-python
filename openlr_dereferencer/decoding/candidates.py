@@ -13,7 +13,13 @@ from .tools import LRDecodeError, coords, project
 from .routes import Route
 from .configuration import Config
 
-def make_candidates(lrp: LocationReferencePoint, line: Line, config: Config, is_last_lrp: bool) -> Iterable[Candidate]:
+
+def make_candidates(
+        lrp: LocationReferencePoint,
+        line: Line,
+        config: Config,
+        is_last_lrp: bool
+) -> Iterable[Candidate]:
     "Return zero or more LRP candidates based on the given line"
     dist = line.length
     reloff = project(line.geometry, coords(lrp))
@@ -30,16 +36,18 @@ def make_candidates(lrp: LocationReferencePoint, line: Line, config: Config, is_
     if candidate.score >= config.min_score:
         yield candidate
 
+
 def nominate_candidates(
-    lrp: LocationReferencePoint, reader: MapReader, config: Config, is_last_lrp: bool
+        lrp: LocationReferencePoint, reader: MapReader, config: Config, is_last_lrp: bool
 ) -> Iterable[Candidate]:
     "Returns a list of candidate lines for the LRP along with their score."
     debug(f"Finding candidates for LRP {lrp} at {coords(lrp)} in radius {config.search_radius}")
     for line in reader.find_lines_close_to(coords(lrp), config.search_radius):
         yield from make_candidates(lrp, line, config, is_last_lrp)
 
+
 def get_candidate_route(
-    map_reader: MapReader, c1: Candidate, c2: Candidate, lfrc: FRC, last_lrp: bool, maxlen: float
+        mapreader: MapReader, c1: Candidate, c2: Candidate, lfrc: FRC, lastlrp: bool, maxlen: float
 ) -> Optional[Route]:
     """Returns the shortest path between two LRP candidates, excluding partial lines.
 
@@ -48,10 +56,10 @@ def get_candidate_route(
     Args:
         map_reader:
             A reader for the map on which the path is searched
-        line1:
-            The start line.
-        line2:
-            The end line.
+        c1:
+            The starting point.
+        c2:
+            The ending point.
         lfrc:
             "lowest frc". Line objects from map_reader with an FRC lower than lfrc will be ignored.
         maxlen:
@@ -62,7 +70,7 @@ def get_candidate_route(
         The returned path excludes the lines the candidate points are on.
         If there is no matching path found, None is returned.
     """
-    debug(f"Try to find path between lines {c1.line.line_id, c2.line.line_id}")
+    debug(f"Try to find path between {c1, c2}")
     if c1.line.line_id == c2.line.line_id:
         return Route(c1, [], c2)
     debug(f"Finding path between nodes {c1.line.end_node.node_id, c2.line.start_node.node_id}")
@@ -77,14 +85,13 @@ def get_candidate_route(
 
 
 def match_tail(
-    current: LocationReferencePoint,
-    candidates: List[Candidate],
-    tail: List[LocationReferencePoint],
-    reader: MapReader,
-    config: Config,
-    observer: Optional[DecoderObserver]
+        current: LocationReferencePoint,
+        candidates: List[Candidate],
+        tail: List[LocationReferencePoint],
+        reader: MapReader,
+        config: Config,
+        observer: Optional[DecoderObserver]
 ) -> List[Route]:
-
     """Searches for the rest of the line location.
 
     Every element of `candidates` is routed to every candidate for `tail[0]` (best scores first).

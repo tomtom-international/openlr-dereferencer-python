@@ -1,3 +1,5 @@
+"Defines data types out of which line locations consist"
+
 from typing import NamedTuple, Tuple, Optional, List
 from shapely.geometry import LineString
 from shapely.ops import substring, linemerge
@@ -6,12 +8,12 @@ from ..maps.abstract import Line, path_length
 
 class PointOnLine(NamedTuple):
     "A point on the road network"
+    #: The line element on which the point resides
     line: Line
-    "The line element on which the point resides"
+    #: Specifies the relative offset of the point.
+    #: Its value is member of the interval [0.0, 1.0].
+    #: A value of 0 references the starting point of the line.
     relative_offset: float
-    """Specifies the relative offset of the point.
-    Its value is member of the interval [0.0, 1.0].
-    A value of 0 references the starting point of the line."""
 
     def position(self) -> Coordinates:
         "Returns the actual geo position"
@@ -30,12 +32,12 @@ class PointOnLine(NamedTuple):
 
 class Route(NamedTuple):
     "A part of a line location path. May contain partial lines."
+    #: The point with which this location is starting
     start: PointOnLine
-    "The point with which this location is starting"
+    #: While the first and the last line may be partial, these are the intermediate lines.
     path_inbetween: List[Line]
-    "While the first and the last line may be partial, these are the intermediate lines."
+    #: The point on which this location is ending
     end: PointOnLine
-    "The point on which this location is ending"
 
     @property
     def lines(self) -> List[Line]:
@@ -73,7 +75,11 @@ class Route(NamedTuple):
     def shape(self) -> LineString:
         "Returns the shape of the route. The route is has to be continuous."
         if self.start.line.line_id == self.end.line.line_id:
-            return substring(self.start.line.geometry, self.start.relative_offset, self.end.relative_offset, normalized=True)
+            return substring(
+                self.start.line.geometry,
+                self.start.relative_offset,
+                self.end.relative_offset, normalized=True
+            )
         return linemerge(
             [self.start.split()[1]] +
             [line.geometry for line in self.path_inbetween] +

@@ -1,8 +1,9 @@
 "Contains the configuration object that can be passed to the decoder, as well as default values"
-from typing import NamedTuple, List, Dict, Union, Optional
 from io import TextIOBase
 from json import loads, dumps
-from openlr import FRC, FOW
+from typing import NamedTuple, List, Dict, Union, Optional
+
+from openlr import FRC
 
 #: The default value for the `fow_standin_score` config option.
 #: The values are adopted from the openlr Java implementation.
@@ -17,9 +18,10 @@ DEFAULT_FOW_STAND_IN_SCORE = [
     [0.50, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.0],  # Other FOW
 ]
 
+
 class Config(NamedTuple):
     """A config object that provides all settings that influences the decoder's behaviour
-    
+
     Customize the values where the default won't fit you:
 
     .. code-block:: python
@@ -27,7 +29,8 @@ class Config(NamedTuple):
         myconfig = Config(min_score=0.9, search_radius=10)
     """
 
-    #: Configures the default radius to search for map objects around an LRP. This value is in meters.
+    #: Configures the default radius to search for map objects around an LRP.
+    #: This value is in meters.
     search_radius: float = 100.0
     #: Tolerable relative DNP deviation of a path
     #:
@@ -38,14 +41,16 @@ class Config(NamedTuple):
     #: Additional buffer to the range of allowed path distance
     #:
     #: In order to be considered, a path must not deviate from the DNP value by more than
-    #: :py:attr:`~max_dnp_deviation` (relative value) plus :py:attr:`~tolerated_dnp_dev`. This value is in meters.
+    #: :py:attr:`~max_dnp_deviation` (relative value) plus :py:attr:`~tolerated_dnp_dev`.
+    #: This value is in meters.
     tolerated_dnp_dev: int = 30
-    #: A filter for candidates with insufficient score. Candidates below this score are not considered.
+    #: A filter for candidates with insufficient score.
+    #: Candidates below this score are not considered.
     #: As this value is a score, it is in the range of [0.0, 1.0].
     min_score: float = 0.3
     #: For every LFRCNP possibly present in an LRP, this defines
     #: what lowest FRC in a considered route is acceptable
-    tolerated_lfrc: Dict[FRC, FRC] = {frc:frc for frc in FRC}
+    tolerated_lfrc: Dict[FRC, FRC] = {frc: frc for frc in FRC}
     #: Partial candidate line threshold, measured in meters
     #:
     #: To find candidates, the LRP coordinates are projected against any line in the local area.
@@ -72,9 +77,10 @@ class Config(NamedTuple):
 
 DEFAULT_CONFIG = Config()
 
+
 def load_config(source: Union[str, TextIOBase, dict]) -> Config:
     """Load config from a source
-    
+
     Args:
         source:
             Either an open text file containing a JSON dict, or the path to it, or a dictionary
@@ -100,7 +106,7 @@ def load_config(source: Union[str, TextIOBase, dict]) -> Config:
             opened_source['min_score'],
             {
                 FRC(int(key)): FRC(value)
-                for (key, value) in opened_source['tolerated_lfrc'].items() 
+                for (key, value) in opened_source['tolerated_lfrc'].items()
             },
             opened_source['candidate_threshold'],
             opened_source['fow_weight'],
@@ -113,10 +119,15 @@ def load_config(source: Union[str, TextIOBase, dict]) -> Config:
     )
 
 
-def save_config(config: Config, dest: Union[str, TextIOBase, type(None)] = None) -> Optional[dict]:
+NoneType: object = type(None)
+
+
+def save_config(config: Config, dest: Union[str, TextIOBase, NoneType] = None) -> Optional[dict]:
     """Saves a config to a file or a dictionary
-    
+
     Args:
+        config:
+            The config.
         dest:
             Either a path, or an already write-opened text file, or nothing.
     Returns:

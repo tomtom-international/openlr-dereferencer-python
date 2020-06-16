@@ -159,7 +159,7 @@ class DecodingTests(unittest.TestCase):
         node1 = DummyNode(Coordinates(0.0, 0.0))
         node2 = DummyNode(Coordinates(0.0, 90.0))
         pal = PointOnLine(DummyLine(None, node1, node2), 0.0)
-        score = score_geolocation(lrp, pal, 1.0, False)
+        score = score_geolocation(lrp, pal, 1.0)
         self.assertEqual(score, 1.0)
 
     def test_geoscore_0(self):
@@ -168,7 +168,7 @@ class DecodingTests(unittest.TestCase):
         node1 = DummyNode(Coordinates(0.0, 0.0))
         node2 = DummyNode(Coordinates(0.0, 90.0))
         pal = PointOnLine(DummyLine(None, node1, node2), 1.0)
-        score = score_geolocation(lrp, pal, 1.0, True)
+        score = score_geolocation(lrp, pal, 1.0)
         self.assertEqual(score, 0.0)
 
     def test_frcscore_0(self):
