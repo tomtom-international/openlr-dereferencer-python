@@ -46,9 +46,7 @@ def nominate_candidates(
         yield from make_candidates(lrp, line, config, is_last_lrp)
 
 
-def get_candidate_route(
-        mapreader: MapReader, c1: Candidate, c2: Candidate, lfrc: FRC, lastlrp: bool, maxlen: float
-) -> Optional[Route]:
+def get_candidate_route(c1: Candidate, c2: Candidate, lfrc: FRC, lastlrp: bool, maxlen: float) -> Optional[Route]:
     """Returns the shortest path between two LRP candidates, excluding partial lines.
 
     If it is longer than `maxlen`, it is treated as if no path exists.
@@ -121,7 +119,7 @@ def match_tail(
 
     # For every pair of candidates, search for a path matching our requirements
     for (c1, c2) in pairs:
-        route = get_candidate_route(reader, c1, c2, lfrc, last_lrp, maxlen)
+        route = get_candidate_route(c1, c2, lfrc, last_lrp, maxlen)
 
         if not route:
             debug("No path for candidate found")
