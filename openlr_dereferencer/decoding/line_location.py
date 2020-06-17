@@ -29,12 +29,12 @@ class LineLocation:
 
     @property
     def p_off(self) -> float:
-        "The location may start after a certain absolute offset on the first line (in meters)"
+        "This location starts `p_off` meters into the first line"
         return self.internal_route.absolute_start_offset
 
     @property
     def n_off(self) -> float:
-        "This location ends `p_off` meters before the last line"
+        "This location ends `n_off` meters before the last line"
         return self.internal_route.absolute_end_offset
 
 

@@ -29,7 +29,7 @@ class PointAlongLine(NamedTuple):
     orientation: Orientation
 
     def coordinates(self) -> Coordinates:
-        "Returns the actual geo coordinate"
+        "Returns the geo coordinates of the point"
         return project_along_path(list(self.line.coordinates()), self.positive_offset)
 
 
@@ -59,7 +59,7 @@ def decode_pointalongline(
         config: Config,
         observer: Optional[DecoderObserver]
 ) -> PointAlongLine:
-    "Decodes a point along line location reference"
+    "Decodes a point along line location reference into a PointAlongLine object"
     path = combine_routes(dereference_path(reference.points, reader, config, observer))
     absolute_offset = path.length() * reference.poffs
     line_object, line_offset = point_along_linelocation(path, absolute_offset)
@@ -85,7 +85,7 @@ def decode_poi_with_accesspoint(
         config: Config,
         observer: Optional[DecoderObserver]
 ) -> PoiWithAccessPoint:
-    "Decodes a point along line location reference into a Coordinates tuple"
+    "Decodes a poi with access point location reference into a PoiWithAccessPoint"
     path = combine_routes(dereference_path(reference.points, reader, config, observer))
     absolute_offset = path_length(get_lines([path])) * reference.poffs
     line, line_offset = point_along_linelocation(path, absolute_offset)

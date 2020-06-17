@@ -51,7 +51,12 @@ def coords(lrp: LocationReferencePoint) -> Coordinates:
 
 
 def project(line_string: LineString, coord: Coordinates) -> float:
-    "The nearest point to `coord` on the line, as relative distance along it"
+    """Computes the nearest point to `coord` on the line
+    
+    Returns:
+        The place on `line_string` where this nearest point resides, as
+        a fractional value in [ 0.0 .. 1.0 ], where 0.0 specifies the
+        starting and 1.0 the ending point."""
     return line_string.project(Point(coord.lon, coord.lat), normalized=True)
 
 

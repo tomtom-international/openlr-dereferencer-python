@@ -78,13 +78,14 @@ class Route(NamedTuple):
             return substring(
                 self.start.line.geometry,
                 self.start.relative_offset,
-                self.end.relative_offset, normalized=True
+                self.end.relative_offset,
+                normalized=True
             )
-        return linemerge(
-            [self.start.split()[1]] +
+        return linemerge([
+            self.start.split()[1]] +
             [line.geometry for line in self.path_inbetween] +
-            [self.end.split()[0]]
-        )
+            [self.end.split()[0]
+        ])
 
     def coordinates(self) -> List[Coordinates]:
         "Returns all Coordinates of this line location"

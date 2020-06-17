@@ -24,9 +24,7 @@ class Config(NamedTuple):
 
     Customize the values where the default won't fit you:
 
-    .. code-block:: python
-
-        myconfig = Config(min_score=0.9, search_radius=10)
+        >>> myconfig = Config(min_score=0.9, search_radius=10)
     """
 
     #: Configures the default radius to search for map objects around an LRP.
