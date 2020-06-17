@@ -2,7 +2,7 @@
 "Creates a test map DB"
 
 from sys import argv
-from openlr_decoder.tests.example_mapformat import setup_testdb, remove_db_file
+from tests.example_mapformat import setup_testdb, remove_db_file
 
 def clean_setup(db_file_path):
     remove_db_file(db_file_path)
