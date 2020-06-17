@@ -390,6 +390,14 @@ class DecodingTests(unittest.TestCase):
         self.assertAlmostEqual(coord.lon, location.lon)
         self.assertAlmostEqual(coord.lat, location.lat)
 
+    def test_bearing_threshold(self):
+        myconfig = Config(max_bear_deviation=10.0)
+        reference = get_test_linelocation_3()
+        decode(reference, self.reader, config=myconfig)
+        too_strict_config = Config(max_bear_deviation=0.0)
+        with self.assertRaises(LRDecodeError):
+            decode(reference, self.reader, config=too_strict_config)
+
     def tearDown(self):
         self.reader.connection.close()
         remove_db_file(self.db)
