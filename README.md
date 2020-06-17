@@ -9,18 +9,21 @@
 
 
 This is a Python package for decoding OpenLR™ location references on target maps.
+
+Its purpose is to give insights into this map-matching process.
+
 ## Dependencies
 - Python ≥ 3.6
 - geographiclib (PyPi package)
 - shapely (PyPi package)
 - [openlr](https://github.com/tomtom-international/openlr-python) (PyPi package)
-- For unittests, SQlite with spatialite extension is required
+- For unittests: SpatiaLite
 ## State
 - [X] Decoding line locations
 - [X] Decoding 'point along line' locations
 - [X] Decoding 'POI with access point' locations
 ## Structure
-It is divided into the following submodules:
+This package is divided into the following submodules:
 ### maps
 Contains an abstract map class, which you may want to implement for your target map.
 
@@ -32,7 +35,10 @@ The actual logic for matching references onto a map.
 
 This includes finding candidate lines and scoring them, and assembling a dereferenced location.
 
-# Installation
+## observer
+Contains the observer class, allowing you to hook onto certain events in the decoding process.
+
+## Installation
 This project is available on PyPi:
 ```sh
 pip3 install openlr-dereferencer
@@ -60,8 +66,8 @@ real_location.lines # <- A list of map objects
 ```
 
 ## Configuration
-The `decode` function takes in an optional `Config` object contaning decoding settings.
-You may just change these before decoding:
+The `decode` function takes in an optional [Config](https://openlr-dereferencer-python.readthedocs.io/en/latest/openlr_dereferencer.decoding.html#openlr_dereferencer.decoding.configuration.Config) object containing decoding settings.
+WIth it, you may specify the decoder's behaviour:
 ```py
 from openlr_dereferencer import decode, Config
 
@@ -74,8 +80,6 @@ my_config = Config(
 
 decode(reference, mapreader, config=my_config)
 ```
-
-The full list of available options is located [here](https://openlr-dereferencer-python.readthedocs.io/en/latest/openlr_dereferencer.decoding.html#openlr_dereferencer.decoding.configuration.Config).
 
 ## Logging
 `openlr-dereferencer` logs all mapmatching decisions using the standard library `logging` module.
