@@ -53,6 +53,9 @@ class Config(NamedTuple):
     #: beginning at the projection point is considered to be the candidate. Else, the candidate
     #: snaps onto the starting point (or ending point, when it is the last LRP)
     candidate_threshold: int = 20
+    #: Defines a threshold for the bearing difference. Candidates differing too much from
+    #: the LRP's bearing value are pre-filtered.
+    max_bear_deviation: float = 45.0
     #: Defines the weight the FOW score has on the overall score of a candidate.
     fow_weight: float = 1 / 4
     #: Defines the weight the FRC score has on the overall score of a candidate.
@@ -103,6 +106,7 @@ def load_config(source: Union[str, TextIOBase, dict]) -> Config:
                 for (key, value) in opened_source['tolerated_lfrc'].items() 
             },
             opened_source['candidate_threshold'],
+            opened_source['max_bear_deviation'],
             opened_source['fow_weight'],
             opened_source['frc_weight'],
             opened_source['geo_weight'],

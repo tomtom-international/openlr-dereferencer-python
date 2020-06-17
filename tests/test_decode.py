@@ -65,15 +65,15 @@ def get_test_linelocation_1():
     "Return a prepared line location with 3 LRPs"
     # References node 0 / line 1 / lines 1, 3
     lrp1 = LocationReferencePoint(13.41, 52.525,
-                                  FRC.FRC0, FOW.SINGLE_CARRIAGEWAY, 90,
+                                  FRC.FRC0, FOW.SINGLE_CARRIAGEWAY, 90.0,
                                   FRC.FRC2, 837.0)
     # References node 3 / line 4
     lrp2 = LocationReferencePoint(13.4145, 52.529,
-                                  FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, 0.0,
+                                  FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, 170,
                                   FRC.FRC2, 456.6)
     # References node 4 / line 4
     lrp3 = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
-                                  FOW.SINGLE_CARRIAGEWAY, 0.125, None, None)
+                                  FOW.SINGLE_CARRIAGEWAY, 320.0, None, None)
     return LineLocationReference([lrp1, lrp2, lrp3], 0.0, 0.0)
 
 
@@ -81,11 +81,11 @@ def get_test_linelocation_2():
     "Return a undecodable line location with 2 LRPs"
     # References node 0 / line 1 / lines 1, 3
     lrp1 = LocationReferencePoint(13.41, 52.525,
-                                  FRC.FRC0, FOW.SINGLE_CARRIAGEWAY, 90/11.25,
+                                  FRC.FRC0, FOW.SINGLE_CARRIAGEWAY, 90.0,
                                   FRC.FRC2, 0.0)
     # References node 13 / ~ line 17
     lrp2 = LocationReferencePoint(13.429, 52.523, FRC.FRC2,
-                                  FOW.SINGLE_CARRIAGEWAY, 270/11.25, None, None)
+                                  FOW.SINGLE_CARRIAGEWAY, 270.0, None, None)
     return LineLocationReference([lrp1, lrp2], 0.0, 0.0)
 
 
@@ -95,11 +95,11 @@ def get_test_linelocation_3():
     This simulates that the start and end junction are missing on the target map."""
     # References a point on line 1
     lrp1 = LocationReferencePoint(13.411, 52.525,
-                                  FRC.FRC1, FOW.SINGLE_CARRIAGEWAY, 90,
+                                  FRC.FRC1, FOW.SINGLE_CARRIAGEWAY, 90.0,
                                   FRC.FRC1, 135)
     # References another point on line 1
     lrp2 = LocationReferencePoint(13.413, 52.525, FRC.FRC1,
-                                  FOW.SINGLE_CARRIAGEWAY, 270, None, None)
+                                  FOW.SINGLE_CARRIAGEWAY, -90.0, None, None)
     return LineLocationReference([lrp1, lrp2], 0.0, 0.0)
 
 
