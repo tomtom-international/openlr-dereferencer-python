@@ -30,6 +30,16 @@ def score_geolocation(
         return 1.0 - dist / radius
     return 0.0
 
+def angle_difference(angle1: float, angle2: float) -> float:
+    """The difference of two angle values.
+    
+    Args:
+        angle1, angle2:
+            The values are expected in degrees.
+    Returns:
+        A value in the range [-180.0, 180.0]"""
+    return (abs(angle1 - angle2) + 180) % 360 - 180
+
 def score_angle_difference(angle1: float, angle2: float) -> float:
     """Helper for `score_bearing` which scores the angle difference.
 
@@ -38,7 +48,7 @@ def score_angle_difference(angle1: float, angle2: float) -> float:
     Returns:
         The similarity of angle1 and angle2, from 0.0 (180° difference) to 1.0 (0° difference)
     """
-    difference = (abs(angle1 - angle2) + 180) % 360 - 180
+    difference = angle_difference(angle1, angle2)
     return 1 - abs(difference) / 180
 
 
