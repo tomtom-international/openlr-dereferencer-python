@@ -71,7 +71,7 @@ def compute_bearing(
         is_last_lrp: bool,
         bear_dist: float
 ) -> float:
-    "Returns the bearing angle of a partial line in degrees"
+    "Returns the bearing angle of a partial line in degrees in the range 0.0 .. 360.0"
     line1, line2 = candidate.split()
     if is_last_lrp:
         if line1 is None:
@@ -84,4 +84,4 @@ def compute_bearing(
         coordinates = linestring_coords(line2)
     absolute_offset = candidate.line.length * candidate.relative_offset
     bearing_point = project_along_path(coordinates, absolute_offset + bear_dist)
-    return degrees(bearing(coordinates[0], bearing_point))
+    return degrees(bearing(coordinates[0], bearing_point)) + 360.0
