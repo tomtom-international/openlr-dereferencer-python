@@ -23,29 +23,27 @@ from .point_locations import (
 from .configuration import Config, DEFAULT_CONFIG, load_config, save_config
 
 LR = TypeVar("LocationReference",
-    LineLocationReference,
-    PointAlongLineLocationReference,
-    PoiWithAccessPointLocationReference,
-    GeoCoordinateLocationReference)
+             LineLocationReference,
+             PointAlongLineLocationReference,
+             PoiWithAccessPointLocationReference,
+             GeoCoordinateLocationReference)
 
 MAP_OBJECTS = TypeVar("MapObjects", LineLocation, Coordinates, PointAlongLine)
 
+
 def decode(
-    reference: LR, 
-    reader: MapReader,
-    observer: Optional[DecoderObserver] = None,
-    config: Config=DEFAULT_CONFIG
+        reference: LR,
+        reader: MapReader,
+        observer: Optional[DecoderObserver] = None,
+        config: Config = DEFAULT_CONFIG
 ) -> MAP_OBJECTS:
     """Translates an openLocationReference into a real location on your map.
 
     Args:
-
         reference:
             The location reference you want to decode
         reader:
             A reader class for the map on which you want to decode
-        radius:
-            The search path for the location's components' candidates
         observer:
             An observer that collects information when events of interest happen at the decoder
         config:
@@ -66,6 +64,9 @@ def decode(
         +-------------------------------------+------------------------+
         | PoiWithAccessPointLocationReference | PoiWithAccessPoint     |
         +-------------------------------------+------------------------+
+    Raises:
+        LRDecodeError:
+            Raised if the decoding process was not successful.
     """
     if isinstance(reference, LineLocationReference):
         return decode_line(reference, reader, config, observer)

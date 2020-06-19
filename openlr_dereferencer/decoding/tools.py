@@ -3,10 +3,7 @@
 from typing import List
 from logging import debug
 from shapely.geometry import LineString, Point
-from shapely.ops import  substring
 from openlr import Coordinates, LocationReferencePoint
-from ..maps import Line
-from ..maps.wgs84 import project_along_path
 from .routes import Route, PointOnLine
 
 
@@ -20,7 +17,7 @@ def remove_offsets(path: Route, p_off: float, n_off: float) -> Route:
     remaining_poff = p_off + path.absolute_start_offset
     while remaining_poff >= lines[0].length:
         debug(f"Remaining positive offset {remaining_poff} is greater than "
-                f"the first line. Removing it.")
+              f"the first line. Removing it.")
         remaining_poff -= lines.pop(0).length
         if not lines:
             raise LRDecodeError("Offset is bigger than line location path")
@@ -28,7 +25,7 @@ def remove_offsets(path: Route, p_off: float, n_off: float) -> Route:
     remaining_noff = n_off + path.absolute_end_offset
     while remaining_noff >= lines[-1].length:
         debug(f"Remaining negative offset {remaining_noff} is greater than "
-                f"the last line. Removing it.")
+              f"the last line. Removing it.")
         remaining_noff -= lines.pop().length
         if not lines:
             raise LRDecodeError("Offset is bigger than line location path")
@@ -54,7 +51,12 @@ def coords(lrp: LocationReferencePoint) -> Coordinates:
 
 
 def project(line_string: LineString, coord: Coordinates) -> float:
-    "The nearest point to `coord` on the line, as relative distance along it"
+    """Computes the nearest point to `coord` on the line
+    
+    Returns:
+        The place on `line_string` where this nearest point resides, as
+        a fractional value in [ 0.0 .. 1.0 ], where 0.0 specifies the
+        starting and 1.0 the ending point."""
     return line_string.project(Point(coord.lon, coord.lat), normalized=True)
 
 

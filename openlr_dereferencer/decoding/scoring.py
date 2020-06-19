@@ -18,9 +18,7 @@ def score_frc(wanted: FRC, actual: FRC) -> float:
     return 1.0 - abs(actual - wanted) / 7
 
 
-def score_geolocation(
-    wanted: LocationReferencePoint, actual: PointOnLine, radius: float, is_last_lrp: bool
-) -> float:
+def score_geolocation(wanted: LocationReferencePoint, actual: PointOnLine, radius: float) -> float:
     """Scores the geolocation of a candidate.
 
     A distance of `radius` or more will result in a 0.0 score."""
@@ -42,7 +40,12 @@ def score_angle_difference(angle1: float, angle2: float) -> float:
     return 1 - abs(difference) / 180
 
 
-def score_bearing(wanted: LocationReferencePoint, actual: PointOnLine, is_last_lrp: bool, bear_dist: float) -> float:
+def score_bearing(
+        wanted: LocationReferencePoint,
+        actual: PointOnLine,
+        is_last_lrp: bool,
+        bear_dist: float
+) -> float:
     """Scores the difference between expected and actual bearing angle.
 
     A difference of 0° will result in a 1.0 score, while 180° will cause a score of 0.0."""
@@ -63,22 +66,19 @@ def score_bearing(wanted: LocationReferencePoint, actual: PointOnLine, is_last_l
 
 
 def score_lrp_candidate(
-    wanted: LocationReferencePoint,
-    candidate: PointOnLine, config: Config, is_last_lrp: bool
+        wanted: LocationReferencePoint,
+        candidate: PointOnLine, config: Config, is_last_lrp: bool
 ) -> float:
     """Scores the candidate (line) for the LRP.
 
     This is the average of fow, frc, geo and bearing score."""
     debug(f"scoring {candidate} with config {config}")
-    score = (
-        config.fow_weight * config.fow_standin_score[wanted.fow][candidate.line.fow]
-        + config.frc_weight * score_frc(wanted.frc, candidate.line.frc)
-        + config.geo_weight * score_geolocation(wanted, candidate, config.search_radius, is_last_lrp)
-        + config.bear_weight * score_bearing(wanted, candidate, is_last_lrp, config.bear_dist)
-    )
-    debug(f"geo score: {score_geolocation(wanted, candidate, config.search_radius, is_last_lrp)}")
-    debug(f"fow score: {config.fow_standin_score[wanted.fow][candidate.line.fow]}")
-    debug(f"frc score: {score_frc(wanted.frc, candidate.line.frc)}")
-    debug(f"bearing score: {score_bearing(wanted, candidate, is_last_lrp, config.bear_dist)}")
-    debug(f"total score: {score}")
+    geo_score = config.geo_weight * score_geolocation(wanted, candidate, config.search_radius)
+    fow_score = config.fow_weight * config.fow_standin_score[wanted.fow][candidate.line.fow]
+    frc_score = config.frc_weight * score_frc(wanted.frc, candidate.line.frc)
+    bear_score = score_bearing(wanted, candidate, is_last_lrp, config.bear_dist)
+    bear_score *= config.bear_weight
+    score = fow_score + frc_score + geo_score + bear_score
+    debug(f"Score: geo {geo_score} + fow {fow_score} + frc {frc_score} "
+          f"+ bear {bear_score} = {score}")
     return score

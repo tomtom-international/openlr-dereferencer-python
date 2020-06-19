@@ -7,7 +7,7 @@ from .tools import remove_offsets
 from .routes import Route, PointOnLine
 
 class LineLocation:
-    """A dereferenced line location. Create it from a combined Route which represents the 
+    """A dereferenced line location. Create it from a combined Route which represents the
     line location path. The attribute `lines` is the list of involved `Line` elements.
     The attributes `p_off` and `n_off` contain the absolute offset at the first/last of these
     line elements. They are measured in meters.
@@ -24,14 +24,17 @@ class LineLocation:
 
     @property
     def lines(self) -> List[Line]:
+        "The sequence of lines involved in this location"
         return self.internal_route.lines
 
     @property
     def p_off(self) -> float:
+        "This location starts `p_off` meters into the first line"
         return self.internal_route.absolute_start_offset
-    
+
     @property
     def n_off(self) -> float:
+        "This location ends `n_off` meters before the last line"
         return self.internal_route.absolute_end_offset
 
 
@@ -47,6 +50,16 @@ def get_lines(line_location_path: Iterable[Route]) -> List[Line]:
 
 
 def combine_routes(line_location_path: Iterable[Route]) -> Route:
+    """Builds the whole location reference path
+
+    Args:
+        line_location_path:
+            Consecutive Routes, like those partial routes resulting from matching an LRP list
+            onto a map
+
+    Returns:
+        The combined route
+    """
     path = get_lines(line_location_path)
     start = PointOnLine(path.pop(0), line_location_path[0].start.relative_offset)
     if path:
@@ -57,7 +70,7 @@ def combine_routes(line_location_path: Iterable[Route]) -> Route:
 
 
 def build_line_location(path: List[Route], reference: LineLocationReference) -> LineLocation:
-    """Builds a LineLocation object from the location reference path and the offset values.
+    """Builds a LineLocation object from all location reference path parts and the offset values.
 
     The result will be a trimmed list of Line objects, with minimized offset values"""
     p_off = reference.poffs * path[0].length()

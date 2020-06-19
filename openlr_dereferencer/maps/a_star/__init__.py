@@ -23,25 +23,46 @@ class PQItem(NamedTuple):
 
 
 def shortest_path(
-    start: Node,
-    end: Node,
-    linefilter: Callable[[Line], bool] = tautology,
-    maxlen: float = float("inf"),
+        start: Node,
+        end: Node,
+        linefilter: Callable[[Line], bool] = tautology,
+        maxlen: float = float("inf"),
 ) -> List[Line]:
     """
     Returns a shortest path on the map between two nodes, as list of lines.
 
-    Uses the A* algorithm for this.
-    https://en.wikipedia.org/wiki/A*_search_algorithm
+    Uses the `A*`_ algorithm for this.
 
-    A `LRPathNotFoundError` is raised if there is no path between the nodes.
+    You may filter considered lines with `linefilter` and paths with `maxlen`.
 
-    An empty path indicates that start and end node are the same.
+    .. _A*: https://en.wikipedia.org/wiki/A*_search_algorithm
 
-    The optional function parameter `linefilter(Line) -> bool` decides whether
-    a line is allowed to be part of the path. If the function returns `False`, the line
-    will not be taken into account.
-    This is used for the 'lowest frc next point' attribute of openLR line references.
+    Args:
+        start:
+            The node from which the path shall start
+        end:
+            The destination node of the path
+        linefilter:
+            The optional function parameter `linefilter(Line) -> bool` allows you to decide
+            whether a line is allowed to be part of the path. If the function returns `False`,
+            the line will not be taken into account.
+            This is used for the 'lowest frc next point' attribute of openLR line references.
+        maxlen:
+            Maximum allowed path length.
+            Abort the search for a shortest-path if this length is exceeded.
+
+    Returns:
+        A shortest path between the both nodes, after exclusion of lines according to `linefilter`
+
+        An empty path indicates that start and end node are the same.
+    Raises:
+        LRPathNotFoundError:
+            Raised if no path between the nodes could be found.
+
+            Even if a path exists, this may happen for two reasons:
+
+            * No path exists were all lines pass the `linefilter`
+            * All existing paths are longer than `maxlen`
     """
 
     # The initial queue item
@@ -92,7 +113,12 @@ def shortest_path(
             if neighbor_f_score > maxlen:
                 continue
 
-            neighbor = PQItem(Score(neighbor_f_score, neighbor_g_score), neighbor_node, line, current)
+            neighbor = PQItem(
+                Score(neighbor_f_score, neighbor_g_score),
+                neighbor_node,
+                line,
+                current
+            )
 
             heappush(open_set, neighbor)
 
