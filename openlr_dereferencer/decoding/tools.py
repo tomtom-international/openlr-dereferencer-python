@@ -84,4 +84,5 @@ def compute_bearing(
         coordinates = linestring_coords(line2)
     absolute_offset = candidate.line.length * candidate.relative_offset
     bearing_point = project_along_path(coordinates, absolute_offset + bear_dist)
-    return degrees(bearing(coordinates[0], bearing_point)) + 360.0
+    bear = bearing(coordinates[0], bearing_point)
+    return degrees(bear) % 360
