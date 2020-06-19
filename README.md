@@ -67,7 +67,7 @@ real_location.lines # <- A list of map objects
 
 ## Configuration
 The `decode` function takes in an optional [Config](https://openlr-dereferencer-python.readthedocs.io/en/latest/openlr_dereferencer.decoding.html#openlr_dereferencer.decoding.configuration.Config) object containing decoding settings.
-WIth it, you may specify the decoder's behaviour:
+With it, you may specify the decoder's behaviour:
 ```py
 from openlr_dereferencer import decode, Config
 
