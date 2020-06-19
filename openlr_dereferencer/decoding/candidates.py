@@ -28,7 +28,7 @@ def make_candidates(lrp: LocationReferencePoint, line: Line, config: Config, is_
     candidate = Candidate(line, reloff)
     bearing = compute_bearing(lrp, candidate, is_last_lrp, config.bear_dist)
     bear_diff = angle_difference(bearing, lrp.bear)
-    if bear_diff > config.max_bear_deviation:
+    if abs(bear_diff) > config.max_bear_deviation:
         debug(f"Not considering {candidate} because the bearing difference is {bear_diff} °.",
               f"bear: {bearing}. lrp bear: {lrp.bear}")
         return
