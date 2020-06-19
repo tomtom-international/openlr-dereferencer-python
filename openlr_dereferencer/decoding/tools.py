@@ -18,7 +18,7 @@ def remove_offsets(path: Route, p_off: float, n_off: float) -> Route:
     lines = path.lines
     debug(f"This routes consists of {lines} and is {path.length()} m long.")
     # Remove positive offset
-    debug(f"fist line's offset is {path.absolute_start_offset}")
+    debug(f"first line's offset is {path.absolute_start_offset}")
     remaining_poff = p_off + path.absolute_start_offset
     while remaining_poff >= lines[0].length:
         debug(f"Remaining positive offset {remaining_poff} is greater than "
