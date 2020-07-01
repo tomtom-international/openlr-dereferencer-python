@@ -8,8 +8,8 @@ from ..maps import shortest_path, MapReader, Line
 from ..maps.a_star import LRPathNotFoundError
 from ..observer import DecoderObserver
 from .candidate import Candidate
-from .scoring import score_lrp_candidate
-from .tools import LRDecodeError, coords, project
+from .scoring import score_lrp_candidate, angle_difference
+from .tools import LRDecodeError, coords, project, compute_bearing
 from .routes import Route
 from .configuration import Config
 
@@ -32,6 +32,12 @@ def make_candidates(
     if is_last_lrp and reloff == 0.0 or not is_last_lrp and reloff == 1.0:
         return
     candidate = Candidate(line, reloff)
+    bearing = compute_bearing(lrp, candidate, is_last_lrp, config.bear_dist)
+    bear_diff = angle_difference(bearing, lrp.bear)
+    if abs(bear_diff) > config.max_bear_deviation:
+        debug(f"Not considering {candidate} because the bearing difference is {bear_diff} °.",
+              f"bear: {bearing}. lrp bear: {lrp.bear}")
+        return
     candidate.score = score_lrp_candidate(lrp, candidate, config, is_last_lrp)
     if candidate.score >= config.min_score:
         yield candidate

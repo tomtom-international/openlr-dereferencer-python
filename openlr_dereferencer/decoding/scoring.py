@@ -5,12 +5,12 @@ FOW_WEIGHT + FRC_WEIGHT + GEO_WEIGHT + BEAR_WEIGHT should always be `1`.
 The result of the scoring functions will be floats from 0.0 to 1.0,
 with `1.0` being an exact match and 0.0 being a non-match."""
 
-from math import degrees
 from logging import debug
 from openlr import FRC, FOW, LocationReferencePoint
 from ..maps.wgs84 import project_along_path, distance, bearing
 from .tools import coords, PointOnLine, linestring_coords
 from .configuration import Config
+from .tools import compute_bearing
 
 
 def score_frc(wanted: FRC, actual: FRC) -> float:
@@ -28,6 +28,16 @@ def score_geolocation(wanted: LocationReferencePoint, actual: PointOnLine, radiu
         return 1.0 - dist / radius
     return 0.0
 
+def angle_difference(angle1: float, angle2: float) -> float:
+    """The difference of two angle values.
+    
+    Args:
+        angle1, angle2:
+            The values are expected in degrees.
+    Returns:
+        A value in the range [-180.0, 180.0]"""
+    return (abs(angle1 - angle2) + 180) % 360 - 180
+
 def score_angle_difference(angle1: float, angle2: float) -> float:
     """Helper for `score_bearing` which scores the angle difference.
 
@@ -36,7 +46,7 @@ def score_angle_difference(angle1: float, angle2: float) -> float:
     Returns:
         The similarity of angle1 and angle2, from 0.0 (180° difference) to 1.0 (0° difference)
     """
-    difference = (abs(angle1 - angle2) + 180) % 360 - 180
+    difference = angle_difference(angle1, angle2)
     return 1 - abs(difference) / 180
 
 
@@ -49,19 +59,7 @@ def score_bearing(
     """Scores the difference between expected and actual bearing angle.
 
     A difference of 0° will result in a 1.0 score, while 180° will cause a score of 0.0."""
-    line1, line2 = actual.split()
-    if is_last_lrp:
-        if line1 is None:
-            return 0.0
-        coordinates = linestring_coords(line1)
-        coordinates.reverse()
-    else:
-        if line2 is None:
-            return 0.0
-        coordinates = linestring_coords(line2)
-    absolute_offset = actual.line.length * actual.relative_offset
-    bearing_point = project_along_path(coordinates, absolute_offset + bear_dist)
-    bear = degrees(bearing(actual.position(), bearing_point))
+    bear = compute_bearing(wanted, actual, is_last_lrp, bear_dist)
     return score_angle_difference(wanted.bear, bear)
 
 
