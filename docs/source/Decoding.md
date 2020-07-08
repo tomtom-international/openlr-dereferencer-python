@@ -16,18 +16,18 @@ When we obtain a line location, it consists of a line location path (a path thro
 The line location path is referenced by location reference points (LRPs). Each pair of successive LRPs reference a part of the line location path. The goal is to obtain the most appropriate route between each consecutive LRPs, and then putting the parts together.
 
 ## First step: list candidates
-The first step is obtaining roads within a certain radius near each LRP. This is implementation specific; you should use the method based on the map you are using.
+The first step is obtaining roads within a certain radius near each LRP. This is implementation specific; you should use the method based on the map you are using. Since the target map might be missing certain junctions, we have to also consider points between junctions as candidates. The candidates are then the points on the nearest roads that are closest to the LRP coordinates.
 
 ## Second step: score candidates
-The second step is scoring (rating) the various candidate roads (line segments) to determine how well they meet the LRP information. The LRP information referring to the road is:
+The second step is scoring (rating) the various candidates (points on line segments) to determine how well they meet the LRP information. The LRP information referring to the road is:
 
-* The starting point of the road (how well it matches the LRP coordinates),
+* How well it matches the LRP coordinates,
 * The physical appearance of the road (defined as the "form of way"),
 * The functional road class (the logical type of road based on importance, for example a motorway or a secondary road),
 * The direction of the first few meters of road (in relation to due north).
 
 ## Third step: route
-For every LRP, you should now have road candidates coupled with their scores. For each pair of successive LRPs, we take their best-rated candidates. The shortest path between the two roads is computed. While this is happening, roads that are lower than the FRC threshold are ignored. This FRC threshold comes from the lowest FRC next point attribute (LFRCNP).
+For every LRP, you should now have candidate points on roads coupled with their scores. For each pair of successive LRPs, we take their best-rated candidates. The shortest path between the two roads is computed. While this is happening, roads that are lower than the FRC threshold are ignored. This FRC threshold comes from the lowest FRC next point attribute (LFRCNP).
 
 ## Fourth step: track back or go further
 For the shortest path calculated in the third step, we verify that the length of the path matches the designated DNP (distance next point) value. DNP is an attribute of the left side LRP.
@@ -63,16 +63,19 @@ We now list lines around each LRP.
 
 ![Figure 4](_static/3_Candidate_Lines.svg)
 
-In the previous figure we found candidate lines for each of the LRPs.
+In the previous figure we found candidate lines for each of the LRPs. For simplicity, we won't consider partial lines here.
 
-As we stated in the first step, finding candidate lines is achieved by obtaining roads within a certain radius near each LRP. We ask our map reader to get all roads within a certain radius around the LRP coordinates. As a sub-step we compute the score of each returned road. The last sub-step is returning each road along with its score. 
+As we stated in the first step, finding candidate lines is achieved by obtaining roads within a certain radius near each LRP. We ask our map reader to get all roads within a certain radius around the LRP coordinates. On the returned roads, we consider the points closest to the LRP as candidates. As a sub-step we compute the score of each candidate. The last sub-step is returning each road along with its score. 
 The following code snippet shows our implementation of this step:
 
 ```py
-    candidates = list(reader.find_lines_close_to(coords(lrp), radius))
+    for line in reader.find_lines_close_to(coords(lrp), config.search_radius):
+        yield from make_candidates(lrp, line, config, is_last_lrp)
     ...
 ```
 It calls the `find_lines_close_to` method of our map implementation to get map objects within a certain radius.
+
+Then, a function is called to return all possible candidates for this line. In the Python implementation, this is the point on the road that is closest to the LRP.
 
 ### Scoring candidates
 The second step is scoring each candidate so they can be properly sorted later, and consider which candidate is the best. The third step takes the scored candidates and sorts them by the best score. This score is chosen by determining which line has the best matching attributes. Considerations include direction, starting point, FRC (functional road class), and the FOW (form of way). 
@@ -86,7 +89,7 @@ Let's assume that our configuration weights the FOW higher than the geo location
 ![Figure 5](_static/Example_map_sorted_candidates.svg)
 
 ### Routing between the candidates
-For each consecutive LRP the decoder searches for a route between the best candidate roads, like described above. In certain circumstances, the route may not be found or may not have the right length. In this case, we try to use the next best candidates.
+For each consecutive LRP the decoder searches for a route between the best candidate points, like described above. In certain circumstances, the route may not be found or may not have the right length. In this case, we try to use the next best candidates.
 
 ![Figure 6](_static/Example_map_secondbest.svg)
 
