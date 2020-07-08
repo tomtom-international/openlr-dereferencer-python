@@ -29,13 +29,13 @@ class Config(NamedTuple):
 
     #: Configures the default radius to search for map objects around an LRP.
     #: This value is in meters.
-    search_radius: float = 50.0
+    search_radius: float = 100.0
     #: Tolerable relative DNP deviation of a path
     #:
     #: A path between consecutive LRPs may deviate from the DNP by this relative value plus
     #: :py:attr:`~tolerated_dnp_dev` in order to be considered. The value here is relative
     #: to the expected distance to next point.
-    max_dnp_deviation: float = 0.1
+    max_dnp_deviation: float = 0.3
     #: Additional buffer to the range of allowed path distance
     #:
     #: In order to be considered, a path must not deviate from the DNP value by more than
