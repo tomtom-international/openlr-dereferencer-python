@@ -170,10 +170,9 @@ def match_tail(
         if last_lrp:
             return [route]
 
-        # If not last LRP, match also the rest of tail
-        if len(tail) == 2:
-            c2.score = score_lrp_candidate(next_lrp, c2, config, True)
-
-        return [route] + match_tail(next_lrp, [c2], tail[1:], reader, config, observer)
+        try:
+            return [route] + match_tail(next_lrp, [c2], tail[1:], reader, config, observer)
+        except LRDecodeError as e:
+            continue
 
     raise LRDecodeError("Decoding was unsuccessful: No candidates left or available.")
