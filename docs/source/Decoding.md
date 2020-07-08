@@ -19,9 +19,9 @@ The line location path is referenced by location reference points (LRPs). Each p
 The first step is obtaining roads within a certain radius near each LRP. This is implementation specific; you should use the method based on the map you are using. Since the target map might be missing certain junctions, we have to also consider points between junctions as candidates. The candidates are then the points on the nearest roads that are closest to the LRP coordinates.
 
 ## Second step: score candidates
-The second step is scoring (rating) the various candidates (points on line segments) to determine how well they meet the LRP information. The LRP information referring to the road is:
+The second step is scoring (rating) the various candidates (which are points on line segments) to determine how well they meet the LRP information. The LRP information referring to the line location part is:
 
-* How well it matches the LRP coordinates,
+* The position of the source map junction (The candidate's position should be close to that),
 * The physical appearance of the road (defined as the "form of way"),
 * The functional road class (the logical type of road based on importance, for example a motorway or a secondary road),
 * The direction of the first few meters of road (in relation to due north).
