@@ -7,7 +7,7 @@ from shapely.geometry import LineString, Point
 from openlr import Coordinates, LocationReferencePoint
 from .routes import Route, PointOnLine
 from ..maps import Line
-from ..maps.wgs84 import project_along_path, bearing
+from ..maps.wgs84 import interpolate, bearing
 from geographiclib.geodesic import Geodesic
 
 
@@ -87,6 +87,6 @@ def compute_bearing(
         coordinates = linestring_coords(line2)
         relative_offset = candidate.relative_offset
     absolute_offset = candidate.line.length * relative_offset
-    bearing_point = project_along_path(coordinates, absolute_offset + bear_dist)
+    bearing_point = interpolate(coordinates, absolute_offset + bear_dist)
     bear = bearing(coordinates[0], bearing_point)
     return degrees(bear) % 360

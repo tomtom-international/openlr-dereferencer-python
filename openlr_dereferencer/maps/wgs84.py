@@ -44,7 +44,7 @@ def bearing(point_a: Coordinates, point_b: Coordinates) -> float:
     return radians(line["azi1"])
 
 
-def project(point: Coordinates, dist: float, angle: float) -> Coordinates:
+def extrapolate(point: Coordinates, dist: float, angle: float) -> Coordinates:
     "Creates a new point that is `dist` meters away in direction `angle`"
     lon, lat = point.lon, point.lat
     geod = Geodesic.WGS84
@@ -54,7 +54,7 @@ def project(point: Coordinates, dist: float, angle: float) -> Coordinates:
     return Coordinates(line["lon2"], line["lat2"])
 
 
-def project_along_path(path: Sequence[Coordinates], distance_meters: float) -> Coordinates:
+def interpolate(path: Sequence[Coordinates], distance_meters: float) -> Coordinates:
     """Go `distance` meters along the `path` and return the resulting point
 
     When the length of the path is too short, returns its last coordinate"""
@@ -63,6 +63,6 @@ def project_along_path(path: Sequence[Coordinates], distance_meters: float) -> C
         segment_length = distance(point1, point2)
         if distance_meters < segment_length:
             angle = bearing(point1, point2)
-            return project(point1, distance_meters, angle)
+            return extrapolate(point1, distance_meters, angle)
         distance_meters -= segment_length
     return segments[-1][1]

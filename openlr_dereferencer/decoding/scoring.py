@@ -7,7 +7,7 @@ with `1.0` being an exact match and 0.0 being a non-match."""
 
 from logging import debug
 from openlr import FRC, FOW, LocationReferencePoint
-from ..maps.wgs84 import project_along_path, distance, bearing
+from ..maps.wgs84 import interpolate, distance, bearing
 from .tools import coords, PointOnLine, linestring_coords
 from .configuration import Config
 from .tools import compute_bearing

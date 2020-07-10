@@ -17,7 +17,7 @@ from openlr_dereferencer.decoding.routes import PointOnLine, Route
 from openlr_dereferencer.decoding.tools import remove_offsets
 from openlr_dereferencer.observer import SimpleObserver
 from openlr_dereferencer.example_sqlite_map import ExampleMapReader
-from openlr_dereferencer.maps.wgs84 import distance, bearing, project
+from openlr_dereferencer.maps.wgs84 import distance, bearing, extrapolate
 
 from .example_mapformat import setup_testdb, remove_db_file
 
@@ -415,9 +415,9 @@ class DecodingToolsTests(unittest.TestCase):
     def test_remove_offsets(self):
         "Remove offsets containing lines"
         node0 = DummyNode(Coordinates(13.128987, 52.494595))
-        node1 = DummyNode(project(node0.coord, 20, 180.0))
-        node2 = DummyNode(project(node1.coord, 90, 90.0))
-        node3 = DummyNode(project(node2.coord, 20, 180.0))
+        node1 = DummyNode(extrapolate(node0.coord, 20, 180.0))
+        node2 = DummyNode(extrapolate(node1.coord, 90, 90.0))
+        node3 = DummyNode(extrapolate(node2.coord, 20, 180.0))
         lines = [
             DummyLine(0, node0, node1),
             DummyLine(1, node1, node2),
@@ -431,7 +431,7 @@ class DecodingToolsTests(unittest.TestCase):
     def test_remove_offsets_raises(self):
         "Remove too big offsets"
         node0 = DummyNode(Coordinates(13.128987, 52.494595))
-        node1 = DummyNode(project(node0.coord, 10, 180.0))
+        node1 = DummyNode(extrapolate(node0.coord, 10, 180.0))
         line = DummyLine(0, node0, node1)
         route = Route(PointOnLine(line, 0.0), [], PointOnLine(line, 1.0))
         with self.assertRaises(LRDecodeError):

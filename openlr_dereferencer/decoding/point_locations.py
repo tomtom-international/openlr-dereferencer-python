@@ -11,7 +11,7 @@ from openlr import (
 from ..maps import MapReader, path_length
 from ..maps.abstract import Line
 from ..observer import DecoderObserver
-from ..maps.wgs84 import project_along_path
+from ..maps.wgs84 import interpolate
 from .line_decoding import dereference_path
 from .line_location import get_lines, Route, combine_routes
 from .configuration import Config
@@ -30,7 +30,7 @@ class PointAlongLine(NamedTuple):
 
     def coordinates(self) -> Coordinates:
         "Returns the geo coordinates of the point"
-        return project_along_path(list(self.line.coordinates()), self.positive_offset)
+        return interpolate(list(self.line.coordinates()), self.positive_offset)
 
 
 def point_along_linelocation(route: Route, length: float) -> Tuple[Line, float]:
@@ -76,7 +76,7 @@ class PoiWithAccessPoint(NamedTuple):
 
     def access_point_coordinates(self) -> Coordinates:
         "Returns the geo coordinates of the access point"
-        return project_along_path(list(self.line.coordinates()), self.positive_offset)
+        return interpolate(list(self.line.coordinates()), self.positive_offset)
 
 
 def decode_poi_with_accesspoint(
