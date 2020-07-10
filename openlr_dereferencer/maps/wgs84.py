@@ -4,6 +4,7 @@ from typing import Sequence
 from geographiclib.geodesic import Geodesic
 from openlr import Coordinates
 from shapely.geometry import LineString
+from itertools import tee
 
 
 def distance(point_a: Coordinates, point_b: Coordinates) -> float:
@@ -17,18 +18,22 @@ def distance(point_a: Coordinates, point_b: Coordinates) -> float:
     return line["s12"]
 
 
+def pairwise(iterable):
+    "s -> (s0,s1), (s1,s2), (s2, s3), ..."
+    a, b = tee(iterable)
+    next(b, None)
+    return zip(a, b)
+
+
 def line_string_length(line_string: LineString) -> float:
     """Returns the length of a line string in meters"""
     geod = Geodesic.WGS84
 
     length = 0
-    p = None
 
-    for c in line_string.coords:
-        if p is not None:
-            l = geod.Inverse(p[1], p[0], c[1], c[0], Geodesic.DISTANCE)
-            length += l["s12"]
-        p = c
+    for (p, c) in pairwise(line_string.coords):
+        l = geod.Inverse(p[1], p[0], c[1], c[0], Geodesic.DISTANCE)
+        length += l["s12"]
 
     return length
 
