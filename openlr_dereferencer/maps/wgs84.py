@@ -3,6 +3,7 @@ from math import radians, degrees
 from typing import Sequence
 from geographiclib.geodesic import Geodesic
 from openlr import Coordinates
+from shapely.geometry import LineString
 
 
 def distance(point_a: Coordinates, point_b: Coordinates) -> float:
@@ -14,6 +15,22 @@ def distance(point_a: Coordinates, point_b: Coordinates) -> float:
     # According to https://geographiclib.sourceforge.io/1.50/python/, the distance between
     # point 1 and 2 is stored in the attribute `s12`.
     return line["s12"]
+
+
+def line_string_length(line_string: LineString) -> float:
+    """Returns the length of a line string in meters"""
+    geod = Geodesic.WGS84
+
+    length = 0
+    p = None
+
+    for c in line_string.coords:
+        if p is not None:
+            l = geod.Inverse(p[1], p[0], c[1], c[0], Geodesic.DISTANCE)
+            length += l["s12"]
+        p = c
+
+    return length
 
 
 def bearing(point_a: Coordinates, point_b: Coordinates) -> float:

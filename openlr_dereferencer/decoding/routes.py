@@ -5,6 +5,8 @@ from shapely.geometry import LineString
 from shapely.ops import substring, linemerge
 from openlr import Coordinates
 from ..maps.abstract import Line, path_length
+from ..maps.wgs84 import line_string_length
+
 
 class PointOnLine(NamedTuple):
     "A point on the road network"
@@ -20,6 +22,16 @@ class PointOnLine(NamedTuple):
         point = self.line.geometry.interpolate(self.relative_offset, normalized=True)
         return Coordinates(point.x, point.y)
 
+    def distance_from_start(self) -> float:
+        "Returns the distance in meters from the start of the line to the point"
+        line1 = substring(self.line.geometry, 0.0, self.relative_offset, True)
+        return line_string_length(line1)
+
+    def distance_to_end(self) -> float:
+        "Returns the distance in meters from the point to the end of the line"
+        line2 = substring(self.line.geometry, self.relative_offset, 1.0, True)
+        return line_string_length(line2)
+        
     def split(self) -> Tuple[Optional[LineString], Optional[LineString]]:
         "Splits the Line element that this point is along and returns the halfs"
         if self.relative_offset == 0.0:
@@ -56,20 +68,20 @@ class Route(NamedTuple):
         lines = self.lines
         result = path_length(lines)
         if self.start.relative_offset > 0.0:
-            result -= lines[0].length * self.start.relative_offset
+            result -= self.start.distance_from_start()
         if self.end.relative_offset < 1.0:
-            result -= lines[-1].length * (1.0 - self.end.relative_offset)
+            result -= self.end.distance_to_end()
         return result
 
     @property
     def absolute_start_offset(self) -> float:
         "Offset on the starting line in meters"
-        return self.start.line.length * self.start.relative_offset
+        return self.start.distance_from_start()
 
     @property
     def absolute_end_offset(self) -> float:
         "Offset on the ending line in meters"
-        return self.end.line.length * (1.0 - self.end.relative_offset)
+        return self.end.distance_to_end()
 
     @property
     def shape(self) -> LineString:

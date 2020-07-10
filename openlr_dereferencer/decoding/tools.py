@@ -6,7 +6,9 @@ from logging import debug
 from shapely.geometry import LineString, Point
 from openlr import Coordinates, LocationReferencePoint
 from .routes import Route, PointOnLine
+from ..maps import Line
 from ..maps.wgs84 import project_along_path, bearing
+from geographiclib.geodesic import Geodesic
 
 
 def remove_offsets(path: Route, p_off: float, n_off: float) -> Route:
@@ -52,19 +54,17 @@ def coords(lrp: LocationReferencePoint) -> Coordinates:
     return Coordinates(lrp.lon, lrp.lat)
 
 
-def project(line_string: LineString, coord: Coordinates) -> float:
+def project(line: Line, coord: Coordinates) -> PointOnLine:
     """Computes the nearest point to `coord` on the line
     
-    Returns:
-        The place on `line_string` where this nearest point resides, as
-        a fractional value in [ 0.0 .. 1.0 ], where 0.0 specifies the
-        starting and 1.0 the ending point."""
-    return line_string.project(Point(coord.lon, coord.lat), normalized=True)
+    Returns: The point on `line` where this nearest point resides"""
+    fraction = line.geometry.project(Point(coord.lon, coord.lat), normalized=True)
+    return PointOnLine(line, fraction)
 
 
 def linestring_coords(line: LineString) -> List[Coordinates]:
     "Returns the edges of the line geometry as Coordinate list"
-    return [Coordinates(*point) for point in line.coords]
+    return [Coordinates(*point) for point in line.coords]   
 
 
 def compute_bearing(

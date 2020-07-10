@@ -22,11 +22,13 @@ def make_candidates(
 ) -> Iterable[Candidate]:
     "Return zero or more LRP candidates based on the given line"
     dist = line.length
-    reloff = project(line.geometry, coords(lrp))
+    point_on_line = project(line, coords(lrp))
+    reloff = point_on_line.relative_offset
+
     # Snap to the relevant end of the line
-    if not is_last_lrp and reloff * dist <= config.candidate_threshold:
+    if not is_last_lrp and point_on_line.distance_from_start() <= config.candidate_threshold:
         reloff = 0.0
-    if is_last_lrp and (1 - reloff) * dist <= config.candidate_threshold:
+    if is_last_lrp and point_on_line.distance_to_end() <= config.candidate_threshold:
         reloff = 1.0
     # Drop candidate if there is no partial line left
     if is_last_lrp and reloff == 0.0 or not is_last_lrp and reloff == 1.0:
