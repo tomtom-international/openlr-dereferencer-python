@@ -39,9 +39,9 @@ def remove_offsets(path: Route, p_off: float, n_off: float) -> Route:
     else:
         end_line = start_line
     return Route(
-        PointOnLine(start_line, remaining_poff / start_line.length),
+        PointOnLine.from_abs_offset(start_line, remaining_poff),
         lines,
-        PointOnLine(end_line, 1.0 - remaining_noff / end_line.length)
+        PointOnLine.from_abs_offset(end_line, - remaining_noff)
     )
 
 

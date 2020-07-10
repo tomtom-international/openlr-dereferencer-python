@@ -42,6 +42,18 @@ class PointOnLine(NamedTuple):
         line2 = substring(self.line.geometry, self.relative_offset, 1.0, True)
         return (line1, line2)
 
+    @classmethod
+    def from_abs_offset(cls, line: Line, meters_into: float):
+        """Build a PointOnLine from an absolute offset value.
+        
+        Negative offsets are recognized and subtracted."""
+        if meters_into >= 0.0:
+            return cls(line, meters_into / line.length)
+        else:
+            negative_meters_into = line.length + meters_into
+            return cls(line, negative_meters_into / line.length)
+
+
 class Route(NamedTuple):
     "A part of a line location path. May contain partial lines."
     #: The point with which this location is starting
@@ -93,11 +105,17 @@ class Route(NamedTuple):
                 self.end.relative_offset,
                 normalized=True
             )
-        return linemerge([
-            self.start.split()[1]] +
-            [line.geometry for line in self.path_inbetween] +
-            [self.end.split()[0]
-        ])
+
+        result = []
+        first = self.start.split()[1]
+        last = self.end.split()[0]
+        if first is not None:
+            result.append(first)
+        result += [line.geometry for line in self.path_inbetween]
+        if last is not None:
+            result.append(last)
+
+        return linemerge(result)
 
     def coordinates(self) -> List[Coordinates]:
         "Returns all Coordinates of this line location"
