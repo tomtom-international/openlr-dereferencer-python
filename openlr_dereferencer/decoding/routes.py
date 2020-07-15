@@ -5,7 +5,7 @@ from shapely.geometry import LineString
 from shapely.ops import substring, linemerge
 from openlr import Coordinates
 from ..maps.abstract import Line, path_length
-from ..maps.wgs84 import line_string_length
+from ..maps.wgs84 import line_string_length, interpolate, pairwise, distance
 
 
 class PointOnLine(NamedTuple):
@@ -19,28 +19,36 @@ class PointOnLine(NamedTuple):
 
     def position(self) -> Coordinates:
         "Returns the actual geo position"
-        point = self.line.geometry.interpolate(self.relative_offset, normalized=True)
-        return Coordinates(point.x, point.y)
+        return interpolate(self.line.coordinates(), self.distance_from_start())
 
     def distance_from_start(self) -> float:
         "Returns the distance in meters from the start of the line to the point"
-        line1 = substring(self.line.geometry, 0.0, self.relative_offset, True)
-        return line_string_length(line1)
+        return self.relative_offset * self.line.length
 
     def distance_to_end(self) -> float:
         "Returns the distance in meters from the point to the end of the line"
-        line2 = substring(self.line.geometry, self.relative_offset, 1.0, True)
-        return line_string_length(line2)
+        return (1.0 - self.relative_offset) * self.line.length
         
     def split(self) -> Tuple[Optional[LineString], Optional[LineString]]:
-        "Splits the Line element that this point is along and returns the halfs"
-        if self.relative_offset == 0.0:
-            return (None, self.line.geometry)
-        elif self.relative_offset == 1.0:
+        "Splits the Line element that this point is along and returns the parts"
+        first_part = []
+        second_part = []
+        remaining_offset = self.distance_from_start()
+        splitpoint = None
+        for (p, c) in pairwise(self.line.coordinates()):
+            if splitpoint is None:
+                first_part.append(p)
+                if remaining_offset < distance(p, c):
+                    splitpoint = interpolate([p, c], remaining_offset)
+                    first_part.append(splitpoint)
+                    second_part = [splitpoint, c]
+            else:
+                second_part.append(c)
+        if splitpoint is None:
             return (self.line.geometry, None)
-        line1 = substring(self.line.geometry, 0.0, self.relative_offset, True)
-        line2 = substring(self.line.geometry, self.relative_offset, 1.0, True)
-        return (line1, line2)
+        else:
+            return (LineString(first_part), LineString(second_part))
+
 
     @classmethod
     def from_abs_offset(cls, line: Line, meters_into: float):
