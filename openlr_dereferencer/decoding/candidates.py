@@ -175,4 +175,6 @@ def match_tail(
         except LRDecodeError as e:
             continue
 
+    if observer is not None:
+        observer.on_matching_fail(current, next_lrp, candidates, next_candidates)
     raise LRDecodeError("Decoding was unsuccessful: No candidates left or available.")
