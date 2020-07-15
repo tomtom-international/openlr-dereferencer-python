@@ -48,7 +48,8 @@ INSERT INTO lines (startnode, endnode, frc, fow, path) VALUES
     (11, 12, 2, 3, ST_GeomFromText("LINESTRING(13.425 52.525, 13.427 52.53)", {SRID})),
     (11, 13, 1, 3, ST_GeomFromText("LINESTRING(13.425 52.525, 13.429 52.523)", {SRID})),
     (13, 14, 3, 3, ST_GeomFromText("LINESTRING(13.429 52.523, 13.425 52.521, 13.42 52.52, 13.4123 52.52, 13.41 52.5245)", {SRID})),
-    (14, 5, 1, 3, ST_GeomFromText("LINESTRING(13.41 52.5245, 13.4125 52.521, 13.4175 52.521)", {SRID}));
+    (14, 5, 1, 3, ST_GeomFromText("LINESTRING(13.41 52.5245, 13.4125 52.521, 13.4175 52.521)", {SRID})),
+    (14, 13, 3, 3, ST_GeomFromText("LINESTRING(13.41 52.5245, 13.4123 52.52, 13.42 52.52, 13.425 52.521, 13.429 52.523)", {SRID}));
 """
 
 def setup_testdb(db_file: str):
