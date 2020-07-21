@@ -5,7 +5,7 @@ from shapely.geometry import LineString
 from shapely.ops import substring, linemerge
 from openlr import Coordinates
 from ..maps.abstract import Line, path_length
-from ..maps.wgs84 import line_string_length, interpolate, pairwise, distance
+from ..maps.wgs84 import line_string_length, interpolate, pairwise, distance, split_line
 
 
 class PointOnLine(NamedTuple):
@@ -31,23 +31,7 @@ class PointOnLine(NamedTuple):
         
     def split(self) -> Tuple[Optional[LineString], Optional[LineString]]:
         "Splits the Line element that this point is along and returns the parts"
-        first_part = []
-        second_part = []
-        remaining_offset = self.distance_from_start()
-        splitpoint = None
-        for (p, c) in pairwise(self.line.coordinates()):
-            if splitpoint is None:
-                first_part.append(p)
-                if remaining_offset < distance(p, c):
-                    splitpoint = interpolate([p, c], remaining_offset)
-                    first_part.append(splitpoint)
-                    second_part = [splitpoint, c]
-            else:
-                second_part.append(c)
-        if splitpoint is None:
-            return (self.line.geometry, None)
-        else:
-            return (LineString(first_part), LineString(second_part))
+        return split_line(self.line.geometry, self.distance_from_start())
 
 
     @classmethod

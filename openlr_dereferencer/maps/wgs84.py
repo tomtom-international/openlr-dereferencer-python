@@ -1,6 +1,6 @@
 "Some geo coordinates related tools"
 from math import radians, degrees
-from typing import Sequence
+from typing import Sequence, Tuple, Optional
 from geographiclib.geodesic import Geodesic
 from openlr import Coordinates
 from shapely.geometry import LineString
@@ -63,11 +63,36 @@ def interpolate(path: Sequence[Coordinates], distance_meters: float) -> Coordina
     """Go `distance` meters along the `path` and return the resulting point
 
     When the length of the path is too short, returns its last coordinate"""
+    remaining_distance = distance_meters
     segments = [(path[i], path[i + 1]) for i in range(len(path) - 1)]
     for (point1, point2) in segments:
         segment_length = distance(point1, point2)
-        if distance_meters < segment_length:
+        if remaining_distance == 0.0:
+            return point1
+        if remaining_distance < segment_length:
             angle = bearing(point1, point2)
-            return extrapolate(point1, distance_meters, angle)
-        distance_meters -= segment_length
+            return extrapolate(point1, remaining_distance, angle)
+        remaining_distance -= segment_length
     return segments[-1][1]
+
+def split_line(line: LineString, meters_into: float) -> Tuple[Optional[LineString], Optional[LineString]]:
+    first_part = []
+    second_part = []
+    remaining_offset = meters_into
+    splitpoint = None
+    for (p, c) in pairwise(line.coords):
+        if splitpoint is None:
+            first_part.append(p)
+            (c1, c2) = (Coordinates(*p), Coordinates(*c))
+            if remaining_offset < distance(c1, c2):
+                splitpoint = interpolate([c1, c2], remaining_offset)
+                if splitpoint != c1:
+                    first_part.append(splitpoint)
+                second_part = [splitpoint, c]
+        else:
+            second_part.append(c)
+    if splitpoint is None:
+        return (line, None)
+    first_part = LineString(first_part) if len(first_part) > 1 else None
+    second_part = LineString(second_part) if len(second_part) > 1 else None
+    return (first_part, second_part)
