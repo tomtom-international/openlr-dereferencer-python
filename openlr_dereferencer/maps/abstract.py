@@ -1,5 +1,30 @@
-"""An abstract `MapReader` base class, which must be implemented for each
-map format to decode location references on."""
+"""Contains an abstract `MapReader` base class, which must be implemented for each
+map format to decode location references on.
+
+A MapReader is an interface with which the decoder can traverse the map. An implementation may
+consist of a database connection or something similar. Its purpose is to let the decoder read
+map objects.
+
+In order to implement a reader for a new map, the following interfaces have to be fulfilled:
+
+* :py:attr:`~MapReader`
+* :py:attr:`~Node`
+* :py:attr:`~Line`
+
+The map model
+-------------
+Nodes
+=====
+A node is an object with an ID and a WGS84 longitude/latitude position.
+
+Lines
+=====
+A line interconnects exactly two nodes in exactly one direction. As further attributes, it has a
+shape, a functional road class and a form of way.
+
+Note that the map you want to implement may have a different line concept. For eample, it is common
+that lines are not necessarily directed.
+"""
 from abc import ABC, abstractmethod
 from typing import Iterable, Hashable, Sequence
 from openlr import Coordinates, FOW, FRC
