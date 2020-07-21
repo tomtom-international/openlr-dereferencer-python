@@ -5,7 +5,7 @@ from shapely.geometry import LineString
 from shapely.ops import substring, linemerge
 from openlr import Coordinates
 from ..maps.abstract import Line, path_length
-from ..maps.wgs84 import line_string_length, interpolate, pairwise, distance, split_line
+from ..maps.wgs84 import interpolate, split_line
 
 
 class PointOnLine(NamedTuple):
@@ -28,7 +28,7 @@ class PointOnLine(NamedTuple):
     def distance_to_end(self) -> float:
         "Returns the distance in meters from the point to the end of the line"
         return (1.0 - self.relative_offset) * self.line.length
-        
+
     def split(self) -> Tuple[Optional[LineString], Optional[LineString]]:
         "Splits the Line element that this point is along and returns the parts"
         return split_line(self.line.geometry, self.distance_from_start())
@@ -37,7 +37,7 @@ class PointOnLine(NamedTuple):
     @classmethod
     def from_abs_offset(cls, line: Line, meters_into: float):
         """Build a PointOnLine from an absolute offset value.
-        
+
         Negative offsets are recognized and subtracted."""
         if meters_into >= 0.0:
             return cls(line, meters_into / line.length)

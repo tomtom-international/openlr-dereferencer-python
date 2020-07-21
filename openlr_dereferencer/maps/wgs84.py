@@ -20,9 +20,9 @@ def distance(point_a: Coordinates, point_b: Coordinates) -> float:
 
 def pairwise(iterable):
     "s -> (s0,s1), (s1,s2), (s2, s3), ..."
-    a, b = tee(iterable)
-    next(b, None)
-    return zip(a, b)
+    first, second = tee(iterable)
+    next(second, None)
+    return zip(first, second)
 
 
 def line_string_length(line_string: LineString) -> float:
@@ -31,8 +31,8 @@ def line_string_length(line_string: LineString) -> float:
 
     length = 0
 
-    for (p, c) in pairwise(line_string.coords):
-        l = geod.Inverse(p[1], p[0], c[1], c[0], Geodesic.DISTANCE)
+    for (coord_a, coord_b) in pairwise(line_string.coords):
+        l = geod.Inverse(coord_a[1], coord_a[0], coord_b[1], coord_b[0], Geodesic.DISTANCE)
         length += l["s12"]
 
     return length
@@ -80,17 +80,17 @@ def split_line(line: LineString, meters_into: float) -> Tuple[Optional[LineStrin
     second_part = []
     remaining_offset = meters_into
     splitpoint = None
-    for (p, c) in pairwise(line.coords):
+    for (point_from, point_to) in pairwise(line.coords):
         if splitpoint is None:
-            first_part.append(p)
-            (c1, c2) = (Coordinates(*p), Coordinates(*c))
-            if remaining_offset < distance(c1, c2):
-                splitpoint = interpolate([c1, c2], remaining_offset)
-                if splitpoint != c1:
+            first_part.append(point_from)
+            (coord_from, coord_to) = (Coordinates(*point_from), Coordinates(*point_to))
+            if remaining_offset < distance(coord_from, coord_to):
+                splitpoint = interpolate([coord_from, coord_to], remaining_offset)
+                if splitpoint != coord_from:
                     first_part.append(splitpoint)
-                second_part = [splitpoint, c]
+                second_part = [splitpoint, point_to]
         else:
-            second_part.append(c)
+            second_part.append(point_to)
     if splitpoint is None:
         return (line, None)
     first_part = LineString(first_part) if len(first_part) > 1 else None

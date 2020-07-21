@@ -7,8 +7,8 @@ with `1.0` being an exact match and 0.0 being a non-match."""
 
 from logging import debug
 from openlr import FRC, FOW, LocationReferencePoint
-from ..maps.wgs84 import interpolate, distance, bearing
-from .tools import coords, PointOnLine, linestring_coords
+from ..maps.wgs84 import distance
+from .tools import coords, PointOnLine
 from .configuration import Config
 from .tools import compute_bearing
 
@@ -30,7 +30,7 @@ def score_geolocation(wanted: LocationReferencePoint, actual: PointOnLine, radiu
 
 def angle_difference(angle1: float, angle2: float) -> float:
     """The difference of two angle values.
-    
+
     Args:
         angle1, angle2:
             The values are expected in degrees.

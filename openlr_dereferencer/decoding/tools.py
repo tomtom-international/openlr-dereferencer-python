@@ -8,7 +8,6 @@ from openlr import Coordinates, LocationReferencePoint
 from .routes import Route, PointOnLine
 from ..maps import Line
 from ..maps.wgs84 import interpolate, bearing
-from geographiclib.geodesic import Geodesic
 
 
 def remove_offsets(path: Route, p_off: float, n_off: float) -> Route:
@@ -56,7 +55,7 @@ def coords(lrp: LocationReferencePoint) -> Coordinates:
 
 def project(line: Line, coord: Coordinates) -> PointOnLine:
     """Computes the nearest point to `coord` on the line
-    
+
     Returns: The point on `line` where this nearest point resides"""
     fraction = line.geometry.project(Point(coord.lon, coord.lat), normalized=True)
     return PointOnLine(line, fraction)
@@ -64,7 +63,7 @@ def project(line: Line, coord: Coordinates) -> PointOnLine:
 
 def linestring_coords(line: LineString) -> List[Coordinates]:
     "Returns the edges of the line geometry as Coordinate list"
-    return [Coordinates(*point) for point in line.coords]   
+    return [Coordinates(*point) for point in line.coords]
 
 
 def compute_bearing(
