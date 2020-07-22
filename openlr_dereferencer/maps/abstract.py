@@ -22,14 +22,22 @@ Lines
 A line interconnects exactly two nodes in exactly one direction. As further attributes, it has a
 shape, a functional road class and a form of way.
 
-Note that the map you want to implement may have a different line concept. For eample, it is common
+Note that the map you want to implement may have a different line concept. For example, it is common
 that lines are not necessarily directed.
+
+Let's consider an example map format that defines way:
+
+.. image:: _static/Mapformat_1_Way.svg
+
 """
+
+
 from abc import ABC, abstractmethod
 from typing import Iterable, Hashable, Sequence
 from openlr import Coordinates, FOW, FRC
 from shapely.geometry import LineString, Point
 from shapely.geometry.base import BaseGeometry
+
 
 class GeometricObject(ABC):
     @property
