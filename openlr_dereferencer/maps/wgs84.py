@@ -76,6 +76,7 @@ def interpolate(path: Sequence[Coordinates], distance_meters: float) -> Coordina
     return segments[-1][1]
 
 def split_line(line: LineString, meters_into: float) -> Tuple[Optional[LineString], Optional[LineString]]:
+    "Splits a line at `meters_into` meters and returns the two parts. A part is None if it would be a Point"
     first_part = []
     second_part = []
     remaining_offset = meters_into

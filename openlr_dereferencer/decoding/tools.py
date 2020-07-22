@@ -4,10 +4,11 @@ from math import degrees
 from typing import List
 from logging import debug
 from shapely.geometry import LineString, Point
+from shapely.ops import substring
 from openlr import Coordinates, LocationReferencePoint
 from .routes import Route, PointOnLine
 from ..maps import Line
-from ..maps.wgs84 import interpolate, bearing
+from ..maps.wgs84 import interpolate, bearing, line_string_length
 
 
 def remove_offsets(path: Route, p_off: float, n_off: float) -> Route:
@@ -58,7 +59,11 @@ def project(line: Line, coord: Coordinates) -> PointOnLine:
 
     Returns: The point on `line` where this nearest point resides"""
     fraction = line.geometry.project(Point(coord.lon, coord.lat), normalized=True)
-    return PointOnLine(line, fraction)
+
+    to_projection_point = substring(line.geometry, 0.0, fraction, normalized=True)
+    meters_to_projection_point = line_string_length(to_projection_point)
+    length_fraction = meters_to_projection_point / line.length
+    return PointOnLine(line, length_fraction)
 
 
 def linestring_coords(line: LineString) -> List[Coordinates]:
