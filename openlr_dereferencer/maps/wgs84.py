@@ -85,11 +85,13 @@ def split_line(line: LineString, meters_into: float) -> Tuple[Optional[LineStrin
         if splitpoint is None:
             first_part.append(point_from)
             (coord_from, coord_to) = (Coordinates(*point_from), Coordinates(*point_to))
-            if remaining_offset < distance(coord_from, coord_to):
+            segment_length = distance(coord_from, coord_to)
+            if remaining_offset < segment_length:
                 splitpoint = interpolate([coord_from, coord_to], remaining_offset)
                 if splitpoint != coord_from:
                     first_part.append(splitpoint)
                 second_part = [splitpoint, point_to]
+            remaining_offset -= segment_length
         else:
             second_part.append(point_to)
     if splitpoint is None:
