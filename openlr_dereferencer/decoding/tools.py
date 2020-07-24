@@ -4,9 +4,11 @@ from math import degrees
 from typing import List
 from logging import debug
 from shapely.geometry import LineString, Point
+from shapely.ops import substring
 from openlr import Coordinates, LocationReferencePoint
 from .routes import Route, PointOnLine
-from ..maps.wgs84 import project_along_path, bearing
+from ..maps import Line
+from ..maps.wgs84 import interpolate, bearing, line_string_length
 
 
 def remove_offsets(path: Route, p_off: float, n_off: float) -> Route:
@@ -37,9 +39,9 @@ def remove_offsets(path: Route, p_off: float, n_off: float) -> Route:
     else:
         end_line = start_line
     return Route(
-        PointOnLine(start_line, remaining_poff / start_line.length),
+        PointOnLine.from_abs_offset(start_line, remaining_poff),
         lines,
-        PointOnLine(end_line, 1.0 - remaining_noff / end_line.length)
+        PointOnLine.from_abs_offset(end_line, end_line.length - remaining_noff)
     )
 
 
@@ -52,14 +54,16 @@ def coords(lrp: LocationReferencePoint) -> Coordinates:
     return Coordinates(lrp.lon, lrp.lat)
 
 
-def project(line_string: LineString, coord: Coordinates) -> float:
+def project(line: Line, coord: Coordinates) -> PointOnLine:
     """Computes the nearest point to `coord` on the line
-    
-    Returns:
-        The place on `line_string` where this nearest point resides, as
-        a fractional value in [ 0.0 .. 1.0 ], where 0.0 specifies the
-        starting and 1.0 the ending point."""
-    return line_string.project(Point(coord.lon, coord.lat), normalized=True)
+
+    Returns: The point on `line` where this nearest point resides"""
+    fraction = line.geometry.project(Point(coord.lon, coord.lat), normalized=True)
+
+    to_projection_point = substring(line.geometry, 0.0, fraction, normalized=True)
+    meters_to_projection_point = line_string_length(to_projection_point)
+    length_fraction = meters_to_projection_point / line.length
+    return PointOnLine(line, length_fraction)
 
 
 def linestring_coords(line: LineString) -> List[Coordinates]:
@@ -87,6 +91,6 @@ def compute_bearing(
         coordinates = linestring_coords(line2)
         relative_offset = candidate.relative_offset
     absolute_offset = candidate.line.length * relative_offset
-    bearing_point = project_along_path(coordinates, absolute_offset + bear_dist)
+    bearing_point = interpolate(coordinates, absolute_offset + bear_dist)
     bear = bearing(coordinates[0], bearing_point)
     return degrees(bear) % 360

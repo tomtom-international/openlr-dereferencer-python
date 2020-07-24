@@ -4,6 +4,7 @@ finds a shortest path between two nodes.
 """
 from typing import List, Optional, Callable, NamedTuple
 from heapq import heapify, heappush, heappop
+from functools import total_ordering
 from ..abstract import Node, Line
 from .tools import heuristic, LRPathNotFoundError, tautology
 
@@ -13,13 +14,16 @@ class Score(NamedTuple):
     f: float
     g: float
 
-
+@total_ordering
 class PQItem(NamedTuple):
     """A single item in the search priority queue"""
     score: Score
     node: Node
     line: Line
     previous: "PQItem"
+
+    def __lt__(self, other):
+        return self.score < other.score
 
 
 def shortest_path(

@@ -21,12 +21,13 @@ def make_candidates(
         is_last_lrp: bool
 ) -> Iterable[Candidate]:
     "Return zero or more LRP candidates based on the given line"
-    dist = line.length
-    reloff = project(line.geometry, coords(lrp))
+    point_on_line = project(line, coords(lrp))
+    reloff = point_on_line.relative_offset
+
     # Snap to the relevant end of the line
-    if not is_last_lrp and reloff * dist <= config.candidate_threshold:
+    if not is_last_lrp and point_on_line.distance_from_start() <= config.candidate_threshold:
         reloff = 0.0
-    if is_last_lrp and (1 - reloff) * dist <= config.candidate_threshold:
+    if is_last_lrp and point_on_line.distance_to_end() <= config.candidate_threshold:
         reloff = 1.0
     # Drop candidate if there is no partial line left
     if is_last_lrp and reloff == 0.0 or not is_last_lrp and reloff == 1.0:
@@ -108,7 +109,7 @@ def match_tail(
             The Candidates for the current LRP
         tail:
             The LRPs following the current.
-            
+
             Contains at least one LRP, as any route has two ends.
         reader:
             The map reader on which we are operating. Needed for nominating next candidates.
@@ -145,19 +146,19 @@ def match_tail(
     pairs.sort(key=lambda pair: (pair[0].score + pair[1].score), reverse=True)
 
     # For every pair of candidates, search for a path matching our requirements
-    for (c1, c2) in pairs:
-        route = get_candidate_route(c1, c2, lfrc, maxlen)
+    for (c_from, c_to) in pairs:
+        route = get_candidate_route(c_from, c_to, lfrc, maxlen)
 
         if not route:
             debug("No path for candidate found")
             if observer is not None:
-                observer.on_route_fail(current, next_lrp, c1, c2)
+                observer.on_route_fail(current, next_lrp, c_from, c_to)
             continue
 
         length = route.length()
 
         if observer is not None:
-            observer.on_route_success(current, next_lrp, c1, c2, route)
+            observer.on_route_success(current, next_lrp, c_from, c_to, route)
 
         debug(f"DNP should be {current.dnp} m, is {length} m.")
         # If the path does not match DNP, continue with the next candidate pair
@@ -171,8 +172,8 @@ def match_tail(
             return [route]
 
         try:
-            return [route] + match_tail(next_lrp, [c2], tail[1:], reader, config, observer)
-        except LRDecodeError as e:
+            return [route] + match_tail(next_lrp, [c_to], tail[1:], reader, config, observer)
+        except LRDecodeError:
             continue
 
     raise LRDecodeError("Decoding was unsuccessful: No candidates left or available.")

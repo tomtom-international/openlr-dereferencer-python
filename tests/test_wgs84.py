@@ -3,9 +3,11 @@
 import unittest
 from math import pi
 
+from shapely.geometry import Point, LineString
+
 from openlr import Coordinates
 
-from openlr_dereferencer.maps.wgs84 import project, distance, project_along_path, bearing
+from openlr_dereferencer.maps.wgs84 import extrapolate, distance, interpolate, bearing, split_line
 
 class GeoTests(unittest.TestCase):
     "Unit tests for all the WGS84 functions"
@@ -71,7 +73,7 @@ class GeoTests(unittest.TestCase):
     def test_projection_90(self):
         "Test point projection into 90° direction"
         geo1 = Coordinates(0.0, 0.0)
-        (lon, lat) = project(geo1, 20037508.0, pi * 90.0 / 180)
+        (lon, lat) = extrapolate(geo1, 20037508.0, pi * 90.0 / 180)
         self.assertAlmostEqual(lon, 180.0, delta=0.1)
         self.assertAlmostEqual(lat, 0.0)
 
@@ -81,7 +83,7 @@ class GeoTests(unittest.TestCase):
         geo2 = Coordinates(13.414, 52.525)
         dist = distance(geo1, geo2)
         angle = bearing(geo1, geo2)
-        geo3 = project(geo1, dist, angle)
+        geo3 = extrapolate(geo1, dist, angle)
         self.assertAlmostEqual(geo2.lon, geo3.lon)
         self.assertAlmostEqual(geo2.lat, geo3.lat)
 
@@ -94,6 +96,22 @@ class GeoTests(unittest.TestCase):
         ]
         part_lengths = [distance(path[i], path[i+1]) for i in range(len(path)-1)]
         length = sum(part_lengths)
-        projected = project_along_path(path, 0.75 * length)
+        projected = interpolate(path, 0.75 * length)
         self.assertAlmostEqual(projected.lon, 0.0, places=3)
         self.assertAlmostEqual(projected.lat, 1.5, places=3)
+
+    def test_split_line(self):
+        start = Coordinates(13.0, 52.0)
+        middle = Coordinates(13.1, 52.0)
+        end = Coordinates(13.1, 52.1)
+        line = LineString([Point(*start), Point(*middle), Point(*end)])
+        length = distance(start, middle) + distance(middle, end)
+        (first, second) = split_line(line, 0.0)
+        self.assertIsNone(first)
+        self.assertEqual(second, line)
+        (first, second) = split_line(line, 1.0 * length)
+        self.assertIsNone(second)
+        self.assertEqual(first, line)
+        (first, second) = split_line(line, 0.5 * length)
+        self.assertAlmostEqual(first.length + second.length, line.length)
+

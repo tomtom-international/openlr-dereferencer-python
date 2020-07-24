@@ -5,6 +5,8 @@ from shapely.geometry import LineString
 from shapely.ops import substring, linemerge
 from openlr import Coordinates
 from ..maps.abstract import Line, path_length
+from ..maps.wgs84 import interpolate, split_line
+
 
 class PointOnLine(NamedTuple):
     "A point on the road network"
@@ -17,18 +19,32 @@ class PointOnLine(NamedTuple):
 
     def position(self) -> Coordinates:
         "Returns the actual geo position"
-        point = self.line.geometry.interpolate(self.relative_offset, normalized=True)
-        return Coordinates(point.x, point.y)
+        return interpolate(self.line.coordinates(), self.distance_from_start())
+
+    def distance_from_start(self) -> float:
+        "Returns the distance in meters from the start of the line to the point"
+        return self.relative_offset * self.line.length
+
+    def distance_to_end(self) -> float:
+        "Returns the distance in meters from the point to the end of the line"
+        return (1.0 - self.relative_offset) * self.line.length
 
     def split(self) -> Tuple[Optional[LineString], Optional[LineString]]:
-        "Splits the Line element that this point is along and returns the halfs"
-        if self.relative_offset == 0.0:
-            return (None, self.line.geometry)
-        elif self.relative_offset == 1.0:
-            return (self.line.geometry, None)
-        line1 = substring(self.line.geometry, 0.0, self.relative_offset, True)
-        line2 = substring(self.line.geometry, self.relative_offset, 1.0, True)
-        return (line1, line2)
+        "Splits the Line element that this point is along and returns the parts"
+        return split_line(self.line.geometry, self.distance_from_start())
+
+
+    @classmethod
+    def from_abs_offset(cls, line: Line, meters_into: float):
+        """Build a PointOnLine from an absolute offset value.
+
+        Negative offsets are recognized and subtracted."""
+        if meters_into >= 0.0:
+            return cls(line, meters_into / line.length)
+        else:
+            negative_meters_into = line.length + meters_into
+            return cls(line, negative_meters_into / line.length)
+
 
 class Route(NamedTuple):
     "A part of a line location path. May contain partial lines."
@@ -56,20 +72,20 @@ class Route(NamedTuple):
         lines = self.lines
         result = path_length(lines)
         if self.start.relative_offset > 0.0:
-            result -= lines[0].length * self.start.relative_offset
+            result -= self.start.distance_from_start()
         if self.end.relative_offset < 1.0:
-            result -= lines[-1].length * (1.0 - self.end.relative_offset)
+            result -= self.end.distance_to_end()
         return result
 
     @property
     def absolute_start_offset(self) -> float:
         "Offset on the starting line in meters"
-        return self.start.line.length * self.start.relative_offset
+        return self.start.distance_from_start()
 
     @property
     def absolute_end_offset(self) -> float:
         "Offset on the ending line in meters"
-        return self.end.line.length * (1.0 - self.end.relative_offset)
+        return self.end.distance_to_end()
 
     @property
     def shape(self) -> LineString:
@@ -81,11 +97,17 @@ class Route(NamedTuple):
                 self.end.relative_offset,
                 normalized=True
             )
-        return linemerge([
-            self.start.split()[1]] +
-            [line.geometry for line in self.path_inbetween] +
-            [self.end.split()[0]
-        ])
+
+        result = []
+        first = self.start.split()[1]
+        last = self.end.split()[0]
+        if first is not None:
+            result.append(first)
+        result += [line.geometry for line in self.path_inbetween]
+        if last is not None:
+            result.append(last)
+
+        return linemerge(result)
 
     def coordinates(self) -> List[Coordinates]:
         "Returns all Coordinates of this line location"
