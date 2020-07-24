@@ -102,6 +102,13 @@ def get_test_linelocation_3():
                                   FOW.SINGLE_CARRIAGEWAY, -90.0, None, None)
     return LineLocationReference([lrp1, lrp2], 0.0, 0.0)
 
+def get_test_linelocation_4() -> LineLocationReference:
+    "Test backtracking with a location that tries the decoder to get lost"
+    lrp1 = LocationReferencePoint(13.41, 52.5245, FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, 120.0, FRC.FRC2, 320)
+    lrp2 = LocationReferencePoint(13.4125, 52.521, FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, 90.0, FRC.FRC2, 1400)
+    lrp3 = LocationReferencePoint(13.429, 52.523, FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, 230.0, None, None)
+    return LineLocationReference([lrp1, lrp2, lrp3], 0.0, 0.0)
+
 
 def get_test_pointalongline() -> PointAlongLineLocationReference:
     "Get a test Point Along Line location reference"
@@ -397,6 +404,15 @@ class DecodingTests(unittest.TestCase):
         too_strict_config = Config(max_bear_deviation=0.0)
         with self.assertRaises(LRDecodeError):
             decode(reference, self.reader, config=too_strict_config)
+
+    def test_backtracking(self):
+        myconfig = Config(search_radius=5, max_dnp_deviation=0.02)
+        reference = get_test_linelocation_4()
+        observer = SimpleObserver()
+        location = decode(reference, self.reader, observer=observer, config=myconfig)
+        lines = [l.line_id for l in location.lines]
+        self.assertListEqual([20], lines)
+        self.assertGreater(len(observer.failed_matches), 0)
 
     def tearDown(self):
         self.reader.connection.close()

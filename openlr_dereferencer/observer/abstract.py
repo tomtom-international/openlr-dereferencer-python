@@ -26,3 +26,10 @@ class DecoderObserver:
                       from_line: Line, to_line: Line):
         """Called after the decoder fails to find a route between two candidate
         lines for successive location reference points"""
+
+    def on_matching_fail(self, from_lrp: LocationReferencePoint, to_lrp: LocationReferencePoint,
+                         from_candidates: Sequence[Candidate], to_candidates: Sequence[Candidate]):
+        """Called after none of the candidate pairs for two LRPs were matching.
+        
+        The only way of recovering is to go back and discard the last bit of
+        the dereferencedd line location, if possible."""

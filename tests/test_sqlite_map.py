@@ -29,9 +29,9 @@ class SQLiteMapTest(unittest.TestCase):
     def test_line_nonexistent_id(self):
         "Check if a nonexistent line ID leads to an exception"
         with self.assertRaises(TypeError):
-            _ = Line(self.reader, 20).length
+            _ = Line(self.reader, 21).length
         with self.assertRaises(ExampleMapError):
-            self.reader.get_line(20)
+            self.reader.get_line(21)
 
     def test_line_length(self):
         "Check the length of the line with ID 1"
@@ -43,6 +43,7 @@ class SQLiteMapTest(unittest.TestCase):
         pointcounts = {line.line_id: line.num_points() for line in self.reader.get_lines()}
         self.assertEqual(pointcounts.pop(18), 5)
         self.assertEqual(pointcounts.pop(19), 3)
+        self.assertEqual(pointcounts.pop(20), 5)
         for pointcount in pointcounts.values():
             self.assertEqual(pointcount, 2)
 
@@ -70,7 +71,7 @@ class SQLiteMapTest(unittest.TestCase):
         "Test if a sorted list of line IDs is as expected"
         lines = []
         lines = [line.line_id for line in self.reader.get_lines()]
-        self.assertSequenceEqual(sorted(lines), range(1, 20))
+        self.assertSequenceEqual(sorted(lines), range(1, 21))
 
     def test_get_line(self):
         "Get a test line"
@@ -117,7 +118,7 @@ class SQLiteMapTest(unittest.TestCase):
 
     def test_linecount(self):
         "Test line count"
-        self.assertEqual(self.reader.get_linecount(), 19)
+        self.assertEqual(self.reader.get_linecount(), 20)
 
     def tearDown(self):
         self.reader.connection.close()
