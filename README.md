@@ -10,13 +10,15 @@
 
 This is a Python package for decoding OpenLR™ location references on target maps.
 
-Its purpose is to give insights into this map-matching process.
+It implements [Chapter H – Decoder](https://www.openlr-association.com/fileadmin/user_upload/openlr-whitepaper_v1.5.pdf#page=97) in the OpenLR whitepaper, except "Step 1 – decode physical data".
+
+Its purpose is to give insights into the map-matching process.
 
 ## Dependencies
 - Python ≥ 3.6
 - geographiclib (PyPi package)
 - shapely (PyPi package)
-- [openlr](https://github.com/tomtom-international/openlr-python) (PyPi package)
+- [openlr](https://github.com/tomtom-international/openlr-python) (PyPi package; implements the decoder's step 1 from the whitepaper)
 - For unittests: SpatiaLite
 ## State
 - [X] Decoding line locations
@@ -35,7 +37,7 @@ The actual logic for matching references onto a map.
 
 This includes finding candidate lines and scoring them, and assembling a dereferenced location.
 
-## observer
+### observer
 Contains the observer class, allowing you to hook onto certain events in the decoding process.
 
 ## Installation
@@ -65,7 +67,7 @@ real_location = decode(reference, mapreader)
 real_location.lines # <- A list of map objects
 ```
 
-## Configuration
+### Configuration
 The `decode` function takes in an optional [Config](https://openlr-dereferencer-python.readthedocs.io/en/latest/openlr_dereferencer.decoding.html#openlr_dereferencer.decoding.configuration.Config) object containing decoding settings.
 With it, you may specify the decoder's behaviour:
 ```py
@@ -81,7 +83,7 @@ my_config = Config(
 decode(reference, mapreader, config=my_config)
 ```
 
-## Logging
+### Logging
 `openlr-dereferencer` logs all mapmatching decisions using the standard library `logging` module.
 
 Use it to turn on debugging:
@@ -91,7 +93,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 ```
 
-## Observing
+### Observing
 Via implementing the [Observer](https://openlr-dereferencer-python.readthedocs.io/en/latest/openlr_dereferencer.observer.html#openlr_dereferencer.observer.simple_observer.SimpleObserver) interface, you can hook onto certain events happening while decoding, and inspect the situation:
 ```py
 from openlr_dereferencer import DecoderObserver, SimpleObserver
@@ -126,7 +128,7 @@ sudo apt install libsqlite3-mod-spatialite
 
 To run the decoding tests.
 ```sh
-python3 -m unittest tests.test_decode
+python3 -m unittest
 ```
 
 ## More Documentation
