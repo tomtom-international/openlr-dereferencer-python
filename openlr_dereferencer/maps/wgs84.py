@@ -99,3 +99,23 @@ def split_line(line: LineString, meters_into: float) -> Tuple[Optional[LineStrin
     first_part = LineString(first_part) if len(first_part) > 1 else None
     second_part = LineString(second_part) if len(second_part) > 1 else None
     return (first_part, second_part)
+
+
+def join_lines(lines: Sequence[LineString]) -> LineString:
+    coords = []
+    last = None
+
+    for l in lines:
+        cs = l.coords
+        first = cs[0]
+
+        if last is None:
+            coords.append(first)
+        else:
+            if first != last:
+                raise ValueError("Lines are not connected")
+
+        coords.extend(cs[1:])
+        last = cs[-1]
+
+    return LineString(coords)
