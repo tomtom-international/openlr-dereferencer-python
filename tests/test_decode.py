@@ -104,8 +104,11 @@ def get_test_linelocation_3():
 
 def get_test_linelocation_4() -> LineLocationReference:
     "Test backtracking with a location that tries the decoder to get lost"
-    lrp1 = LocationReferencePoint(13.41, 52.5245, FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, 120.0, FRC.FRC2, 320)
-    lrp2 = LocationReferencePoint(13.4125, 52.521, FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, 90.0, FRC.FRC2, 1400)
+    # Seems to reference line 19 -> Decoder gets lost
+    lrp1 = LocationReferencePoint(13.41, 52.5245, FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, 120.0, FRC.FRC2, 424)
+    # Matches still roughly line 19
+    lrp2 = LocationReferencePoint(13.4125, 52.521, FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, 90.0, FRC.FRC2, 1313)
+    # Matches only line 20 -> Decoding fails and backtracking resolves LRPs 1 and 2 to line 20
     lrp3 = LocationReferencePoint(13.429, 52.523, FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, 230.0, None, None)
     return LineLocationReference([lrp1, lrp2, lrp3], 0.0, 0.0)
 
