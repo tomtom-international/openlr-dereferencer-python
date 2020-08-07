@@ -2,10 +2,10 @@
 
 from typing import NamedTuple, Tuple, Optional, List
 from shapely.geometry import LineString
-from shapely.ops import substring, linemerge
+from shapely.ops import substring
 from openlr import Coordinates
 from ..maps.abstract import Line, path_length
-from ..maps.wgs84 import interpolate, split_line
+from ..maps.wgs84 import interpolate, split_line, join_lines
 
 
 class PointOnLine(NamedTuple):
@@ -107,7 +107,7 @@ class Route(NamedTuple):
         if last is not None:
             result.append(last)
 
-        return linemerge(result)
+        return join_lines(result)
 
     def coordinates(self) -> List[Coordinates]:
         "Returns all Coordinates of this line location"
