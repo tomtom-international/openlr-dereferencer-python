@@ -19,11 +19,11 @@ A node is an object with an ID and a WGS84 longitude/latitude position.
 
 Lines
 =====
-A line interconnects exactly two nodes in exactly one direction. As further attributes, it has a
-shape, a functional road class and a form of way.
+A line interconnects exactly two nodes in exactly one direction. As additional attributes,
+it has a shape, a functional road class and a form of way.
 
-Note that the map you want to implement may have a different line concept. For example, it is common
-that roads are not necessarily directed. Also, roads may connect more than two nodes.
+Note that the map you want to implement may have a different line concept. For example, it is
+common that roads are not necessarily directed. Also, roads may connect more than two nodes.
 
 Let's consider an example map format that defines ways like this:
 
@@ -35,7 +35,7 @@ If we write a MapReader adapter for this format, we could consider every
 directed link between points being a line, yielding multiple lines per way.
 
 As lines and ways are now different things, our line IDs have to include more than
-just the way ID. It can be, for example, a tuple of the line ID and both node IDs.
+just the way ID. It can be, for example, a tuple of the way ID and both node IDs.
 
 .. image:: _static/Mapformat_2_Lines.svg
 
