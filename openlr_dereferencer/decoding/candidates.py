@@ -30,7 +30,7 @@ def make_candidates(
     if is_last_lrp and point_on_line.distance_to_end() <= config.candidate_threshold:
         reloff = 1.0
     # Drop candidate if there is no partial line left
-    if is_last_lrp and reloff == 0.0 or not is_last_lrp and reloff == 1.0:
+    if is_last_lrp and reloff <= 0.0 or not is_last_lrp and reloff >= 1.0:
         return
     candidate = Candidate(line, reloff)
     bearing = compute_bearing(lrp, candidate, is_last_lrp, config.bear_dist)
