@@ -1,10 +1,55 @@
-"""An abstract `MapReader` base class, which must be implemented for each
-map format to decode location references on."""
+"""Contains an abstract `MapReader` base class, which must be implemented for each
+map format to decode location references on.
+
+A MapReader is an interface with which the decoder can traverse the map. An implementation may
+consist of a database connection or something similar. Its purpose is to let the decoder read
+map objects.
+
+In order to implement a reader for a new map, the following interfaces have to be implemented:
+
+* :py:attr:`~MapReader`
+* :py:attr:`~Node`
+* :py:attr:`~Line`
+
+The map model
+-------------
+Nodes
+=====
+A node is an object with an ID and a WGS84 longitude/latitude position.
+
+Lines
+=====
+A line interconnects exactly two nodes in exactly one direction. As additional attributes,
+it has a shape, a functional road class and a form of way.
+
+Note that the map you want to implement may have a different line concept. For example, it is
+common that roads are not necessarily directed. Also, roads may connect more than two nodes.
+
+Let's consider an example map format that defines ways like this:
+
+.. image:: _static/Mapformat_1_Way.svg
+
+Roads in the map are modeled as multi-directional ways.
+
+If we write a MapReader adapter for this format, we could consider every
+directed link between nodes being a line, yielding multiple lines per way.
+
+As lines and ways are now different things, our line IDs have to include more than
+just the way ID. It can be, for example, a tuple of the way ID and both node IDs.
+
+.. image:: _static/Mapformat_2_Lines.svg
+
+Line IDs are required to be hashable. Since tuples of numbers are hashable,
+they can be used to implement line IDs.
+"""
+
+
 from abc import ABC, abstractmethod
 from typing import Iterable, Hashable, Sequence
 from openlr import Coordinates, FOW, FRC
 from shapely.geometry import LineString, Point
 from shapely.geometry.base import BaseGeometry
+
 
 class GeometricObject(ABC):
     @property
@@ -18,7 +63,9 @@ class Line(GeometricObject):
     @property
     @abstractmethod
     def line_id(self) -> Hashable:
-        "Returns the id of the line. A type is not specified here."
+        """Returns the id of the line.
+        
+        A type is not specified here, but the ID has to be usable as key of a dictionary."""
 
     @property
     @abstractmethod
