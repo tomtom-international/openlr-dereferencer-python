@@ -5,7 +5,7 @@ A MapReader is an interface with which the decoder can traverse the map. An impl
 consist of a database connection or something similar. Its purpose is to let the decoder read
 map objects.
 
-In order to implement a reader for a new map, the following interfaces have to be fulfilled:
+In order to implement a reader for a new map, the following interfaces have to be implemented:
 
 * :py:attr:`~MapReader`
 * :py:attr:`~Node`
@@ -29,19 +29,18 @@ Let's consider an example map format that defines ways like this:
 
 .. image:: _static/Mapformat_1_Way.svg
 
-So, multi-node, multi-directed ways.
+Roads in the map are modeled as multi-directional ways.
 
 If we write a MapReader adapter for this format, we could consider every
-directed link between points being a line, yielding multiple lines per way.
+directed link between nodes being a line, yielding multiple lines per way.
 
 As lines and ways are now different things, our line IDs have to include more than
 just the way ID. It can be, for example, a tuple of the way ID and both node IDs.
 
 .. image:: _static/Mapformat_2_Lines.svg
 
-The `Line` interface is still fulfilled, as the only requirement
-for line IDs is to be hashable.
-
+Line IDs are required to be hashable. Since tuples of numbers are hashable,
+they can be used to implement line IDs.
 """
 
 
@@ -64,7 +63,9 @@ class Line(GeometricObject):
     @property
     @abstractmethod
     def line_id(self) -> Hashable:
-        "Returns the id of the line. A type is not specified here."
+        """Returns the id of the line.
+        
+        A type is not specified here, but the ID has to be usable as key of a dictionary."""
 
     @property
     @abstractmethod
