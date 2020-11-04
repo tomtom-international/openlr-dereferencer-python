@@ -20,10 +20,10 @@ class ExampleMapReader(MapReader):
         self.connection = sqlite3.connect(map_db_file)
         self.connection.enable_load_extension(True)
         try:
-            self.connection.load_extension("mod_spatialite.so")
+            self.connection.load_extension("mod_spatialite")
         except sqlite3.OperationalError:
             raise ExampleMapError(
-                "Spatialite (mod_spatialite.so) was not found on your system."
+                "Spatialite (the mod_spatialite library) was not found on your system."
                 "Please install all dependencies."
             )
 
