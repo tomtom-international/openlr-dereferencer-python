@@ -2,7 +2,7 @@
 
 from itertools import product
 from logging import debug
-from typing import Optional, Iterable, List
+from typing import Optional, Iterable, List, Tuple
 from openlr import FRC, LocationReferencePoint
 from ..maps import shortest_path, MapReader, Line
 from ..maps.a_star import LRPathNotFoundError
@@ -135,48 +135,82 @@ def match_tail(
 
     # Generate all pairs of candidates for the first two lrps
     next_lrp = tail[0]
-
     next_candidates = list(nominate_candidates(next_lrp, reader, config, last_lrp))
 
     if observer is not None:
         observer.on_candidates_found(next_lrp, next_candidates)
 
     pairs = list(product(candidates, next_candidates))
-
-    # Sort by line score pair
+    # Sort by line scores
     pairs.sort(key=lambda pair: (pair[0].score + pair[1].score), reverse=True)
 
     # For every pair of candidates, search for a path matching our requirements
     for (c_from, c_to) in pairs:
-        route = get_candidate_route(c_from, c_to, lfrc, maxlen)
-
-        if not route:
-            debug("No path for candidate found")
-            if observer is not None:
-                observer.on_route_fail(current, next_lrp, c_from, c_to)
+        route = handleCandidatePair((current, next_lrp), (c_from, c_to), observer, lfrc, minlen, maxlen)
+        if route is None:
             continue
-
-        length = route.length()
-
-        if observer is not None:
-            observer.on_route_success(current, next_lrp, c_from, c_to, route)
-
-        debug(f"DNP should be {current.dnp} m, is {length} m.")
-        # If the path does not match DNP, continue with the next candidate pair
-        if length < minlen or length > maxlen:
-            debug("Shortest path deviation from DNP is too large, trying next candidate")
-            continue
-
-        debug(f"Taking route {route}.")
-
         if last_lrp:
             return [route]
-
         try:
             return [route] + match_tail(next_lrp, [c_to], tail[1:], reader, config, observer)
         except LRDecodeError:
+            debug("Recursive call to resolve remaining path had no success")
             continue
 
     if observer is not None:
         observer.on_matching_fail(current, next_lrp, candidates, next_candidates)
     raise LRDecodeError("Decoding was unsuccessful: No candidates left or available.")
+
+def handleCandidatePair(
+        lrps: Tuple[LocationReferencePoint, LocationReferencePoint],
+        candidates: Tuple[Candidate, Candidate],
+        observer: Optional[DecoderObserver],
+        lowest_frc: FRC,
+        minlen: float,
+        maxlen: float,
+    ) -> Optional[Route]:
+    """
+    Try to find an adequate route between two LRP candidates.
+
+    Args:
+        lrps:
+            The two LRPs
+        candidates:
+            The two candidates
+        observer:
+            An optional decoder observer
+        lowest_frc:
+            The lowest acceptable FRC for a line to be considered part of the route
+        minlen:
+            The lowest acceptable route length in meters
+        maxlen:
+            The highest acceptable route length in meters
+
+    Returns:
+        If a route can not be found or has no acceptable length, None is returned.
+        Else, this function returns the found route.
+    """
+    current, next_lrp = lrps
+    source, dest = candidates
+    route = get_candidate_route(source, dest, lowest_frc, maxlen)
+
+    if not route:
+        debug("No path for candidate found")
+        if observer is not None:
+            observer.on_route_fail(current, next_lrp, source, dest)
+        return None
+
+    length = route.length()
+
+    if observer is not None:
+        observer.on_route_success(current, next_lrp, source, dest, route)
+
+    debug(f"DNP should be {current.dnp} m, is {length} m.")
+    # If the path does not match DNP, continue with the next candidate pair
+    if length < minlen or length > maxlen:
+        debug("Shortest path deviation from DNP is too large")
+        return None
+
+    debug(f"Taking route {route}.")
+
+    return route
