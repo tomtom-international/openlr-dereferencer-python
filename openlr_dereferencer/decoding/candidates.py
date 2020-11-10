@@ -9,7 +9,8 @@ from ..maps.a_star import LRPathNotFoundError
 from ..observer import DecoderObserver
 from .candidate import Candidate
 from .scoring import score_lrp_candidate, angle_difference
-from .tools import LRDecodeError, coords, project, compute_bearing
+from .error import LRDecodeError
+from .path_math import coords, project, compute_bearing
 from .routes import Route
 from .configuration import Config
 
@@ -20,7 +21,7 @@ def make_candidates(
         config: Config,
         is_last_lrp: bool
 ) -> Iterable[Candidate]:
-    "Return zero or more LRP candidates based on the given line"
+    "Yields zero or more LRP candidates based on the given line"
     point_on_line = project(line, coords(lrp))
     reloff = point_on_line.relative_offset
 
@@ -47,13 +48,13 @@ def make_candidates(
 def nominate_candidates(
         lrp: LocationReferencePoint, reader: MapReader, config: Config, is_last_lrp: bool
 ) -> Iterable[Candidate]:
-    "Returns a list of candidate lines for the LRP along with their score."
+    "Yields candidate lines for the LRP along with their score."
     debug(f"Finding candidates for LRP {lrp} at {coords(lrp)} in radius {config.search_radius}")
     for line in reader.find_lines_close_to(coords(lrp), config.search_radius):
         yield from make_candidates(lrp, line, config, is_last_lrp)
 
 
-def get_candidate_route(c1: Candidate, c2: Candidate, lfrc: FRC, maxlen: float) -> Optional[Route]:
+def get_candidate_route(start: Candidate, dest: Candidate, lfrc: FRC, maxlen: float) -> Optional[Route]:
     """Returns the shortest path between two LRP candidates, excluding partial lines.
 
     If it is longer than `maxlen`, it is treated as if no path exists.
@@ -61,9 +62,9 @@ def get_candidate_route(c1: Candidate, c2: Candidate, lfrc: FRC, maxlen: float) 
     Args:
         map_reader:
             A reader for the map on which the path is searched
-        c1:
+        start:
             The starting point.
-        c2:
+        dest:
             The ending point.
         lfrc:
             "lowest frc". Line objects from map_reader with an FRC lower than lfrc will be ignored.
@@ -75,15 +76,15 @@ def get_candidate_route(c1: Candidate, c2: Candidate, lfrc: FRC, maxlen: float) 
         The returned path excludes the lines the candidate points are on.
         If there is no matching path found, None is returned.
     """
-    debug(f"Try to find path between {c1, c2}")
-    if c1.line.line_id == c2.line.line_id:
-        return Route(c1, [], c2)
-    debug(f"Finding path between nodes {c1.line.end_node.node_id, c2.line.start_node.node_id}")
+    debug(f"Try to find path between {start, dest}")
+    if start.line.line_id == dest.line.line_id:
+        return Route(start, [], dest)
+    debug(f"Finding path between nodes {start.line.end_node.node_id, dest.line.start_node.node_id}")
     linefilter = lambda line: line.frc <= lfrc
     try:
-        path = shortest_path(c1.line.end_node, c2.line.start_node, linefilter, maxlen=maxlen)
+        path = shortest_path(start.line.end_node, dest.line.start_node, linefilter, maxlen=maxlen)
         debug(f"Returning {path}")
-        return Route(c1, path, c2)
+        return Route(start, path, dest)
     except LRPathNotFoundError:
         debug(f"No path found between these nodes")
         return None

@@ -6,6 +6,7 @@ from logging import debug
 from shapely.geometry import LineString, Point
 from shapely.ops import substring
 from openlr import Coordinates, LocationReferencePoint
+from .error import LRDecodeError
 from .routes import Route, PointOnLine
 from ..maps import Line
 from ..maps.wgs84 import interpolate, bearing, line_string_length
@@ -43,10 +44,6 @@ def remove_offsets(path: Route, p_off: float, n_off: float) -> Route:
         lines,
         PointOnLine.from_abs_offset(end_line, end_line.length - remaining_noff)
     )
-
-
-class LRDecodeError(Exception):
-    "An error that happens through decoding location references"
 
 
 def coords(lrp: LocationReferencePoint) -> Coordinates:

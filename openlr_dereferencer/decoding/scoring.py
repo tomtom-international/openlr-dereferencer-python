@@ -8,9 +8,8 @@ with `1.0` being an exact match and 0.0 being a non-match."""
 from logging import debug
 from openlr import FRC, FOW, LocationReferencePoint
 from ..maps.wgs84 import distance
-from .tools import coords, PointOnLine
+from .path_math import coords, PointOnLine, compute_bearing
 from .configuration import Config
-from .tools import compute_bearing
 
 
 def score_frc(wanted: FRC, actual: FRC) -> float:

@@ -139,4 +139,3 @@ class Node(AbstractNode):
 
 class ExampleMapError(Exception):
     "Some error reading the DB"
-    pass

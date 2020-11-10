@@ -137,7 +137,10 @@ def save_config(config: Config, dest: Union[str, TextIOBase, NoneType] = None) -
     if dest is None:
         return config._asdict()
     if isinstance(dest, str):
-        with open(dest, "w") as fp:
-            save_config(config, fp)
-    if isinstance(dest, TextIOBase):
+        with open(dest, "w") as filepointer:
+            # Call the TextIOBase code path
+            save_config(config, filepointer)
+    elif isinstance(dest, TextIOBase):
         dest.write(dumps(save_config(config)))
+    else:
+        raise TypeError("`dest` has to be a valid destination")
