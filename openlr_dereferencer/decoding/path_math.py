@@ -1,4 +1,4 @@
-"Some tooling functions for path and offset handling"
+"Functions for reckoning with paths, bearing, and offsets"
 
 from math import degrees
 from typing import List
