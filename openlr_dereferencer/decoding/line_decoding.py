@@ -4,7 +4,7 @@ from typing import List, Optional
 from openlr import LineLocationReference, LocationReferencePoint
 from ..maps import MapReader
 from ..observer import DecoderObserver
-from .candidates import nominate_candidates, match_tail
+from .candidate_functions import nominate_candidates, match_tail
 from .line_location import build_line_location, LineLocation
 from .routes import Route
 from .configuration import Config

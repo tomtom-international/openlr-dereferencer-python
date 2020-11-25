@@ -10,11 +10,11 @@ from openlr import Coordinates, FRC, FOW, LineLocationReference, LocationReferen
 
 from openlr_dereferencer import decode, Config
 from openlr_dereferencer.decoding import PointAlongLine, LineLocation, LRDecodeError, PoiWithAccessPoint
-from openlr_dereferencer.decoding.candidates import nominate_candidates
+from openlr_dereferencer.decoding.candidate_functions import nominate_candidates
 from openlr_dereferencer.decoding.scoring import score_geolocation, score_frc, \
     score_bearing, score_angle_difference
 from openlr_dereferencer.decoding.routes import PointOnLine, Route
-from openlr_dereferencer.decoding.tools import remove_offsets
+from openlr_dereferencer.decoding.path_math import remove_offsets
 from openlr_dereferencer.observer import SimpleObserver
 from openlr_dereferencer.example_sqlite_map import ExampleMapReader
 from openlr_dereferencer.maps.wgs84 import distance, bearing, extrapolate

@@ -3,7 +3,7 @@
 from typing import List, Iterable
 from openlr import Coordinates, LineLocationReference
 from ..maps import Line
-from .tools import remove_offsets
+from .path_math import remove_offsets
 from .routes import Route, PointOnLine
 
 class LineLocation:

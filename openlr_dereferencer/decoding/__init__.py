@@ -11,7 +11,7 @@ from openlr import (
 )
 from ..observer import DecoderObserver
 from ..maps import MapReader
-from .tools import LRDecodeError
+from .error import LRDecodeError
 from .line_decoding import decode_line
 from .line_location import LineLocation
 from .point_locations import (
@@ -28,7 +28,7 @@ LR = TypeVar("LocationReference",
              PoiWithAccessPointLocationReference,
              GeoCoordinateLocationReference)
 
-MAP_OBJECTS = TypeVar("MapObjects", LineLocation, Coordinates, PointAlongLine)
+MapObjects = TypeVar("MapObjects", LineLocation, Coordinates, PointAlongLine)
 
 
 def decode(
@@ -36,7 +36,7 @@ def decode(
         reader: MapReader,
         observer: Optional[DecoderObserver] = None,
         config: Config = DEFAULT_CONFIG
-) -> MAP_OBJECTS:
+) -> MapObjects:
     """Translates an openLocationReference into a real location on your map.
 
     Args:
