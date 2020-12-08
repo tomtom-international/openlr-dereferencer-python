@@ -1,7 +1,7 @@
 "Functions for reckoning with paths, bearing, and offsets"
 
 from math import degrees
-from typing import List
+from typing import List, Tuple
 from logging import debug
 from shapely.geometry import LineString, Point
 from shapely.ops import substring
@@ -9,7 +9,7 @@ from openlr import Coordinates, LocationReferencePoint
 from .error import LRDecodeError
 from .routes import Route, PointOnLine
 from ..maps import Line
-from ..maps.wgs84 import interpolate, bearing, line_string_length
+from ..maps.wgs84 import interpolate, bearing, line_string_length, distance
 
 
 def remove_offsets(path: Route, p_off: float, n_off: float) -> Route:
@@ -91,3 +91,13 @@ def compute_bearing(
     bearing_point = interpolate(coordinates, absolute_offset + bear_dist)
     bear = bearing(coordinates[0], bearing_point)
     return degrees(bear) % 360
+
+def simple_frechet(
+    reference: Tuple[Coordinates, Coordinates],
+    candidate: Tuple[Coordinates, Coordinates]
+) -> float:
+    "Computes the frechet distance between two simple directed lines in meters"
+    return max(
+        distance(reference[0], candidate[0]),
+        distance(reference[1], candidate[1])
+    )

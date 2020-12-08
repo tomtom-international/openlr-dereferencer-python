@@ -7,25 +7,14 @@ with `1.0` being an exact match and 0.0 being a non-match."""
 
 from logging import debug
 from openlr import FRC, FOW, LocationReferencePoint
-from ..maps.wgs84 import distance
-from .path_math import coords, PointOnLine, compute_bearing
+from ..maps.wgs84 import distance, Coordinates, extrapolate
+from .path_math import coords, PointOnLine, compute_bearing, simple_frechet
 from .configuration import Config
 
 
 def score_frc(wanted: FRC, actual: FRC) -> float:
     "Return a score for a FRC value"
     return 1.0 - abs(actual - wanted) / 7
-
-
-def score_geolocation(wanted: LocationReferencePoint, actual: PointOnLine, radius: float) -> float:
-    """Scores the geolocation of a candidate.
-
-    A distance of `radius` or more will result in a 0.0 score."""
-    debug(f"Candidate coords are {actual.position()}")
-    dist = distance(coords(wanted), actual.position())
-    if dist < radius:
-        return 1.0 - dist / radius
-    return 0.0
 
 def angle_difference(angle1: float, angle2: float) -> float:
     """The difference of two angle values.
@@ -49,18 +38,16 @@ def score_angle_difference(angle1: float, angle2: float) -> float:
     return 1 - abs(difference) / 180
 
 
-def score_bearing(
-        wanted: LocationReferencePoint,
-        actual: PointOnLine,
-        is_last_lrp: bool,
-        bear_dist: float
-) -> float:
-    """Scores the difference between expected and actual bearing angle.
-
-    A difference of 0° will result in a 1.0 score, while 180° will cause a score of 0.0."""
-    bear = compute_bearing(wanted, actual, is_last_lrp, bear_dist)
-    return score_angle_difference(wanted.bear, bear)
-
+def score_shape(wanted: LocationReferencePoint, candidate: PointOnLine, config: Config) -> float:
+    "Computes a geo/shape score for a candidate"
+    max_distance = config.search_radius * 2 * config.bear_dist
+    expected_start = Coordinates(wanted.lon, wanted.lat)
+    expected_end = extrapolate(expected_start, max_distance, wanted.angle)
+    distance = simple_frechet(
+        (expected_start, expected_end),
+        (candidate.position, candidate.line.end_node.coordinates)
+    )
+    return 1.0 - distance / config.search_radius
 
 def score_lrp_candidate(
         wanted: LocationReferencePoint,
@@ -70,12 +57,10 @@ def score_lrp_candidate(
 
     This is the average of fow, frc, geo and bearing score."""
     debug(f"scoring {candidate} with config {config}")
-    geo_score = config.geo_weight * score_geolocation(wanted, candidate, config.search_radius)
+    shape_score = config.shape_weight * score_shape(wanted, candidate, config)
     fow_score = config.fow_weight * config.fow_standin_score[wanted.fow][candidate.line.fow]
     frc_score = config.frc_weight * score_frc(wanted.frc, candidate.line.frc)
-    bear_score = score_bearing(wanted, candidate, is_last_lrp, config.bear_dist)
-    bear_score *= config.bear_weight
-    score = fow_score + frc_score + geo_score + bear_score
-    debug(f"Score: geo {geo_score} + fow {fow_score} + frc {frc_score} "
-          f"+ bear {bear_score} = {score}")
+    score = fow_score + frc_score + shape_score
+    debug(f"Score: shape {shape_score} + fow {fow_score} + frc {frc_score} "
+          f"= {score}")
     return score
