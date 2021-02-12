@@ -96,7 +96,9 @@ def simple_frechet(
     reference: Tuple[Coordinates, Coordinates],
     candidate: Tuple[Coordinates, Coordinates]
 ) -> float:
-    "Computes the frechet distance between two simple directed lines in meters"
+    """Computes the frechet distance between two simple directed lines in meters
+    
+    The frechet distance of two directed  fully straight lines can be computed very easily."""
     return max(
         distance(reference[0], candidate[0]),
         distance(reference[1], candidate[1])

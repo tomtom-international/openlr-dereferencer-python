@@ -60,7 +60,7 @@ class Config(NamedTuple):
     #: the LRP's bearing value are pre-filtered.
     max_bear_deviation: float = 45.0
     #: Defines a threshold for the shape difference. Only candidates within this value get
-    #: a shape score assigned.
+    #: a shape score assigned. Measured in meters.
     max_shape_deviation: float = 100.0
     #: Defines the weight the FOW score has on the overall score of a candidate.
     fow_weight: float = 1 / 4
