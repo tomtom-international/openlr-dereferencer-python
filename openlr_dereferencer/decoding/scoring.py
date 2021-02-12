@@ -7,7 +7,7 @@ with `1.0` being an exact match and 0.0 being a non-match."""
 
 from logging import debug
 from openlr import FRC, FOW, LocationReferencePoint
-from ..maps.wgs84 import distance, Coordinates, extrapolate
+from ..maps.wgs84 import distance, Coordinates, extrapolate, interpolate
 from .path_math import coords, PointOnLine, compute_bearing, simple_frechet
 from .configuration import Config
 
@@ -40,14 +40,17 @@ def score_angle_difference(angle1: float, angle2: float) -> float:
 
 def score_shape(wanted: LocationReferencePoint, candidate: PointOnLine, config: Config) -> float:
     "Computes a geo/shape score for a candidate"
-    max_distance = config.search_radius * 2 * config.bear_dist
+    max_distance = config.max_shape_deviation
     expected_start = Coordinates(wanted.lon, wanted.lat)
-    expected_end = extrapolate(expected_start, max_distance, wanted.angle)
-    distance = simple_frechet(
+    expected_end = extrapolate(expected_start, config.bear_dist, wanted.bear)
+    candidate_start = candidate.position()
+    candidate_bear_end = interpolate([Coordinates(lon, lat) for (lon, lat) in candidate.split()[1].coords], config.bear_dist)
+    line_distance = simple_frechet(
         (expected_start, expected_end),
-        (candidate.position, candidate.line.end_node.coordinates)
+        (candidate_start, candidate_bear_end)
     )
-    return 1.0 - distance / config.search_radius
+    debug(f"Distance of {candidate.line}: {line_distance}. {(expected_start, expected_end)}, {(candidate_start, candidate_bear_end)}")
+    return 1.0 - line_distance / max_distance
 
 def score_lrp_candidate(
         wanted: LocationReferencePoint,
