@@ -59,20 +59,21 @@ class Config(NamedTuple):
     #: Defines a threshold for the bearing difference. Candidates differing too much from
     #: the LRP's bearing value are pre-filtered.
     max_bear_deviation: float = 45.0
+    #: Defines a threshold for the shape difference. Only candidates within this value get
+    #: a shape score assigned.
+    max_shape_deviation: float = 100.0
     #: Defines the weight the FOW score has on the overall score of a candidate.
     fow_weight: float = 1 / 4
     #: Defines the weight the FRC score has on the overall score of a candidate.
     frc_weight: float = 1 / 4
-    #: Defines the weight the coordinate difference has on the overall score of a candidate.
-    geo_weight: float = 1 / 4
-    #: Defines the weight the bearing score has on the overall score of a candidate.
-    bear_weight: float = 1 / 4
+    #: Defines the weight the frechet difference has on the overall score of a candidate.
+    shape_weight: float = 1 / 2
     #: When comparing an LRP FOW with a candidate's FOW, this matrix defines
     #: how well the candidate's FOW fits as replacement for the expected value.
     #: The usage is `fow_standin_score[lrp's fow][candidate's fow]`.
     #: It returns the score.
     fow_standin_score: List[List[float]] = DEFAULT_FOW_STAND_IN_SCORE
-    #: The bearing angle is computed along this distance on a given line. Given in meters.
+    #: The first `bear_dist` meters of the shape of a line are scored.
     bear_dist: int = 20
 
 
@@ -111,10 +112,10 @@ def load_config(source: Union[str, TextIOBase, dict]) -> Config:
             },
             opened_source['candidate_threshold'],
             opened_source['max_bear_deviation'],
+            opened_source['max_shape_deviation'],
             opened_source['fow_weight'],
             opened_source['frc_weight'],
-            opened_source['geo_weight'],
-            opened_source['bear_weight'],
+            opened_source['shape_weight'],
             opened_source['fow_standin_score'],
             opened_source['bear_dist']
         ]
