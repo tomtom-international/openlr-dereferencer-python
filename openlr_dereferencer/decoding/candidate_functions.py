@@ -24,11 +24,24 @@ def make_candidates(
     "Yields zero or more LRP candidates based on the given line"
     point_on_line = project(line, coords(lrp))
     reloff = point_on_line.relative_offset
-
-    # Snap to the relevant end of the line
-    if not is_last_lrp and point_on_line.distance_from_start() <= config.candidate_threshold:
+    #In case the LRP is not the last LRP and its projection onto the line is close to the END of the line,
+    # discard the point since we expect that the start of
+    # the an adjacent line will be considered as candidate and that would be the better candidate.
+    if not is_last_lrp and point_on_line.distance_to_end()<=config.candidate_threshold:
+        return
+    # Snap to the relevant end of the line, only if the node is not a simple connection node between two lines:
+    # so it does not look like this: ----*-----
+    if not is_last_lrp and point_on_line.distance_from_start() <= config.candidate_threshold and not (len(list(line.start_node.incoming_lines()))==1 and len(list(line.start_node.outgoing_lines()))==1):
         reloff = 0.0
-    if is_last_lrp and point_on_line.distance_to_end() <= config.candidate_threshold:
+
+    # In case the LRP is the last LRP and its projection onto the line is close to the START of the line,
+    # discard the point since we expect that the end of an adjacent line
+    # will be considered as candidate and that would be the better candidate.
+    if is_last_lrp and point_on_line.distance_from_start()<=config.candidate_threshold:
+        return
+    # Snap to the relevant end of the line, only if the node is not a simple connection node between two lines:
+    # so it does not look like this: ----*-----
+    if is_last_lrp and point_on_line.distance_to_end() <= config.candidate_threshold and not (len(list(line.end_node.incoming_lines()))==1 and len(list(line.end_node.outgoing_lines()))==1):
         reloff = 1.0
     # Drop candidate if there is no partial line left
     if is_last_lrp and reloff <= 0.0 or not is_last_lrp and reloff >= 1.0:
