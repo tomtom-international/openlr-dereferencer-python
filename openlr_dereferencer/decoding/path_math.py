@@ -58,8 +58,12 @@ def project(line: Line, coord: Coordinates) -> PointOnLine:
     fraction = line.geometry.project(Point(coord.lon, coord.lat), normalized=True)
 
     to_projection_point = substring(line.geometry, 0.0, fraction, normalized=True)
+
     meters_to_projection_point = line_string_length(to_projection_point)
-    length_fraction = meters_to_projection_point / line.length
+    geometry_length = line_string_length(line.geometry)
+
+    length_fraction = meters_to_projection_point / geometry_length
+
     return PointOnLine(line, length_fraction)
 
 
