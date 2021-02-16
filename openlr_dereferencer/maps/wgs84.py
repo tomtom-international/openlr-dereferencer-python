@@ -50,7 +50,7 @@ def bearing(point_a: Coordinates, point_b: Coordinates) -> float:
 
 
 def extrapolate(point: Coordinates, dist: float, angle: float) -> Coordinates:
-    "Creates a new point that is `dist` meters away in direction `angle`"
+    "Creates a new point that is `dist` meters away in direction `angle` (radians)"
     lon, lat = point.lon, point.lat
     geod = Geodesic.WGS84
     line = geod.Direct(lat, lon, degrees(angle), dist)
