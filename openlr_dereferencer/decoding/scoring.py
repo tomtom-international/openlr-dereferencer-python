@@ -50,7 +50,8 @@ def score_shape(wanted: LocationReferencePoint, candidate: PointOnLine, config: 
         (candidate_start, candidate_bear_end)
     )
     debug(f"Distance of {candidate.line}: {line_distance}. {(expected_start, expected_end)}, {(candidate_start, candidate_bear_end)}")
-    return 1.0 - line_distance / max_distance
+    score = 1.0 - line_distance / max_distance
+    return max(score, 0.0)
 
 def score_lrp_candidate(
         wanted: LocationReferencePoint,
