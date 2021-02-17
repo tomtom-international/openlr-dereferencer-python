@@ -92,7 +92,7 @@ def compute_bearing(
         coordinates = linestring_coords(line2)
         relative_offset = candidate.relative_offset
     absolute_offset = candidate.line.length * relative_offset
-    bearing_point = interpolate(coordinates, absolute_offset + bear_dist)
+    bearing_point = interpolate(coordinates, bear_dist)
     bear = bearing(coordinates[0], bearing_point)
     return degrees(bear) % 360
 
