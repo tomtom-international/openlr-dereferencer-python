@@ -7,6 +7,7 @@ with `1.0` being an exact match and 0.0 being a non-match."""
 
 from math import radians
 from logging import debug
+from typing import Tuple
 from openlr import FRC, FOW, LocationReferencePoint
 from ..maps.wgs84 import distance, Coordinates, extrapolate, interpolate, bearing
 from .path_math import coords, PointOnLine, compute_bearing, simple_frechet
@@ -38,6 +39,16 @@ def score_angle_difference(angle1: float, angle2: float) -> float:
     difference = angle_difference(angle1, angle2)
     return 1 - abs(difference) / 180
 
+def scale_up_to(simple_line: Tuple[Coordinates, Coordinates], min_length: float) -> Tuple[Coordinates, Coordinates]:
+    "Extend the simple directed line if it is not long enough"
+    old_length = distance(*simple_line)
+    if old_length >= min_length:
+        return simple_line
+    # Replace the endpoint with a more distant one
+    angle = bearing(*simple_line)
+    new_endpoint = extrapolate(simple_line[0], min_length, angle)
+    return (simple_line[0], new_endpoint)
+
 
 def score_shape(wanted: LocationReferencePoint, candidate: PointOnLine, config: Config, is_last_lrp: bool) -> float:
     "Computes a geo/shape score for a candidate"
@@ -49,6 +60,10 @@ def score_shape(wanted: LocationReferencePoint, candidate: PointOnLine, config: 
         candidate_bear_end = interpolate([Coordinates(lon, lat) for (lon, lat) in reversed(candidate.split()[0].coords)], config.bear_dist)
     else:
         candidate_bear_end = interpolate([Coordinates(lon, lat) for (lon, lat) in candidate.split()[1].coords], config.bear_dist)
+
+    # Normalize if line is shorter than bearing distance
+    (candidate_start, candidate_bear_end) = scale_up_to((candidate_start, candidate_bear_end), config.bear_dist)
+
     line_distance = simple_frechet(
         (expected_start, expected_end),
         (candidate_start, candidate_bear_end)
