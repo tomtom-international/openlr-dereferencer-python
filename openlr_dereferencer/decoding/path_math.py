@@ -1,7 +1,7 @@
 "Functions for reckoning with paths, bearing, and offsets"
 
 from math import degrees
-from typing import List
+from typing import List, Tuple
 from logging import debug
 from shapely.geometry import LineString, Point
 from shapely.ops import substring
@@ -9,7 +9,7 @@ from openlr import Coordinates, LocationReferencePoint
 from .error import LRDecodeError
 from .routes import Route, PointOnLine
 from ..maps import Line
-from ..maps.wgs84 import interpolate, bearing, line_string_length
+from ..maps.wgs84 import interpolate, bearing, line_string_length, distance
 
 
 def remove_offsets(path: Route, p_off: float, n_off: float) -> Route:
@@ -58,8 +58,12 @@ def project(line: Line, coord: Coordinates) -> PointOnLine:
     fraction = line.geometry.project(Point(coord.lon, coord.lat), normalized=True)
 
     to_projection_point = substring(line.geometry, 0.0, fraction, normalized=True)
+
     meters_to_projection_point = line_string_length(to_projection_point)
-    length_fraction = meters_to_projection_point / line.length
+    geometry_length = line_string_length(line.geometry)
+
+    length_fraction = meters_to_projection_point / geometry_length
+
     return PointOnLine(line, length_fraction)
 
 
@@ -88,6 +92,18 @@ def compute_bearing(
         coordinates = linestring_coords(line2)
         relative_offset = candidate.relative_offset
     absolute_offset = candidate.line.length * relative_offset
-    bearing_point = interpolate(coordinates, absolute_offset + bear_dist)
+    bearing_point = interpolate(coordinates, bear_dist)
     bear = bearing(coordinates[0], bearing_point)
     return degrees(bear) % 360
+
+def simple_frechet(
+    reference: Tuple[Coordinates, Coordinates],
+    candidate: Tuple[Coordinates, Coordinates]
+) -> float:
+    """Computes the frechet distance between two simple directed lines in meters
+    
+    The frechet distance of two directed  fully straight lines can be computed very easily."""
+    return max(
+        distance(reference[0], candidate[0]),
+        distance(reference[1], candidate[1])
+    )
