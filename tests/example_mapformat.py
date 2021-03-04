@@ -56,7 +56,7 @@ def setup_testdb(db_file: str):
     "Creates a sqlite DB with all the test data"
     conn = sqlite3.connect(db_file)
     conn.enable_load_extension(True)
-    conn.load_extension('mod_spatialite.so')
+    conn.load_extension('mod_spatialite')
     cur = conn.cursor()
     cur.executescript(INIT_SQL)
     conn.close()

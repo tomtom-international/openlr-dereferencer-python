@@ -81,13 +81,10 @@ def compute_bearing(
             return 0.0
         coordinates = linestring_coords(line1)
         coordinates.reverse()
-        relative_offset = 1.0 - candidate.relative_offset
     else:
         if line2 is None:
             return 0.0
         coordinates = linestring_coords(line2)
-        relative_offset = candidate.relative_offset
-    absolute_offset = candidate.line.length * relative_offset
     bearing_point = interpolate(coordinates, bear_dist)
     bear = bearing(coordinates[0], bearing_point)
     return degrees(bear) % 360
