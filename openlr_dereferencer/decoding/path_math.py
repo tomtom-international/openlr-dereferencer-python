@@ -58,8 +58,12 @@ def project(line: Line, coord: Coordinates) -> PointOnLine:
     fraction = line.geometry.project(Point(coord.lon, coord.lat), normalized=True)
 
     to_projection_point = substring(line.geometry, 0.0, fraction, normalized=True)
+
     meters_to_projection_point = line_string_length(to_projection_point)
-    length_fraction = meters_to_projection_point / line.length
+    geometry_length = line_string_length(line.geometry)
+
+    length_fraction = meters_to_projection_point / geometry_length
+
     return PointOnLine(line, length_fraction)
 
 
@@ -81,13 +85,10 @@ def compute_bearing(
             return 0.0
         coordinates = linestring_coords(line1)
         coordinates.reverse()
-        relative_offset = 1.0 - candidate.relative_offset
     else:
         if line2 is None:
             return 0.0
         coordinates = linestring_coords(line2)
-        relative_offset = candidate.relative_offset
-    absolute_offset = candidate.line.length * relative_offset
     bearing_point = interpolate(coordinates, bear_dist)
     bear = bearing(coordinates[0], bearing_point)
     return degrees(bear) % 360
