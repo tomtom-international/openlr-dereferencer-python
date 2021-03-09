@@ -27,6 +27,54 @@ def score_geolocation(wanted: LocationReferencePoint, actual: PointOnLine, radiu
         return 1.0 - dist / radius
     return 0.0
 
+
+def angle_sector(angle: float) -> int:
+    """The bearing angles are mapped to one of  32 sectors, each of size 11.5°
+    returns the sector the angle belongs to.
+
+    Args:
+        angle:
+            the value is expected in degrees
+    Returns:
+        the sector to which the angle belongs to. Value in range [0,31]
+    """
+
+    if angle < 0:
+        angle = angle + 360
+    return int(angle / (360 / 32)) % 32
+
+
+def angle_sector_difference(angle1: float, angle2: float) -> int:
+    """"The distance of the two sectors containing the angles values, respectively
+    Args:
+        angle1, angle2:
+            the values are expected in degrees
+    Returns:
+        Value in the range [0,16]
+        """
+
+    sector_diff = abs(angle_sector(angle1) - angle_sector(angle2))
+    "Differences should be between 0 and 16. Direction (clockwise or counter clockwise) between the two sectors should "
+    "not matter. Thus map a difference (sector_diff) larger than 16 needs to be mapped to 32-sector_diff"
+    if sector_diff > 16:
+        sector_diff = 32 - sector_diff
+    return sector_diff
+
+
+def score_angle_sector_differences(angle1: float, angle2: float) -> float:
+    """Helper for 'score_bearing which scores the angle difference
+
+    Args:
+        angle1, angle2:
+            The values are expected in degrees.
+    Returns:
+        The similarity of the sectors of the angles, from 1.0 (same sector) to 0.0 (16 sectors difference)
+    """
+
+    sector_diff = angle_sector_difference(angle1, angle2)
+    return 1.0 - (sector_diff / 16)
+
+
 def angle_difference(angle1: float, angle2: float) -> float:
     """The difference of two angle values.
 
@@ -34,8 +82,9 @@ def angle_difference(angle1: float, angle2: float) -> float:
         angle1, angle2:
             The values are expected in degrees.
     Returns:
-        A value in the range [-180.0, 180.0]"""
+        Value in the range [-180.0, 180.0]"""
     return (abs(angle1 - angle2) + 180) % 360 - 180
+
 
 def score_angle_difference(angle1: float, angle2: float) -> float:
     """Helper for `score_bearing` which scores the angle difference.
@@ -59,7 +108,7 @@ def score_bearing(
 
     A difference of 0° will result in a 1.0 score, while 180° will cause a score of 0.0."""
     bear = compute_bearing(wanted, actual, is_last_lrp, bear_dist)
-    return score_angle_difference(wanted.bear, bear)
+    return score_angle_sector_differences(wanted.bear, bear)
 
 
 def score_lrp_candidate(
