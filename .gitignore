@@ -36,6 +36,9 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+test-config.json
+db.sqlite
+db.sqlite-journal
 
 # Sphinx documentation
 docs/_build/
