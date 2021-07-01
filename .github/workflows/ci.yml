@@ -21,6 +21,8 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install the spatialite module for sqlite
+      run: sudo apt-get -y install libsqlite3-mod-spatialite
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
