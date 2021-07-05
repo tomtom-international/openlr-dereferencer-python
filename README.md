@@ -1,7 +1,6 @@
 # openlr-dereferencer
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
-[![Build status](https://img.shields.io/travis/tomtom-international/openlr-dereferencer-python)](https://travis-ci.org/tomtom-international/openlr-dereferencer-python)
 [![Coverage Status](https://img.shields.io/codecov/c/github/tomtom-international/openlr-dereferencer-python/master.svg)](https://codecov.io/github/tomtom-international/openlr-dereferencer-python?branch=master)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/openlr-dereferencer)](https://pypi.org/project/openlr-dereferencer)
 [![PyPI](https://img.shields.io/pypi/v/openlr-dereferencer)](https://pypi.org/project/openlr-dereferencer)
