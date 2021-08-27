@@ -1,6 +1,6 @@
 """
-* Decode a LR given a target map
-* Generate report on candidate locations
+* Given a LR and a target map, decode and 
+  generate report on candidate locations
 """
 
 from openlr_dereferencer import decoding
