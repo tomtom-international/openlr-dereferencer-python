@@ -20,6 +20,9 @@ def dereference_path(
     first_lrp = lrps[0]
     first_candidates = list(nominate_candidates(first_lrp, reader, config, False))
 
+
+    # print("candidates: ", x=[i for i in first_candidates.score])
+
     if observer is not None:
         observer.on_candidates_found(first_lrp, first_candidates)
 

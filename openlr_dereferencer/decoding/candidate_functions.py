@@ -60,6 +60,9 @@ def make_candidates(
               f"bear: {bearing}. lrp bear: {lrp.bear}")
         return
     candidate.score = score_lrp_candidate(lrp, candidate, config, is_last_lrp)
+
+    print("lrp: ", lrp, "\n candidate point on a line", line.line_id, " bear: ", bearing, " bear_diff: ", bear_diff, " candidate_score" ,candidate.score, "allowed_min_score: ", config.min_score )
+
     if candidate.score >= config.min_score:
         yield candidate
 
