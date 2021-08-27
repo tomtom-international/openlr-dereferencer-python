@@ -127,4 +127,5 @@ def score_lrp_candidate(
     score = fow_score + frc_score + geo_score + bear_score
     debug(f"Score: geo {geo_score} + fow {fow_score} + frc {frc_score} "
           f"+ bear {bear_score} = {score}")
-    return score
+    #import pdb; pdb.set_trace()
+    return candidate.line.fow, candidate.line.frc, geo_score, fow_score, frc_score, score
