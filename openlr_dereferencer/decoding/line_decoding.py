@@ -35,5 +35,8 @@ def decode_line(reference: LineLocationReference, reader: MapReader, config: Con
     """Decodes an openLR line location reference
 
     Candidates are searched in a radius of `radius` meters around an LRP."""
+
+    # print("Number of lrps: ", len(reference.points), [i for i in reference.points])
+    # print("\n lrp_lon lrp_lat lrp_frc lrp_fow lrp_bear lrp_lfrcnp lrp_dnp cand_link_id cand_dir cand_fow cand_frc cand_geo_score cand_fow_score cand_frc_score cand_bear cand_bear_diff cand_score min_score")
     parts = dereference_path(reference.points, reader, config, observer)
     return build_line_location(parts, reference)
