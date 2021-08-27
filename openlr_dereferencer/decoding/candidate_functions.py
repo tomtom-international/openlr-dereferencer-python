@@ -71,8 +71,8 @@ def make_candidates(
             1. move outputs to decoder.py
             2. add output file as input arg
     """
-    with open("candidate_traces.txt", "wa") as output:
-        print(str(lrp.lon)+" "+str(lrp.lat)+" "+str(lrp.frc)+" "+str(lrp.fow)+" "+str(lrp.bear)+" "+str(lrp.lfrcnp)+" "+str(lrp.dnp)+" "+str(line.line_id.link_id)+" "+str(line.line_id.forward)+" "+str(candidate_fow)+" "+str(candidate_frc)+" "+str(geo_score)+" "+str(fow_score)+" "+str(frc_score)+" "+str(bearing)+" "+str(bear_diff)+" "+str(candidate.score)+" "+str(config.min_score), file=output)
+    with open("candidate_traces.txt", "a") as output:
+        output.write(str(lrp.lon)+" "+str(lrp.lat)+" "+str(lrp.frc)+" "+str(lrp.fow)+" "+str(lrp.bear)+" "+str(lrp.lfrcnp)+" "+str(lrp.dnp)+" "+str(line.line_id.link_id)+" "+str(line.line_id.forward)+" "+str(candidate_fow)+" "+str(candidate_frc)+" "+str(geo_score)+" "+str(fow_score)+" "+str(frc_score)+" "+str(bearing)+" "+str(bear_diff)+" "+str(candidate.score)+" "+str(config.min_score)+"\n")
 
 
     if candidate.score >= config.min_score:
