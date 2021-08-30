@@ -11,8 +11,8 @@ from .tools import heuristic, LRPathNotFoundError, tautology
 
 class Score(NamedTuple):
     """The score of a single item in the search priority queue"""
-    f: float
-    g: float
+    f: float # used to score the distance of a node to a target node
+    g: float # used to score the distance of a node from a source node
 
 @total_ordering
 class PQItem(NamedTuple):
