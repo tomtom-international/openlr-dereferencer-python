@@ -4,7 +4,7 @@ from itertools import product
 from logging import debug
 from typing import Optional, Iterable, List, Tuple
 from openlr import FRC, LocationReferencePoint
-from ..maps import shortest_path, MapReader, Line
+from ..maps import shortest_path, MapReader, Line, Node
 from ..maps.a_star import LRPathNotFoundError
 from ..observer import DecoderObserver
 from .candidate import Candidate
@@ -23,55 +23,27 @@ def make_candidates(
     reloff = point_on_line.relative_offset
     # In case the LRP is not the last LRP
     if not is_last_lrp:
-
         # Snap to the relevant end of the line, only if the node is not a simple connection node between two lines:
         # so it does not look like this: ----*-----
-        if abs(point_on_line.distance_from_start()) <= config.candidate_threshold and (
-            not (
-                len(list(line.start_node.incoming_lines())) == 1
-                and len(list(line.start_node.outgoing_lines())) == 1
-            )
-            or not (
-                len(list(line.start_node.incoming_lines())) == 2
-                and len(list(line.start_node.outgoing_lines())) == 2
-            )
-        ):
+        if abs(point_on_line.distance_from_start()) <= config.candidate_threshold and is_valid_node(line.start_node):
             reloff = 0.0
         # If the projection onto the line is close to the END of the line,
         # discard the point since we expect that the start of
         # the an adjacent line will be considered as candidate and that would be the better candidate.
         else:
-            if abs(point_on_line.distance_to_end()) <= config.candidate_threshold and (
-                not (
-                    len(list(line.start_node.incoming_lines())) == 1
-                    and len(list(line.start_node.outgoing_lines())) == 1
-                )
-                or not (
-                    len(list(line.end_node.incoming_lines())) == 2
-                    and len(list(line.end_node.outgoing_lines())) == 2
-                )
-            ):
+            if abs(point_on_line.distance_to_end()) <= config.candidate_threshold and is_valid_node(line.end_node):
                 return
     # In case the LRP is the last LRP
     if is_last_lrp:
         # Snap to the relevant end of the line, only if the node is not a simple connection node between two lines:
         # so it does not look like this: ----*-----
-        if abs(point_on_line.distance_to_end()) <= config.candidate_threshold and (
-            not (
-                len(list(line.start_node.incoming_lines())) == 1
-                and len(list(line.start_node.outgoing_lines())) == 1
-            )
-            or not (
-                len(list(line.end_node.incoming_lines())) == 2
-                and len(list(line.end_node.outgoing_lines())) == 2
-            )
-        ):
+        if abs(point_on_line.distance_to_end()) <= config.candidate_threshold and is_valid_node(line.end_node):
             reloff = 1.0
         else:
             # If the projection onto the line is close to the START of the line,
             # discard the point since we expect that the end of an adjacent line
             # will be considered as candidate and that would be the better candidate.
-            if point_on_line.distance_from_start() <= config.candidate_threshold:
+            if point_on_line.distance_from_start() <= config.candidate_threshold and is_valid_node(line.start_node):
                 return
     # Drop candidate if there is no partial line left
     if is_last_lrp and reloff <= 0.0 or not is_last_lrp and reloff >= 1.0:
@@ -272,3 +244,42 @@ def handleCandidatePair(
     debug(f"Taking route {route}.")
 
     return route
+
+
+def is_valid_node(node: Node):
+    """
+    Checks if a node is a valid node. A valid node is a node that corresponds to a real-world junction
+    """
+    return not is_invalid_node(node)
+
+
+def is_invalid_node(node: Node):
+    """
+    Checks if a node is an invalid node. An invalid node is a node along a road and not at a real-world junction.
+    """
+
+    # Get a list of all incoming lines to the node
+    incoming_lines = list(node.incoming_lines())
+
+    # Get a list of all outgoing lines from the node
+    outgoing_lines = list(node.outgoing_lines())
+
+    # Check the number of incoming and outgoing lines
+    if (len(incoming_lines) == 1 and len(outgoing_lines) == 1) or (len(incoming_lines) == 2 and len(outgoing_lines) == 2):
+        # Get the unique nodes of all incoming and outgoing lines
+        unique_nodes = set()
+
+        for line in incoming_lines:
+            unique_nodes.add(line.start_node)
+            unique_nodes.add(line.end_node)
+
+        for line in outgoing_lines:
+            unique_nodes.add(line.start_node)
+            unique_nodes.add(line.end_node)
+
+        # If it is an invalid node, there should be 3 unique nodes
+        return len(unique_nodes) == 3
+
+    else:
+        # Otherwise it is a valid node
+        return False
