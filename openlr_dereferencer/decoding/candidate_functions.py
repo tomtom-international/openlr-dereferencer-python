@@ -13,7 +13,7 @@ from .error import LRDecodeError
 from .path_math import coords, project, compute_bearing
 from .routes import Route
 from .configuration import Config
-
+import pdb
 
 def make_candidates(
         lrp: LocationReferencePoint,
@@ -23,6 +23,7 @@ def make_candidates(
 ) -> Iterable[Candidate]:
     "Yields zero or more LRP candidates based on the given line"
     point_on_line = project(line, coords(lrp))
+    #print("lrp: ", lrp," projected on line: ", line.line_id)
     reloff = point_on_line.relative_offset
     #In case the LRP is not the last LRP
     if not is_last_lrp:
@@ -31,6 +32,7 @@ def make_candidates(
     # so it does not look like this: ----*-----
         if abs(point_on_line.distance_from_start()) <= config.candidate_threshold and not (len(list(line.start_node.incoming_lines()))==1 and len(list(line.start_node.outgoing_lines()))==1):
             reloff = 0.0
+            print(point_on_line.distance_from_start(), line.line_id.link_id, config.candidate_threshold)
         # If the projection onto the line is close to the END of the line,
         # discard the point since we expect that the start of
         # the an adjacent line will be considered as candidate and that would be the better candidate.
@@ -50,6 +52,7 @@ def make_candidates(
             if point_on_line.distance_from_start()<=config.candidate_threshold:
                 return
     # Drop candidate if there is no partial line left
+    # pdb.set_trace()
     if is_last_lrp and reloff <= 0.0 or not is_last_lrp and reloff >= 1.0:
         return
     candidate = Candidate(line, reloff)
@@ -60,7 +63,7 @@ def make_candidates(
               f"bear: {bearing}. lrp bear: {lrp.bear}")
         return
     # candidate.score = score_lrp_candidate(lrp, candidate, config, is_last_lrp)
-
+    # pdb.set_trace()
     # score each candidate line for a lrp
 
     candidate_fow, candidate_frc, geo_score, fow_score, frc_score, candidate.score = score_lrp_candidate(lrp, candidate, config, is_last_lrp)
@@ -74,10 +77,10 @@ def make_candidates(
     with open("candidate_traces.txt", "a") as output:
         output.write(str(lrp.lon)+" "+str(lrp.lat)+" "+str(lrp.frc)+" "+str(lrp.fow)+" "+str(lrp.bear)+" "+str(lrp.lfrcnp)+" "+str(lrp.dnp)+" "+str(line.line_id.link_id)+" "+str(line.line_id.forward)+" "+str(candidate_fow)+" "+str(candidate_frc)+" "+str(geo_score)+" "+str(fow_score)+" "+str(frc_score)+" "+str(bearing)+" "+str(bear_diff)+" "+str(candidate.score)+" "+str(config.min_score)+"\n")
 
-
+    #nominee =  (line, candidate_fow, candidate_frc, geo_score, fow_score, frc_score, bearing, bear_diff, candidate.score)
     if candidate.score >= config.min_score:
         yield candidate
-
+    #print("score: ", candidate.score, reloff)
 
 def nominate_candidates(
         lrp: LocationReferencePoint, reader: MapReader, config: Config, is_last_lrp: bool
@@ -183,6 +186,11 @@ def match_tail(
         route = handleCandidatePair((current, next_lrp), (c_from, c_to), observer, lfrc, minlen, maxlen)
         if route is None:
             continue
+        else:
+            with open("paths_between_candidate_lrps.txt", "a") as output:
+                output.write(str(current)+" "+str(next_lrp)+" "+str(c_from)+" "+str(c_to)+" "+str([line.line_id for line in route.lines])+"\n")
+
+
         if last_lrp:
             return [route]
         try:
