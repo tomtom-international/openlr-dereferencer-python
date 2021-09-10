@@ -5,7 +5,17 @@ from geographiclib.geodesic import Geodesic
 from openlr import Coordinates
 from shapely.geometry import LineString
 from itertools import tee
+import numpy as np
 
+def haversine_distance(point_a: Coordinates, point_b: Coordinates) -> float: #(lat1, lon1, lat2, lon2):
+   r = 6371
+   phi1 = np.radians(point_a.lat)
+   phi2 = np.radians(point_b.lat)
+   delta_phi = np.radians(point_b.lat - point_a.lat)
+   delta_lambda = np.radians(point_b.lon -point_a.lon)
+   a = np.sin(delta_phi / 2)**2 + np.cos(phi1) * np.cos(phi2) *   np.sin(delta_lambda / 2)**2
+   res = r * (2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a)))
+   return r #np.round(res, 2)
 
 def distance(point_a: Coordinates, point_b: Coordinates) -> float:
     "Returns the distance of two WGS84 coordinates on our planet, in meters"
@@ -15,6 +25,8 @@ def distance(point_a: Coordinates, point_b: Coordinates) -> float:
     line = geod.Inverse(lat1, lon1, lat2, lon2, Geodesic.DISTANCE)
     # According to https://geographiclib.sourceforge.io/1.50/python/, the distance between
     # point 1 and 2 is stored in the attribute `s12`.
+
+    #result = haversine_distance(point_a, point_b)
     return line["s12"]
 
 
