@@ -1,6 +1,16 @@
 """
-* Given a LR and a target map, decode and 
-  generate report on candidate locations
+* This is a script intended to understand
+the steps of a decoder and implications
+on candidate selection
+
+    - Inputs:
+        - location references 
+        - A target map
+    - Outputs:
+        - candidate traces of the decoder 
+          to decode each input location reference (lr)
+        - decoded locations for each lr
+        - statistics on candidate traces with respect to input config
 """
 
 from openlr_dereferencer import decoding
@@ -20,6 +30,7 @@ parser.add_argument("lr", type=str, help=" location reference")
 
 args = parser.parse_args()
 
+
 # create map reader
 
 def create_map_reader(map):
@@ -28,14 +39,17 @@ def create_map_reader(map):
     map_model = openlr_sqlite_map.MapModel(database_reader)
 
     map_reader = openlr_sqlite_map.DefaultMapReader(map_model)
-    pdb.set_trace()   
+    pdb.set_trace()
     return map_reader
 
-# decode a LR on target map
-def decode_lr():
+
+# decode a lr on target map
+
+def decode_lr(lr, target_map):
+
     """Decodes a location reference received as a base 64 string"""
-    base64str = args.lr
-    map_reader = create_map_reader(args.map)
+    base64str = lr
+    map_reader = create_map_reader(target_map)
     locref = None
     location = None
 
@@ -48,15 +62,20 @@ def decode_lr():
     result = {
         "success": True if location else False,
         "locref": locref_dto(locref) if locref else None,
-        "location": location_dto(location) if location else None
+        "location": location_dto(location) if location else None,
     }
-    print("selected_candidate: ", location_dto(location))
-    pdb.set_trace()
+
+    # print("selected_candidate: ", location_dto(location))
+    return location
+    # pdb.set_trace()
+
 
 def locref_dto(locref):
     """Builds a data object for a location reference"""
     if isinstance(locref, openlr.LineLocationReference):
         return line_locref_dto(locref)
+
+
 def locref_dto(locref):
     """Builds a data object for a location reference"""
     if isinstance(locref, openlr.LineLocationReference):
@@ -68,7 +87,7 @@ def line_locref_dto(locref):
     return {
         "lrps": [lrp_dto(point) for point in locref.points],
         "poff": locref.poffs,
-        "noff": locref.noffs
+        "noff": locref.noffs,
     }
 
 
@@ -78,7 +97,7 @@ def lrp_dto(point):
         "coord": [point.lon, point.lat],
         "bearing": point.bear,
         "frc": point.frc,
-        "fow": point.fow
+        "fow": point.fow,
     }
 
 
@@ -95,7 +114,7 @@ def line_location_dto(location):
         "lines": [line_dto(line) for line in location.lines],
         "coords": [[c.lon, c.lat] for c in location.coordinates()],
         "poff": location.p_off,
-        "noff": location.n_off
+        "noff": location.n_off,
     }
 
 
@@ -106,7 +125,15 @@ def line_dto(line):
         "forward": line.line_id.forward,
         "frc": line.frc,
         "fow": line.fow,
-        "coords": [list(c) for c in line.geometry.coords]
+        "coords": [list(c) for c in line.geometry.coords],
     }
-decode_lr()
+
+
+if __name__ == "__main__":
+
+    decoded_location = decode_lr(args.lr, args.map)
+
+    #print("selected_candidate: ", location_dto(decoded_location))
+    # add inputs to decoder
+
 
