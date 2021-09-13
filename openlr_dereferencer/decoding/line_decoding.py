@@ -27,7 +27,7 @@ def dereference_path(
         observer.on_candidates_found(first_lrp, first_candidates)
 
     # linelocationpath = match_tail(first_lrp, first_candidates, lrps[1:], reader, config, observer)
-    linelocationpath = match_tail(first_lrp, first_candidates, lrps[1:], reader, config, observer)
+    linelocationpath = match_tail(forwd_lrp, backwd_lrp, forwd_candidates, backwd_candidates, lrps, reader, config, observer)
 
 
     return linelocationpath
