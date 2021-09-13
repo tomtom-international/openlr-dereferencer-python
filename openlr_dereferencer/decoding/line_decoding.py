@@ -17,16 +17,19 @@ def dereference_path(
         observer: Optional[DecoderObserver]
 ) -> List[Route]:
     "Decode the location reference path, without considering any offsets"
-    first_lrp = lrps[0]
-    first_candidates = list(nominate_candidates(first_lrp, reader, config, False))
-
+    first_lrp, last_lrp = lrps[0], lrps[-1]
+    first_candidates, last_candidates = list(nominate_candidates(first_lrp, reader, config, False, 0)), list(nominate_candidates(last_lrp, reader, config, False, 1))
+    
 
     # print("candidates: ", x=[i for i in first_candidates.score])
 
     if observer is not None:
         observer.on_candidates_found(first_lrp, first_candidates)
 
+    # linelocationpath = match_tail(first_lrp, first_candidates, lrps[1:], reader, config, observer)
     linelocationpath = match_tail(first_lrp, first_candidates, lrps[1:], reader, config, observer)
+
+
     return linelocationpath
 
 
