@@ -17,10 +17,10 @@ def dereference_path(
         observer: Optional[DecoderObserver]
 ) -> List[Route]:
     "Decode the location reference path, without considering any offsets"
-    first_lrp, last_lrp = lrps[0], lrps[-1]
-    first_candidates, last_candidates = list(nominate_candidates(first_lrp, reader, config, False, 0)), list(nominate_candidates(last_lrp, reader, config, False, 1))
+    forwd_lrp, backwd_lrp = lrps[0], lrps[-1]
+    forwd_candidates, backwd_candidates = list(nominate_candidates(forwd_lrp, reader, config, False)), list(nominate_candidates(backwd_lrp, reader, config, False))
     
-
+    
     # print("candidates: ", x=[i for i in first_candidates.score])
 
     if observer is not None:
