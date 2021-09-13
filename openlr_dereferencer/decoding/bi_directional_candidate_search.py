@@ -41,7 +41,7 @@ def bi_directional_search(
     backwd_idx_pos = len(lrps)-1
 
 
-    while len(backwd_pq <= len(forwd_pq) and len(forwd_pq) >= 2 and len(backwd_pq) >= 2:
+    while len(backwd_pq <= len(forwd_pq) and len(forwd_pq) >= 1 and len(backwd_pq) >= 1:
 
         forwd_lrp = heappop(forwd_pq)
         forwd_nxt_lrp = lrps[forwd_idx_pos+1]
@@ -94,7 +94,7 @@ def bi_directional_search(
 
             if backwd_route is not None:
                 backwd_routes.append(backwd_route)
-
-        forwd_idx_pos += 1
-        backwd_idx_pos += 1
+            #TODO: add recursive call for the next lrps so computation
+        # forwd_idx_pos += 1
+        # backwd_idx_pos += 1
 
