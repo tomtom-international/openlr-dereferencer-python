@@ -38,7 +38,8 @@ def bi_directional_search(
     # track position of current lrp poped from queue to identify adjacent lrp
     forwd_idx_pos = 0
     backwd_idx_pos = len(lrps) - 1
-
+    
+    routes = {}
     while (
         len(backwd_pq) <= len(forwd_pq) and len(forwd_pq) != 0 and len(backwd_pq) != 0
     ):
@@ -181,6 +182,7 @@ def bi_directional_search(
                 # join to sub-routes to build a complete path
                 # [current_route] + [nxt_route]
             """
+    return routes
             # TODO: add recursive call for the next lrps so computation
         # forwd_idx_pos += 1
         # backwd_idx_pos += 1
