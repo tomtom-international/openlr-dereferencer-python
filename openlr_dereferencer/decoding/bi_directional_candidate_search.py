@@ -124,7 +124,6 @@ def bi_directional_search(
                 backwd_minlen,
                 backwd_maxlen
             )
-            print(forwd_route)
 
             pdb.set_trace()
             if forwd_routes is not None:
@@ -167,7 +166,7 @@ def bi_directional_search(
                     )
                 )
             
-            # pdb.set_trace()
+
             # add routes for each lrp into adjacency list
             if forwd_idx_pos == 0:
                 routes[forwd_lrp] = [forwd_routes]
@@ -175,15 +174,8 @@ def bi_directional_search(
             else:
                 routes[forwd_lrp].append(forwd_routes)
                 routes[backwd_prev_lrp].append(backwd_routes)
-            # pdb.set_trace()
-            """
-            # check if backward and forward search processed the same node
-
-            if forwd_pairs[idx][1].line.start_node == forwd_pairs[idx][0].line.end_node:
-                
-                # join to sub-routes to build a complete path
-                # [current_route] + [nxt_route]
-            """
+            
+            
         forwd_idx_pos += 1
         backwd_idx_pos -= 1
     print(routes)
