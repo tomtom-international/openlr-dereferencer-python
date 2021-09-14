@@ -29,43 +29,39 @@ def bi_directional_search(
     observer: Optional[DecoderObserver],
 ) -> List[Route]:
 
-    # priority queue for forward and backward search
-
-    forwd_pq, backwd_pq = [lrp for lrp in lrps[::-1]], lrps.copy()
-
-    heapify(forwd_pq), heapify(backwd_pq)
 
     # track position of current lrp poped from queue to identify adjacent lrp
     forwd_idx_pos = 0
     backwd_idx_pos = len(lrps) - 1
     
+    K = 0 # top K best paths
     routes = {}
-    while (
-        len(backwd_pq) <= len(forwd_pq) and len(forwd_pq) != 0 and len(backwd_pq) != 0
-    ):
+    for forwd_lrp, backwd_lrp in zip(lrps, lrps[::-1]):
+        
+        if forwd_idx_pos >= backwd_idx_pos:
+            break
 
-        forwd_lrp = heappop(forwd_pq)
+        # pdb.set_trace()
         forwd_nxt_lrp = lrps[forwd_idx_pos + 1]
 
-        backwd_lrp = heappop(backwd_pq)
         backwd_prev_lrp = lrps[backwd_idx_pos - 1]
 
         # find candidates
         forwd_lrp_cand = list(
-            nominate_candidates(forwd_lrp, reader, config, len(forwd_pq) == 1)
+            nominate_candidates(forwd_lrp, reader, config, forwd_idx_pos == len(lrps)-1)
         )
         forwd_nxt_lrp_cand = list(
-            nominate_candidates(forwd_nxt_lrp, reader, config, len(forwd_pq) == 1)
+            nominate_candidates(forwd_nxt_lrp, reader, config, forwd_idx_pos == len(lrps)-1)
         )
 
         backwd_lrp_cand = list(
             nominate_candidates(
-                backwd_lrp, reader, config, len(backwd_pq) == len(processed_lrps)
+                backwd_lrp, reader, config, backwd_idx_pos == len(lrps)-1
             )
         )
         backwd_prev_lrp_cand = list(
             nominate_candidates(
-                backwd_prev_lrp, reader, config, len(backwd_pq) == len(processed_lrps)
+                backwd_prev_lrp, reader, config, backwd_idx_pos == len(lrps)-1
             )
         )
 
@@ -74,10 +70,11 @@ def bi_directional_search(
         " K = Min(len(first_lrp_cand) // 2, len(last_lrp_cand) // 2)
         
         """
-        if len(forwd_pq) == len(lrps) - 2:
-
-            K = min(len(forwd_lrp_cand) // 2, len(backwd_lrp_cand) // 2)
-
+        if forwd_idx_pos==0 and backwd_idx_pos==len(lrps)-1:
+            
+            # K = min(len(forwd_lrp_cand) // 2, len(backwd_lrp_cand) // 2)
+            K = min(len(forwd_lrp_cand), len(backwd_lrp_cand))
+        # pdb.set_trace()
         forwd_pairs = list(product(forwd_lrp_cand, forwd_nxt_lrp_cand))
         backwd_pairs = list(product(backwd_prev_lrp_cand, backwd_lrp_cand))
 
@@ -95,7 +92,8 @@ def bi_directional_search(
             1 + config.max_dnp_deviation
         ) * forwd_lrp.dnp + config.tolerated_dnp_dev
         forwd_lfrc = config.tolerated_lfrc[forwd_lrp.lfrcnp]
-
+        
+        # pdb.set_trace()
         # mín and max path length to the next lrp
         backwd_minlen = (
             1 - config.max_dnp_deviation
@@ -104,7 +102,8 @@ def bi_directional_search(
             1 + config.max_dnp_deviation
         ) * backwd_prev_lrp.dnp + config.tolerated_dnp_dev
         backwd_lfrc = config.tolerated_lfrc[backwd_prev_lrp.lfrcnp]
-
+        
+        # pdb.set_trace()
         # find 2K shorest paths between consequtive lrps: K through forward, K through backward search
         forwd_routes, backwd_routes = [], []
         for idx in range(K):
@@ -115,7 +114,7 @@ def bi_directional_search(
                 observer,
                 forwd_lfrc,
                 forwd_minlen,
-                forwd_maxlen,
+                forwd_maxlen
             )
             backwd_route = handleCandidatePair(
                 (backwd_prev_lrp, backwd_lrp),
@@ -123,17 +122,19 @@ def bi_directional_search(
                 observer,
                 backwd_lfrc,
                 backwd_minlen,
-                backwd_maxlen,
+                backwd_maxlen
             )
+            print(forwd_route)
 
-            if forwd_route is not None:
+            pdb.set_trace()
+            if forwd_routes is not None:
                 # forwd_routes.append(forwd_route)
                 forwd_routes.append(
                     (
                         forwd_nxt_lrp,
-                        forwd_pairs[idx][0].line.start_node,
+                        forwd_pairs[idx][0].line.end_node.node_id,
                         forwd_pairs[idx][1].line.start_node.node_id,
-                        forwd_route,
+                        forwd_route
                     )
                 )
 
@@ -141,39 +142,40 @@ def bi_directional_search(
                 forwd_routes.append(
                     (
                         forwd_nxt_lrp,
-                        forwd_pairs[idx][0].line.start_node,
+                        forwd_pairs[idx][0].line.end_node.node_id,
                         forwd_pairs[idx][1].line.start_node.node_id,
-                        None,
+                        None
                     )
                 )
-            if backwd_route is not None:
+            if backwd_routes is not None:
                 # backwd_routes.append(backwd_route)
                 backwd_routes.append(
                     (
                         backwd_lrp,
-                        backwd_pairs[idx][0].line.start_node,
+                        backwd_pairs[idx][0].line.end_node.node_id,
                         backwd_pairs[idx][1].line.start_node.node_id,
-                        backwd_route,
+                        backwd_route
                     )
                 )
             else:
                 backwd_routes.append(
                     (
                         backwd_lrp,
-                        backwd_pairs[idx][0].line.start_node,
+                        backwd_pairs[idx][0].line.end_node.node_id,
                         backwd_pairs[idx][1].line.start_node.node_id,
-                        None,
+                        None
                     )
                 )
-
-        # add route to each adjacent lrp into adjacency list
-        if len(forwd_pq) == len(lrps):
-            routes[forwd_lrp] = [forwd_routes]
-            routes[backwd_lrp] = [backwd_routes]
-        else:
-            routes[forwd_lrp].append(forwd_routes)
-            routes[backwd_prev_lrp].append(backwd_routes)
-
+            
+            # pdb.set_trace()
+            # add routes for each lrp into adjacency list
+            if forwd_idx_pos == 0:
+                routes[forwd_lrp] = [forwd_routes]
+                routes[backwd_lrp] = [backwd_routes]
+            else:
+                routes[forwd_lrp].append(forwd_routes)
+                routes[backwd_prev_lrp].append(backwd_routes)
+            # pdb.set_trace()
             """
             # check if backward and forward search processed the same node
 
@@ -182,7 +184,7 @@ def bi_directional_search(
                 # join to sub-routes to build a complete path
                 # [current_route] + [nxt_route]
             """
+        forwd_idx_pos += 1
+        backwd_idx_pos -= 1
+    print(routes)
     return routes
-            # TODO: add recursive call for the next lrps so computation
-        # forwd_idx_pos += 1
-        # backwd_idx_pos += 1
