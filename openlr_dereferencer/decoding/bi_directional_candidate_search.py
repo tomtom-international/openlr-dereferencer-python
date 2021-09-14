@@ -127,15 +127,43 @@ def bi_directional_search(
 
             if forwd_route is not None:
                 # forwd_routes.append(forwd_route)
-                forwd_routes.append((forwd_nxt_lrp, forwd_pairs[idx][0].line.start_node, forwd_pairs[idx][1].line.start_node.node_id, forwd_route))
+                forwd_routes.append(
+                    (
+                        forwd_nxt_lrp,
+                        forwd_pairs[idx][0].line.start_node,
+                        forwd_pairs[idx][1].line.start_node.node_id,
+                        forwd_route,
+                    )
+                )
 
             else:
-                forwd_routes.append((forwd_nxt_lrp, forwd_pairs[idx][0].line.start_node, forwd_pairs[idx][1].line.start_node.node_id, None))
+                forwd_routes.append(
+                    (
+                        forwd_nxt_lrp,
+                        forwd_pairs[idx][0].line.start_node,
+                        forwd_pairs[idx][1].line.start_node.node_id,
+                        None,
+                    )
+                )
             if backwd_route is not None:
                 # backwd_routes.append(backwd_route)
-                backwd_routes.append((backwd_lrp, backwd_pairs[idx][0].line.start_node, backwd_pairs[idx][1].line.start_node.node_id, backwd_route))
+                backwd_routes.append(
+                    (
+                        backwd_lrp,
+                        backwd_pairs[idx][0].line.start_node,
+                        backwd_pairs[idx][1].line.start_node.node_id,
+                        backwd_route,
+                    )
+                )
             else:
-                backwd_routes.append((backwd_lrp, backwd_pairs[idx][0].line.start_node, backwd_pairs[idx][1].line.start_node.node_id, None))
+                backwd_routes.append(
+                    (
+                        backwd_lrp,
+                        backwd_pairs[idx][0].line.start_node,
+                        backwd_pairs[idx][1].line.start_node.node_id,
+                        None,
+                    )
+                )
 
         # add route to each adjacent lrp into adjacency list
         if len(forwd_pq) == len(lrps):
