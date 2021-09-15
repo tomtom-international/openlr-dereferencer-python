@@ -30,51 +30,50 @@ def bi_directional_search(
 ) -> List[Route]:
 
 
-    # track position of current lrp poped from queue to identify adjacent lrp
-    forwd_idx_pos = 0
-    backwd_idx_pos = len(lrps) - 1
-    
-    K = 0 # top K best paths
+    K = 0 # top K best paths between consequtive lrps
     routes = {}
-    for forwd_lrp, backwd_lrp in zip(lrps, lrps[::-1]):
-        
-        if forwd_idx_pos >= backwd_idx_pos:
+
+    for forwd_idx in range(len(lrps)):
+        pdb.set_trace()
+        backwd_idx = len(lrps) - 1 - forwd_idx
+        if forwd_idx >= backwd_idx:
             break
 
-        # pdb.set_trace()
-        forwd_nxt_lrp = lrps[forwd_idx_pos + 1]
+        forwd_lrp = lrps[forwd_idx]
+        forwd_nxt_lrp = lrps[forwd_idx + 1]
 
-        backwd_prev_lrp = lrps[backwd_idx_pos - 1]
-
+        backwd_lrp = lrps[backwd_idx]
+        backwd_prev_lrp = lrps[backwd_idx - 1]
+        pdb.set_trace()
         # find candidates
         forwd_lrp_cand = list(
-            nominate_candidates(forwd_lrp, reader, config, forwd_idx_pos == len(lrps)-1)
+            nominate_candidates(forwd_lrp, reader, config, forwd_idx == len(lrps)-1)
         )
         forwd_nxt_lrp_cand = list(
-            nominate_candidates(forwd_nxt_lrp, reader, config, forwd_idx_pos == len(lrps)-1)
+            nominate_candidates(forwd_nxt_lrp, reader, config, forwd_idx == len(lrps)-1)
         )
 
         backwd_lrp_cand = list(
             nominate_candidates(
-                backwd_lrp, reader, config, backwd_idx_pos == len(lrps)-1
+                backwd_lrp, reader, config, backwd_idx == len(lrps)-1
             )
         )
         backwd_prev_lrp_cand = list(
             nominate_candidates(
-                backwd_prev_lrp, reader, config, backwd_idx_pos == len(lrps)-1
+                backwd_prev_lrp, reader, config, backwd_idx == len(lrps)-1
             )
         )
-
+        pdb.set_trace()
         """
-        " choose top K candidates to build K maximum paths
+        " TODO: choose top K candidates to build K maximum paths
         " K = Min(len(first_lrp_cand) // 2, len(last_lrp_cand) // 2)
         
         """
-        if forwd_idx_pos==0 and backwd_idx_pos==len(lrps)-1:
+        if forwd_idx==0 and backwd_idx==len(lrps)-1:
             
-            # K = min(len(forwd_lrp_cand) // 2, len(backwd_lrp_cand) // 2)
             K = min(len(forwd_lrp_cand), len(backwd_lrp_cand))
-        # pdb.set_trace()
+
+        # find pairs of candidate lines between consequtive lrps
         forwd_pairs = list(product(forwd_lrp_cand, forwd_nxt_lrp_cand))
         backwd_pairs = list(product(backwd_prev_lrp_cand, backwd_lrp_cand))
 
@@ -83,7 +82,7 @@ def bi_directional_search(
         backwd_pairs.sort(
             key=lambda pair: (pair[0].score + pair[1].score), reverse=True
         )
-
+        pdb.set_trace()
         # mín and max path length to the next lrp
         forwd_minlen = (
             1 - config.max_dnp_deviation
@@ -93,7 +92,6 @@ def bi_directional_search(
         ) * forwd_lrp.dnp + config.tolerated_dnp_dev
         forwd_lfrc = config.tolerated_lfrc[forwd_lrp.lfrcnp]
         
-        # pdb.set_trace()
         # mín and max path length to the next lrp
         backwd_minlen = (
             1 - config.max_dnp_deviation
@@ -103,8 +101,8 @@ def bi_directional_search(
         ) * backwd_prev_lrp.dnp + config.tolerated_dnp_dev
         backwd_lfrc = config.tolerated_lfrc[backwd_prev_lrp.lfrcnp]
         
-        # pdb.set_trace()
-        # find 2K shorest paths between consequtive lrps: K through forward, K through backward search
+        pdb.set_trace()
+        # find 2K shorest paths between pair of consequtive lrps: K through forward search, K through backward search
         forwd_routes, backwd_routes = [], []
         for idx in range(K):
 
@@ -127,56 +125,56 @@ def bi_directional_search(
 
             pdb.set_trace()
             if forwd_routes is not None:
-                # forwd_routes.append(forwd_route)
+
                 forwd_routes.append(
                     (
                         forwd_nxt_lrp,
-                        forwd_pairs[idx][0].line.end_node.node_id,
-                        forwd_pairs[idx][1].line.start_node.node_id,
+                        forwd_pairs[idx][0].line.line_id,
+                        forwd_pairs[idx][1].line.line_id,
                         forwd_route
                     )
                 )
 
             else:
+
                 forwd_routes.append(
                     (
                         forwd_nxt_lrp,
-                        forwd_pairs[idx][0].line.end_node.node_id,
-                        forwd_pairs[idx][1].line.start_node.node_id,
+                        forwd_pairs[idx][0].line.line_id,
+                        forwd_pairs[idx][1].line.line_id,
                         None
                     )
                 )
             if backwd_routes is not None:
-                # backwd_routes.append(backwd_route)
+
                 backwd_routes.append(
                     (
                         backwd_lrp,
-                        backwd_pairs[idx][0].line.end_node.node_id,
-                        backwd_pairs[idx][1].line.start_node.node_id,
+                        backwd_pairs[idx][0].line.line_id,
+                        backwd_pairs[idx][1].line.line_id,
                         backwd_route
                     )
                 )
             else:
+
                 backwd_routes.append(
                     (
                         backwd_lrp,
-                        backwd_pairs[idx][0].line.end_node.node_id,
-                        backwd_pairs[idx][1].line.start_node.node_id,
+                        backwd_pairs[idx][0].line.line_id,
+                        backwd_pairs[idx][1].line.line_id,
                         None
                     )
                 )
             
-
+            pdb.set_trace()
             # add routes for each lrp into adjacency list
-            if forwd_idx_pos == 0:
+            if forwd_idx == 0:
                 routes[forwd_lrp] = [forwd_routes]
-                routes[backwd_lrp] = [backwd_routes]
+                routes[backwd_prev_lrp] = [backwd_routes]
             else:
                 routes[forwd_lrp].append(forwd_routes)
                 routes[backwd_prev_lrp].append(backwd_routes)
             
             
-        forwd_idx_pos += 1
-        backwd_idx_pos -= 1
     print(routes)
     return routes
