@@ -30,21 +30,27 @@ def make_candidates(
         # If the projection onto the line is close to the END of the line,
         # discard the point since we expect that the start of
         # the an adjacent line will be considered as candidate and that would be the better candidate.
+        # TODO: check if there is adjacent line that best suit before discarding candidate.
+        """
         else:
             if abs(point_on_line.distance_to_end()) <= config.candidate_threshold and is_valid_node(line.end_node):
                 return
+        """
     # In case the LRP is the last LRP
     if is_last_lrp:
         # Snap to the relevant end of the line, only if the node is not a simple connection node between two lines:
         # so it does not look like this: ----*-----
         if abs(reloff) < 0.85 and abs(point_on_line.distance_to_end()) <= config.candidate_threshold and is_valid_node(line.end_node):
             reloff = 1.0
+        """
         else:
             # If the projection onto the line is close to the START of the line,
             # discard the point since we expect that the end of an adjacent line
             # will be considered as candidate and that would be the better candidate.
+            # TODO: check if there is adjacent line that best suit before discarding candidate
             if point_on_line.distance_from_start() <= config.candidate_threshold and is_valid_node(line.start_node):
                 return
+        """
     # Drop candidate if there is no partial line left
     if is_last_lrp and reloff <= 0.0 or not is_last_lrp and reloff >= 1.0:
         return
