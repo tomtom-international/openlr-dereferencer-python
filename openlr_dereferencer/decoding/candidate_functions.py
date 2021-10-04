@@ -25,7 +25,7 @@ def make_candidates(
     if not is_last_lrp:
         # Snap to the relevant end of the line, only if the node is not a simple connection node between two lines:
         # so it does not look like this: ----*-----
-        if abs(point_on_line.distance_from_start()) <= config.candidate_threshold and is_valid_node(line.start_node):
+        if abs(reloff) < 0.15 and abs(point_on_line.distance_from_start()) <= config.candidate_threshold and is_valid_node(line.start_node):
             reloff = 0.0
         # If the projection onto the line is close to the END of the line,
         # discard the point since we expect that the start of
@@ -37,7 +37,7 @@ def make_candidates(
     if is_last_lrp:
         # Snap to the relevant end of the line, only if the node is not a simple connection node between two lines:
         # so it does not look like this: ----*-----
-        if abs(point_on_line.distance_to_end()) <= config.candidate_threshold and is_valid_node(line.end_node):
+        if abs(reloff) < 0.85 and abs(point_on_line.distance_to_end()) <= config.candidate_threshold and is_valid_node(line.end_node):
             reloff = 1.0
         else:
             # If the projection onto the line is close to the START of the line,
