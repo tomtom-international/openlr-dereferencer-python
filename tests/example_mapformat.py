@@ -64,6 +64,7 @@ def setup_testdb(db_file: str):
     conn.close()
 
 def setup_testdb_in_memory():
+    "Creates a sqlite DB and returns a connection for quicker tests"
     conn = sqlite3.connect(":memory:")
     _setup_connection(conn)
     return conn
