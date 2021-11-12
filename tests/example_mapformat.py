@@ -51,15 +51,22 @@ INSERT INTO lines (startnode, endnode, frc, fow, path) VALUES
     (14, 5, 1, 3, ST_GeomFromText("LINESTRING(13.41 52.5245, 13.4125 52.521, 13.4175 52.521)", {SRID})),
     (14, 13, 3, 3, ST_GeomFromText("LINESTRING(13.41 52.5245, 13.4123 52.52, 13.42 52.52, 13.425 52.521, 13.429 52.523)", {SRID}));
 """
-
-def setup_testdb(db_file: str):
-    "Creates a sqlite DB with all the test data"
-    conn = sqlite3.connect(db_file)
+def _setup_connection(conn):
     conn.enable_load_extension(True)
     conn.load_extension('mod_spatialite')
     cur = conn.cursor()
     cur.executescript(INIT_SQL)
+
+def setup_testdb(db_file: str):
+    "Creates a sqlite DB with all the test data"
+    conn = sqlite3.connect(db_file)
+    _setup_connection(conn)
     conn.close()
+
+def setup_testdb_in_memory():
+    conn = sqlite3.connect(":memory:")
+    _setup_connection(conn)
+    return conn
 
 def remove_db_file(db_file: str):
     "Removes the sqlite DB file, and does not raise when nonexistent"
