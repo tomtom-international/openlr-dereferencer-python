@@ -10,7 +10,7 @@ from openlr_dereferencer.example_sqlite_map import (
     ExampleMapReader, Line, ExampleMapError, Node
 )
 
-from .example_mapformat import setup_testdb,setup_testdb_in_memory, remove_db_file
+from .example_mapformat import setup_testdb_in_memory, remove_db_file
 
 class SQLiteMapTest(unittest.TestCase):
     "A few unit tests for the example sqlite mapformat"
