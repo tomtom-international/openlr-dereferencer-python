@@ -5,16 +5,14 @@ import unittest
 from openlr_dereferencer.maps import shortest_path
 from openlr_dereferencer.example_sqlite_map import ExampleMapReader
 
-from .example_mapformat import setup_testdb, remove_db_file
+from .example_mapformat import setup_testdb_in_memory, remove_db_file
 
 class AStarTests(unittest.TestCase):
     "Tests the A* module"
-    db = 'db.sqlite'
 
     def setUp(self):
-        remove_db_file(self.db)
-        setup_testdb(self.db)
-        self.reader = ExampleMapReader(self.db)
+        self.reader = ExampleMapReader(":memory:")
+        self.reader.connection = setup_testdb_in_memory()
 
     def test_shortest_path_same_node(self):
         "Shortest path between a node and itself is empty"
@@ -58,4 +56,3 @@ class AStarTests(unittest.TestCase):
 
     def tearDown(self):
         self.reader.connection.close()
-        remove_db_file(self.db)

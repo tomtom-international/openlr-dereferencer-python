@@ -2,6 +2,7 @@
 import unittest
 from math import degrees
 from itertools import zip_longest
+from io import StringIO
 from typing import List, Iterable, TypeVar, NamedTuple
 from shapely.geometry import LineString
 from openlr import Coordinates, FRC, FOW, LineLocationReference, LocationReferencePoint,\
@@ -19,7 +20,7 @@ from openlr_dereferencer.observer import SimpleObserver
 from openlr_dereferencer.example_sqlite_map import ExampleMapReader
 from openlr_dereferencer.maps.wgs84 import distance, bearing, extrapolate
 
-from .example_mapformat import setup_testdb, remove_db_file
+from .example_mapformat import setup_testdb, setup_testdb_in_memory, remove_db_file
 
 from openlr_dereferencer import load_config, save_config, DEFAULT_CONFIG
 
@@ -139,7 +140,6 @@ T = TypeVar("T")
 
 class DecodingTests(unittest.TestCase):
     "Unittests for the decoding logic"
-    db = 'db.sqlite'
 
     def assertIterableAlmostEqual(self, iter_a: Iterable[T], iter_b: Iterable[T], delta: float):
         """Tests if `a` and `b` iterate over nearly-equal floats.
@@ -158,9 +158,8 @@ class DecodingTests(unittest.TestCase):
                 raise self.failureException(msg)
 
     def setUp(self):
-        remove_db_file(self.db)
-        setup_testdb(self.db)
-        self.reader = ExampleMapReader(self.db)
+        self.reader = ExampleMapReader(":memory:")
+        self.reader.connection = setup_testdb_in_memory()
         self.config = Config()
 
     def test_geoscore_1(self):
@@ -419,15 +418,15 @@ class DecodingTests(unittest.TestCase):
 
     def tearDown(self):
         self.reader.connection.close()
-        remove_db_file(self.db)
 
 
 class DecodingToolsTests(unittest.TestCase):
     def test_load_saved_config(self):
         "Save and load a Config object"
-        filename = "test-config.json"
-        save_config(DEFAULT_CONFIG, filename)
-        config = load_config(filename)
+        test_config_file = StringIO()
+        save_config(DEFAULT_CONFIG, test_config_file)
+        test_config_file.seek(0)
+        config = load_config(test_config_file)
         self.assertDictEqual(config.tolerated_lfrc, DEFAULT_CONFIG.tolerated_lfrc)
         self.assertEqual(config.bear_dist, DEFAULT_CONFIG.bear_dist)
 

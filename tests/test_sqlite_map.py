@@ -10,16 +10,14 @@ from openlr_dereferencer.example_sqlite_map import (
     ExampleMapReader, Line, ExampleMapError, Node
 )
 
-from .example_mapformat import setup_testdb, remove_db_file
+from .example_mapformat import setup_testdb_in_memory, remove_db_file
 
 class SQLiteMapTest(unittest.TestCase):
     "A few unit tests for the example sqlite mapformat"
-    db = 'db.sqlite'
 
     def setUp(self):
-        remove_db_file(self.db)
-        setup_testdb(self.db)
-        self.reader = ExampleMapReader(self.db)
+        self.reader = ExampleMapReader(":memory:")
+        self.reader.connection = setup_testdb_in_memory()
 
     def test_line_invalid_id_type(self):
         "Check if an invalid line id raises an error"
@@ -122,4 +120,3 @@ class SQLiteMapTest(unittest.TestCase):
 
     def tearDown(self):
         self.reader.connection.close()
-        remove_db_file(self.db)
