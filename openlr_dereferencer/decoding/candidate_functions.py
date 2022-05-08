@@ -104,7 +104,7 @@ def get_candidate_route(start: Candidate, dest: Candidate, lfrc: FRC, maxlen: fl
         debug("Returning %s", path)
         return Route(start, path, dest)
     except LRPathNotFoundError:
-        debug(f"No path found between these nodes")
+        debug("No path found between these nodes")
         return None
 
 
@@ -229,6 +229,6 @@ def handleCandidatePair(
         debug("Shortest path deviation from DNP is too large")
         return None
 
-    debug(f"Taking route {route}.")
+    debug("Taking route %s.", route)
 
     return route
