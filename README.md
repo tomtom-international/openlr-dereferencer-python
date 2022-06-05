@@ -9,7 +9,7 @@
 
 This is a Python package for decoding OpenLR™ location references on target maps.
 
-It implements [Chapter H – Decoder](https://www.openlr-association.com/fileadmin/user_upload/openlr-whitepaper_v1.5.pdf#page=97) in the OpenLR whitepaper, except "Step 1 – decode physical data".
+It implements [Chapter G – Decoder](https://www.openlr-association.com/fileadmin/user_upload/openlr-whitepaper_v1.5.pdf#page=97) in the OpenLR whitepaper, except "Step 1 – decode physical data".
 
 Its purpose is to give insights into the map-matching process.
 
