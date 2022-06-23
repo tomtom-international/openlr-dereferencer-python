@@ -14,23 +14,21 @@ from ..maps.wgs84 import interpolate, bearing, line_string_length
 
 def remove_offsets(path: Route, p_off: float, n_off: float) -> Route:
     """Remove start+end offsets, measured in meters, from a route and return the result"""
-    debug(f"Will consider positive offset = {p_off} m and negative offset {n_off} m.")
+    debug("Will consider positive offset = %.02fm and negative offset %.02fm.", p_off, n_off)
     lines = path.lines
-    debug(f"This routes consists of {lines} and is {path.length()} m long.")
+    debug("This route consists of %s and is %.02fm long.", lines, path.length())
     # Remove positive offset
-    debug(f"first line's offset is {path.absolute_start_offset}")
+    debug("first line's offset is %.02f",path.absolute_start_offset)
     remaining_poff = p_off + path.absolute_start_offset
     while remaining_poff >= lines[0].length:
-        debug(f"Remaining positive offset {remaining_poff} is greater than "
-              f"the first line. Removing it.")
+        debug("Remaining positive offset %.02f is greater than the first line. Removing it.", remaining_poff)
         remaining_poff -= lines.pop(0).length
         if not lines:
             raise LRDecodeError("Offset is bigger than line location path")
     # Remove negative offset
     remaining_noff = n_off + path.absolute_end_offset
     while remaining_noff >= lines[-1].length:
-        debug(f"Remaining negative offset {remaining_noff} is greater than "
-              f"the last line. Removing it.")
+        debug("Remaining negative offset %.02f is greater than the last line. Removing it.", remaining_noff)
         remaining_noff -= lines.pop().length
         if not lines:
             raise LRDecodeError("Offset is bigger than line location path")
