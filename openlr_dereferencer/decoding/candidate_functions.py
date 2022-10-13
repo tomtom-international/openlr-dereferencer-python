@@ -15,10 +15,10 @@ from .routes import Route
 from .configuration import Config
 
 
-def make_candidates(
+def make_candidate(
     lrp: LocationReferencePoint, line: Line, config: Config, is_last_lrp: bool
-) -> Iterable[Candidate]:
-    "Yields zero or more LRP candidates based on the given line"
+) -> Candidate:
+    "Returns one or none LRP candidates based on the given line"
     point_on_line = project(line, coords(lrp))
     reloff = point_on_line.relative_offset
     # In case the LRP is not the last LRP
@@ -59,7 +59,7 @@ def make_candidates(
         return
     candidate.score = score_lrp_candidate(lrp, candidate, config, is_last_lrp)
     if candidate.score >= config.min_score:
-        yield candidate
+        return candidate
 
 
 def nominate_candidates(
@@ -70,7 +70,9 @@ def nominate_candidates(
         f"Finding candidates for LRP {lrp} at {coords(lrp)} in radius {config.search_radius}"
     )
     for line in reader.find_lines_close_to(coords(lrp), config.search_radius):
-        yield from make_candidates(lrp, line, config, is_last_lrp)
+        candidate = make_candidate(lrp, line, config, is_last_lrp)
+        if candidate:
+            yield candidate
 
 
 def get_candidate_route(
