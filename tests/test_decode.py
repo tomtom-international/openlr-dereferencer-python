@@ -11,7 +11,7 @@ from openlr import Coordinates, FRC, FOW, LineLocationReference, LocationReferen
 
 from openlr_dereferencer import decode, Config
 from openlr_dereferencer.decoding import PointAlongLine, LineLocation, LRDecodeError, PoiWithAccessPoint
-from openlr_dereferencer.decoding.candidate_functions import nominate_candidates
+from openlr_dereferencer.decoding.candidate_functions import nominate_candidates, make_candidates
 from openlr_dereferencer.decoding.scoring import score_geolocation, score_frc, \
     score_bearing, score_angle_difference
 from openlr_dereferencer.decoding.routes import PointOnLine, Route
@@ -161,6 +161,13 @@ class DecodingTests(unittest.TestCase):
         self.reader = ExampleMapReader(":memory:")
         self.reader.connection = setup_testdb_in_memory()
         self.config = Config()
+
+    def test_make_candidates_with_zero_length_line(self):
+        lrp = LocationReferencePoint(0.0, 0.0, None, None, None, None, None)
+        node1 = DummyNode(Coordinates(0.0, 0.0))
+        node2 = DummyNode(Coordinates(0.0, 0.0))
+        line = DummyLine(0, node1, node2)
+        self.assertListEqual(list(make_candidates(lrp, line, self.config, False)), [])
 
     def test_geoscore_1(self):
         "Test scoring an excactly matching LRP candidate line"

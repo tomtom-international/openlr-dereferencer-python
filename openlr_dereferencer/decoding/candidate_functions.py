@@ -19,6 +19,10 @@ def make_candidates(
     lrp: LocationReferencePoint, line: Line, config: Config, is_last_lrp: bool
 ) -> Iterable[Candidate]:
     "Yields zero or more LRP candidates based on the given line"
+    # When the line is of length zero, we expect that also the adjacent lines are considered as candidates, hence
+    # we don't need to project on the point that is the degenerated line.
+    if line.geometry.length == 0:
+        return
     point_on_line = project(line, coords(lrp))
     reloff = point_on_line.relative_offset
     # In case the LRP is not the last LRP
@@ -29,7 +33,7 @@ def make_candidates(
             reloff = 0.0
         # If the projection onto the line is close to the END of the line,
         # discard the point since we expect that the start of
-        # the an adjacent line will be considered as candidate and that would be the better candidate.
+        # an adjacent line will be considered as candidate and that would be the better candidate.
         else:
             if abs(point_on_line.distance_to_end()) <= config.candidate_threshold and is_valid_node(line.end_node):
                 return
