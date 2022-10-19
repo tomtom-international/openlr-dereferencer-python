@@ -20,7 +20,7 @@ def make_candidates(
 ) -> Iterable[Candidate]:
     "Yields zero or more LRP candidates based on the given line"
     # When the line is of length zero, we expect that also the adjacent lines are considered as candidates, hence
-    # we don't need to project one the point that is the degenerated line.
+    # we don't need to project on the point that is the degenerated line.
     if line.geometry.length == 0:
         return
     point_on_line = project(line, coords(lrp))
