@@ -4,7 +4,7 @@ from itertools import chain
 from typing import Iterable
 from openlr import Coordinates, FRC, FOW
 from shapely.geometry import LineString
-from ..maps import Line as AbstractLine, Node as AbstractNode
+from openlr_dereferencer.maps import Line as AbstractLine, Node as AbstractNode
 
 class Line(AbstractLine):
     "Line object implementation for the example format"

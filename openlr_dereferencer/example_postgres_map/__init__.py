@@ -1,12 +1,11 @@
 """The example map format described in `map_format.md`, conforming to
 the interface in openlr_dereferencer.maps"""
 
-import os
 import psycopg2
-from typing import Sequence, Tuple, Iterable
+from typing import Iterable
 from openlr import Coordinates
 from .primitives import Line, Node, ExampleMapError
-from ..maps import MapReader, wgs84
+from openlr_dereferencer.maps import MapReader
 
 
 class PostgresMapReader(MapReader):
@@ -63,7 +62,6 @@ class PostgresMapReader(MapReader):
 
     def find_nodes_close_to(self, coord: Coordinates, dist: float) -> Iterable[Node]:
         """Finds all nodes in a given radius, given in meters
-        print("Node",coord, dist)
         Yields every node within this distance to `coord`."""
         lon, lat = coord.lon, coord.lat
         stmt = """
@@ -77,12 +75,10 @@ class PostgresMapReader(MapReader):
         """
         self.cursor.execute(stmt, (lon, lat, dist))
         for (node_id,) in self.cursor.fetchall():
-            print("Node",coord, dist, node_id)
             yield Node(self, node_id)
 
     def find_lines_close_to(self, coord: Coordinates, dist: float) -> Iterable[Line]:
         "Yields all lines within `dist` meters around `coord`"
-        print("Line",coord, dist)
         lon, lat = coord.lon, coord.lat
         stmt = """
             SELECT
@@ -95,5 +91,4 @@ class PostgresMapReader(MapReader):
         """
         self.cursor.execute(stmt, (lon, lat, dist))
         for (line_id,) in self.cursor.fetchall():
-            print("Line",coord, dist, line_id)
             yield Line(self, line_id)
