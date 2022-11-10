@@ -57,7 +57,7 @@ def make_candidates(
     bear_diff = angle_difference(bearing, lrp.bear)
     if abs(bear_diff) > config.max_bear_deviation:
         debug(
-            f"Not considering {candidate} because the bearing difference is {bear_diff} °.",
+            f"Not considering {candidate} because the bearing difference is {bear_diff} °." + 
             f"bear: {bearing}. lrp bear: {lrp.bear}",
         )
         return
