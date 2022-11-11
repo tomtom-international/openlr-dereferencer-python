@@ -16,7 +16,7 @@ from .configuration import Config
 
 
 def make_candidate(
-    lrp: LocationReferencePoint, line: Line, config: Config, is_last_lrp: bool
+    lrp: LocationReferencePoint, line: Line, config: Config, observer: Optional[DecoderObserver], is_last_lrp: bool
 ) -> Candidate:
     "Returns one or none LRP candidates based on the given line"
     point_on_line = project(line, coords(lrp))
@@ -52,6 +52,11 @@ def make_candidate(
     bearing = compute_bearing(lrp, candidate, is_last_lrp, config.bear_dist)
     bear_diff = angle_difference(bearing, lrp.bear)
     if abs(bear_diff) > config.max_bear_deviation:
+        if observer is not None:
+            observer.on_candidate_rejected(
+                lrp, candidate,
+                f"Bearing difference = {bear_diff} greater than max. bearing deviation = {config.max_bear_deviation}",
+            )
         debug(
             f"Not considering {candidate} because the bearing difference is {bear_diff} °.",
             f"bear: {bearing}. lrp bear: {lrp.bear}",
@@ -63,14 +68,15 @@ def make_candidate(
 
 
 def nominate_candidates(
-    lrp: LocationReferencePoint, reader: MapReader, config: Config, is_last_lrp: bool
+    lrp: LocationReferencePoint, reader: MapReader, config: Config,
+    observer: Optional[DecoderObserver], is_last_lrp: bool
 ) -> Iterable[Candidate]:
     "Yields candidate lines for the LRP along with their score."
     debug(
         f"Finding candidates for LRP {lrp} at {coords(lrp)} in radius {config.search_radius}"
     )
     for line in reader.find_lines_close_to(coords(lrp), config.search_radius):
-        candidate = make_candidate(lrp, line, config, is_last_lrp)
+        candidate = make_candidate(lrp, line, config, observer, is_last_lrp)
         if candidate:
             yield candidate
 
@@ -229,7 +235,7 @@ def handleCandidatePair(
     if not route:
         debug("No path for candidate found")
         if observer is not None:
-            observer.on_route_fail(current, next_lrp, source, dest)
+            observer.on_route_fail(current, next_lrp, source, dest, "No path for candidate found")
         return None
 
     length = route.length()
@@ -241,6 +247,8 @@ def handleCandidatePair(
     # If the path does not match DNP, continue with the next candidate pair
     if length < minlen or length > maxlen:
         debug("Shortest path deviation from DNP is too large")
+        if observer is not None:
+            observer.on_route_fail(current, next_lrp, source, dest, "Shortest path deviation from DNP is too large")
         return None
 
     debug(f"Taking route {route}.")

@@ -14,6 +14,7 @@ class AttemptedRoute(NamedTuple):
     to_line: Line
     success: bool
     path: Optional[Sequence[Line]]
+    reason: Optional[str]
 
 class AttemptedMatch(NamedTuple):
     "An attempted try to resolve a pair of two LRPs"
@@ -21,6 +22,7 @@ class AttemptedMatch(NamedTuple):
     to_lrp: LocationReferencePoint
     from_candidate: Sequence[Candidate]
     to_candidate: Sequence[Candidate]
+    reason: Optional[str]
 
 
 class SimpleObserver(DecoderObserver):
@@ -29,16 +31,22 @@ class SimpleObserver(DecoderObserver):
 
     def __init__(self):
         self.candidates = {}
+        self.failed_candidates = []
         self.attempted_routes = []
         self.failed_matches = []
 
     def on_candidates_found(self, lrp: LocationReferencePoint, candidates: Sequence[Candidate]):
         self.candidates[lrp] = candidates
 
+    def on_candidate_rejected(self, lrp: LocationReferencePoint, candidate: Candidate, reason: str):
+        self.failed_candidates.append(
+            (lrp, candidate, reason)
+        )
+
     def on_route_fail(self, from_lrp: LocationReferencePoint, to_lrp: LocationReferencePoint,
-                      from_line: Line, to_line: Line):
+                      from_line: Line, to_line: Line, reason: str):
         self.attempted_routes.append(
-            AttemptedRoute(from_lrp, to_lrp, from_line, to_line, False, None)
+            AttemptedRoute(from_lrp, to_lrp, from_line, to_line, False, None, reason)
         )
 
     def on_route_success(self, from_lrp: LocationReferencePoint, to_lrp: LocationReferencePoint,
@@ -48,7 +56,7 @@ class SimpleObserver(DecoderObserver):
         )
 
     def on_matching_fail(self, from_lrp: LocationReferencePoint, to_lrp: LocationReferencePoint,
-                         from_candidates: Sequence[Candidate], to_candidates: Sequence[Candidate]):
+                         from_candidates: Sequence[Candidate], to_candidates: Sequence[Candidate], reason: str):
         self.failed_matches.append(
-            AttemptedMatch(from_lrp, to_lrp, from_candidates, to_candidates)
+            AttemptedMatch(from_lrp, to_lrp, from_candidates, to_candidates, reason)
         )
