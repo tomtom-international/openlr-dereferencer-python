@@ -19,6 +19,10 @@ def make_candidate(
     lrp: LocationReferencePoint, line: Line, config: Config, observer: Optional[DecoderObserver], is_last_lrp: bool
 ) -> Candidate:
     "Returns one or none LRP candidates based on the given line"
+    # When the line is of length zero, we expect that also the adjacent lines are considered as candidates, hence
+    # we don't need to project on the point that is the degenerated line.
+    if line.geometry.length == 0:
+        return
     point_on_line = project(line, coords(lrp))
     reloff = point_on_line.relative_offset
     # In case the LRP is not the last LRP
@@ -29,7 +33,7 @@ def make_candidate(
             reloff = 0.0
         # If the projection onto the line is close to the END of the line,
         # discard the point since we expect that the start of
-        # the an adjacent line will be considered as candidate and that would be the better candidate.
+        # an adjacent line will be considered as candidate and that would be the better candidate.
         else:
             if abs(point_on_line.distance_to_end()) <= config.candidate_threshold and is_valid_node(line.end_node):
                 return
@@ -168,7 +172,7 @@ def match_tail(
 
     # Generate all pairs of candidates for the first two lrps
     next_lrp = tail[0]
-    next_candidates = list(nominate_candidates(next_lrp, reader, config, last_lrp))
+    next_candidates = list(nominate_candidates(next_lrp, reader, config, observer, last_lrp))
 
     if observer is not None:
         observer.on_candidates_found(next_lrp, next_candidates)
@@ -195,7 +199,7 @@ def match_tail(
             continue
 
     if observer is not None:
-        observer.on_matching_fail(current, next_lrp, candidates, next_candidates)
+        observer.on_matching_fail(current, next_lrp, candidates, next_candidates, "No candidate pair matches")
     raise LRDecodeError("Decoding was unsuccessful: No candidates left or available.")
 
 

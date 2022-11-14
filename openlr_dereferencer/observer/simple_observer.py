@@ -52,7 +52,7 @@ class SimpleObserver(DecoderObserver):
     def on_route_success(self, from_lrp: LocationReferencePoint, to_lrp: LocationReferencePoint,
                          from_line: Line, to_line: Line, path: Sequence[Line]):
         self.attempted_routes.append(
-            AttemptedRoute(from_lrp, to_lrp, from_line, to_line, True, path)
+            AttemptedRoute(from_lrp, to_lrp, from_line, to_line, True, path, None)
         )
 
     def on_matching_fail(self, from_lrp: LocationReferencePoint, to_lrp: LocationReferencePoint,
