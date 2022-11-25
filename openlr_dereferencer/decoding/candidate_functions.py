@@ -67,8 +67,22 @@ def make_candidate(
         )
         return
     candidate.score = score_lrp_candidate(lrp, candidate, config, is_last_lrp)
-    if candidate.score >= config.min_score:
-        return candidate
+    if candidate.score < config.min_score:
+        if observer is not None:
+            observer.on_candidate_rejected(
+                lrp, candidate,
+                f"Candidate score = {candidate.score} lower than min. score = {config.min_score}",
+            )
+        debug(
+            f"Not considering {candidate}",
+            f"Candidate score = {candidate.score} < min. score = {config.min_score}",
+        )
+        return
+    if observer is not None:
+        observer.on_candidate_found(
+            lrp, candidate,
+        )
+    return candidate
 
 
 def nominate_candidates(
@@ -173,9 +187,6 @@ def match_tail(
     # Generate all pairs of candidates for the first two lrps
     next_lrp = tail[0]
     next_candidates = list(nominate_candidates(next_lrp, reader, config, observer, last_lrp))
-
-    if observer is not None:
-        observer.on_candidates_found(next_lrp, next_candidates)
 
     pairs = list(product(candidates, next_candidates))
     # Sort by line scores

@@ -35,8 +35,11 @@ class SimpleObserver(DecoderObserver):
         self.attempted_routes = []
         self.failed_matches = []
 
-    def on_candidates_found(self, lrp: LocationReferencePoint, candidates: Sequence[Candidate]):
-        self.candidates[lrp] = candidates
+    def on_candidate_found(self, lrp: LocationReferencePoint, candidate: Candidate):
+        if lrp not in self.candidates:
+            self.candidates[lrp] = [candidate]
+        else:
+            self.candidates[lrp].append(candidate)
 
     def on_candidate_rejected(self, lrp: LocationReferencePoint, candidate: Candidate, reason: str):
         self.failed_candidates.append(

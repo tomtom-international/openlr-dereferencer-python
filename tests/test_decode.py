@@ -383,6 +383,29 @@ class DecodingTests(unittest.TestCase):
         self.assertTrue(observer.candidates)
         self.assertListEqual([route.success for route in observer.attempted_routes], [True, True])
 
+    def test_observer_generate_candidates_strict_bearing_threshold(self):
+        "Try to generate candidates with a strict bearing threshold"
+        reference = get_test_linelocation_1()
+        observer = SimpleObserver()
+        candidates = list(
+            nominate_candidates(reference.points[0], self.reader, Config(max_bear_deviation=0), observer, False)
+        )
+
+        self.assertListEqual(candidates, [])
+        self.assertDictEqual(observer.candidates, {})
+        self.assertTrue(observer.failed_candidates)
+
+    def test_observer_generate_candidates_score_threshold(self):
+        "Try to generate candidates with a high min score"
+        reference = get_test_linelocation_1()
+        observer = SimpleObserver()
+        candidates = list(
+            nominate_candidates(reference.points[0], self.reader, Config(min_score=0.8), observer, False)
+        )
+
+        self.assertEqual(len(candidates), 1)
+        self.assertTrue(observer.failed_candidates)
+
     def test_observer_decode_pointalongline(self):
         "Add a simple observer for decoding a valid point along line location"
         reference = get_test_pointalongline()

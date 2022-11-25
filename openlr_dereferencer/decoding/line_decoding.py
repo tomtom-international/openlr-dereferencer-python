@@ -20,9 +20,6 @@ def dereference_path(
     first_lrp = lrps[0]
     first_candidates = list(nominate_candidates(first_lrp, reader, config, observer, False))
 
-    if observer is not None:
-        observer.on_candidates_found(first_lrp, first_candidates)
-
     linelocationpath = match_tail(first_lrp, first_candidates, lrps[1:], reader, config, observer)
     return linelocationpath
 

@@ -12,8 +12,8 @@ class DecoderObserver:
     "Abstract class representing an observer to the OpenLR decoding process"
 
     @abstractmethod
-    def on_candidates_found(self, lrp: LocationReferencePoint, candidates: Sequence[Candidate]):
-        "Called by the decoder when it finds a list of candidates for a location reference point"
+    def on_candidate_found(self, lrp: LocationReferencePoint, candidate: Candidate):
+        "Called by the decoder when it finds a candidate for a location reference point"
 
     @abstractmethod
     def on_candidate_rejected(self, lrp: LocationReferencePoint, candidate: Candidate, reason: str):
