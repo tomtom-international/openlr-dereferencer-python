@@ -11,7 +11,7 @@ from openlr import Coordinates, FRC, FOW, LineLocationReference, LocationReferen
 
 from openlr_dereferencer import decode, Config
 from openlr_dereferencer.decoding import PointAlongLine, LineLocation, LRDecodeError, PoiWithAccessPoint
-from openlr_dereferencer.decoding.candidate_functions import nominate_candidates, make_candidates
+from openlr_dereferencer.decoding.candidate_functions import nominate_candidates, make_candidate
 from openlr_dereferencer.decoding.scoring import score_geolocation, score_frc, \
     score_bearing, score_angle_difference
 from openlr_dereferencer.decoding.routes import PointOnLine, Route
@@ -167,7 +167,7 @@ class DecodingTests(unittest.TestCase):
         node1 = DummyNode(Coordinates(0.0, 0.0))
         node2 = DummyNode(Coordinates(0.0, 0.0))
         line = DummyLine(0, node1, node2)
-        self.assertListEqual(list(make_candidates(lrp, line, self.config, False)), [])
+        self.assertEqual(make_candidate(lrp, line, self.config, None, False), None)
 
     def test_geoscore_1(self):
         "Test scoring an excactly matching LRP candidate line"
@@ -288,7 +288,7 @@ class DecodingTests(unittest.TestCase):
     def test_generate_candidates_1(self):
         "Generate candidates and pick the best"
         reference = get_test_linelocation_1()
-        candidates = list(nominate_candidates(reference.points[0], self.reader, self.config, False))
+        candidates = list(nominate_candidates(reference.points[0], self.reader, self.config, None, False))
         # Sort by score
         candidates.sort(key=lambda candidate: candidate.score, reverse=True)
         # Get only the line ids
@@ -382,6 +382,29 @@ class DecodingTests(unittest.TestCase):
         decode(reference, self.reader, observer=observer)
         self.assertTrue(observer.candidates)
         self.assertListEqual([route.success for route in observer.attempted_routes], [True, True])
+
+    def test_observer_generate_candidates_strict_bearing_threshold(self):
+        "Try to generate candidates with a strict bearing threshold"
+        reference = get_test_linelocation_1()
+        observer = SimpleObserver()
+        candidates = list(
+            nominate_candidates(reference.points[0], self.reader, Config(max_bear_deviation=0), observer, False)
+        )
+
+        self.assertListEqual(candidates, [])
+        self.assertDictEqual(observer.candidates, {})
+        self.assertTrue(observer.failed_candidates)
+
+    def test_observer_generate_candidates_score_threshold(self):
+        "Try to generate candidates with a high min score"
+        reference = get_test_linelocation_1()
+        observer = SimpleObserver()
+        candidates = list(
+            nominate_candidates(reference.points[0], self.reader, Config(min_score=0.8), observer, False)
+        )
+
+        self.assertEqual(len(candidates), 1)
+        self.assertTrue(observer.failed_candidates)
 
     def test_observer_decode_pointalongline(self):
         "Add a simple observer for decoding a valid point along line location"
