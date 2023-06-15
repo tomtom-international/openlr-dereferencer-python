@@ -62,7 +62,7 @@ def make_candidate(
                 f"Bearing difference = {bear_diff} greater than max. bearing deviation = {config.max_bear_deviation}",
             )
         debug(
-            f"Not considering {candidate} because the bearing difference is {bear_diff} °.",
+            f"Not considering {candidate} because the bearing difference is {bear_diff} °." + 
             f"bear: {bearing}. lrp bear: {lrp.bear}",
         )
         return
