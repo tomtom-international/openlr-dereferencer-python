@@ -10,7 +10,6 @@ import pandas as pd
 import geopandas as gpd
 import psycopg2
 from sqlalchemy import text
-from geoalchemy2 import Geometry
 from shapely.geometry import LineString
 from tqdm import tqdm
 from stl_general import database as db
@@ -25,6 +24,13 @@ OPENLR_NODES_TBL_NAME = "hollowell_cumberland_osm_openlr_nodes"
 OUTPUT_TBL_NAME = "hollowell_cumberland_tt_osm_crosswalk"
 SCHEMA_NAME = "mag"
 DB_NICKNAME = "dell4db"
+
+# OLR dereferencers configs
+BEAR_DIST = 1  # tomtom has v short segs
+FOW_WEIGHT = 0  # we don't get FOW from TomTom at the moment
+TOLERATED_DNP_DEV = 1000  # tomtom has v short segs
+CANDIDATE_THRESHOLD = 20  # tomtom has v short segs
+REL_CANDIDATE_THRESHOLD = 0.1  # threshold should be relative to candidate segment length
 
 
 def tt_seg_to_openlr_ref(linestr, frc=7, fow=0, lfrcnp=None):
@@ -101,11 +107,11 @@ def match_segs(resume=False, observer=False, debug=False):
         observer = openlr_dereferencer.SimpleObserver() if observer else None
         olr_ref = tt_seg_to_openlr_ref(seg["geom"], frc=seg["road_class"])
         my_config = openlr_dereferencer.Config(
-            bear_dist=1,  # tomtom has v short segs
-            fow_weight=0,  # we don't get FOW from TomTom at the moment
-            tolerated_dnp_dev=1000,  # tomtom has v short segs
-            candidate_threshold=20,  # tomtom has v short segs
-            rel_candidate_threshold=0.1,  # threshold should be relative to candidate segment length
+            bear_dist=BEAR_DIST,
+            fow_weight=FOW_WEIGHT,
+            tolerated_dnp_dev=TOLERATED_DNP_DEV,
+            candidate_threshold=CANDIDATE_THRESHOLD,
+            rel_candidate_threshold=REL_CANDIDATE_THRESHOLD,
         )
         try:
             with PostgresMapReader(

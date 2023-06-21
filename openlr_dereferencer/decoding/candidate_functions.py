@@ -132,13 +132,16 @@ def get_candidate_route(start: Candidate, dest: Candidate, lfrc: FRC, maxlen: fl
     if start.line.line_id == dest.line.line_id:
         return Route(start, [], dest)
     debug(f"Finding path between nodes {start.line.end_node.node_id, dest.line.start_node.node_id}")
-    linefilter = lambda line: line.frc <= lfrc
+
+    def linefilter(line, lfrc=lfrc):
+        return line.frc <= lfrc
+
     try:
         path = shortest_path(start.line.end_node, dest.line.start_node, linefilter, maxlen=maxlen)
         debug(f"Returning {path}")
         return Route(start, path, dest)
     except LRPathNotFoundError:
-        debug(f"No path found between these nodes")
+        debug(f"No path found between these nodes: ({start.line.end_node.node_id}, {dest.line.start_node.node_id})")
         return None
 
 

@@ -6,6 +6,7 @@ from ..maps import Line
 from .path_math import remove_offsets
 from .routes import Route, PointOnLine
 
+
 class LineLocation:
     """A dereferenced line location. Create it from a combined Route which represents the
     line location path. The attribute `lines` is the list of involved `Line` elements.
