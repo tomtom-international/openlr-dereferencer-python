@@ -11,12 +11,15 @@ from .tools import heuristic, LRPathNotFoundError, tautology
 
 class Score(NamedTuple):
     """The score of a single item in the search priority queue"""
+
     f: float
     g: float
+
 
 @total_ordering
 class PQItem(NamedTuple):
     """A single item in the search priority queue"""
+
     score: Score
     node: Node
     line: Line
@@ -27,10 +30,10 @@ class PQItem(NamedTuple):
 
 
 def shortest_path(
-        start: Node,
-        end: Node,
-        linefilter: Callable[[Line], bool] = tautology,
-        maxlen: float = float("inf"),
+    start: Node,
+    end: Node,
+    linefilter: Callable[[Line], bool] = tautology,
+    maxlen: float = float("inf"),
 ) -> List[Line]:
     """
     Returns a shortest path on the map between two nodes, as list of lines.
@@ -117,12 +120,7 @@ def shortest_path(
             if neighbor_f_score > maxlen:
                 continue
 
-            neighbor = PQItem(
-                Score(neighbor_f_score, neighbor_g_score),
-                neighbor_node,
-                line,
-                current
-            )
+            neighbor = PQItem(Score(neighbor_f_score, neighbor_g_score), neighbor_node, line, current)
 
             heappush(open_set, neighbor)
 

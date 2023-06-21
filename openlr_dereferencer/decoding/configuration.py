@@ -56,6 +56,7 @@ class Config(NamedTuple):
     #: beginning at the projection point is considered to be the candidate. Else, the candidate
     #: snaps onto the starting point (or ending point, when it is the last LRP)
     candidate_threshold: int = 20
+    rel_candidate_threshold: float = 1.0
     #: Defines a threshold for the bearing difference. Candidates differing too much from
     #: the LRP's bearing value are pre-filtered.
     max_bear_deviation: float = 45.0
@@ -101,22 +102,20 @@ def load_config(source: Union[str, TextIOBase, dict]) -> Config:
         raise TypeError("Surprising type")
     return Config._make(
         [
-            opened_source['search_radius'],
-            opened_source['max_dnp_deviation'],
-            opened_source['tolerated_dnp_dev'],
-            opened_source['min_score'],
-            {
-                FRC(int(key)): FRC(value)
-                for (key, value) in opened_source['tolerated_lfrc'].items()
-            },
-            opened_source['candidate_threshold'],
-            opened_source['max_bear_deviation'],
-            opened_source['fow_weight'],
-            opened_source['frc_weight'],
-            opened_source['geo_weight'],
-            opened_source['bear_weight'],
-            opened_source['fow_standin_score'],
-            opened_source['bear_dist']
+            opened_source["search_radius"],
+            opened_source["max_dnp_deviation"],
+            opened_source["tolerated_dnp_dev"],
+            opened_source["min_score"],
+            {FRC(int(key)): FRC(value) for (key, value) in opened_source["tolerated_lfrc"].items()},
+            opened_source["candidate_threshold"],
+            opened_source["rel_candidate_threshold"],
+            opened_source["max_bear_deviation"],
+            opened_source["fow_weight"],
+            opened_source["frc_weight"],
+            opened_source["geo_weight"],
+            opened_source["bear_weight"],
+            opened_source["fow_standin_score"],
+            opened_source["bear_dist"],
         ]
     )
 
