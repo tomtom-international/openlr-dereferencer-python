@@ -130,8 +130,8 @@ class Line(AbstractLine):
         return result
 
     @property
-    def way_id(self) -> int:
-        stmt = f"SELECT distinct(way_id) FROM {self.db_schema}.{self.lines_tbl_name} WHERE line_id = %s"
+    def way_ids(self) -> int:
+        stmt = f"SELECT distinct(way_ids) FROM {self.db_schema}.{self.lines_tbl_name} WHERE line_id = %s"
         self.map_reader.cursor.execute(stmt, (self.line_id,))
         (result,) = self.map_reader.cursor.fetchone()
         return result
