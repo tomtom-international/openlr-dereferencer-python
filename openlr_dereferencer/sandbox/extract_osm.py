@@ -1,4 +1,8 @@
-import argparse
+########################################################################
+# Creates tables of nodes and edges from OSM
+#
+########################################################################
+
 from repoman.utils import stl_database as db
 import pandas as pd
 import geopandas as gpd
@@ -7,9 +11,13 @@ from sqlalchemy.dialects import postgresql as psql
 from geoalchemy2 import Geometry
 import osmnx as ox
 
-OPENLR_LINES_TBL_NAME = "hollowell_cumberland_osm_openlr_lines"
-OPENLR_NODES_TBL_NAME = "hollowell_cumberland_osm_openlr_nodes"
-SCHEMA_NAME = "mag"
+PROJECT_ID = "at_7"
+PROJECT_TBL_DB_NICKNAME = "dell4db"
+PROJECTS_TBL_SCHEMA = "at_tomtom"
+OLR_DB_NICKNAME = "dell4db"
+SIMPLIFY = True
+SCHEMA_NAME = "at_tomtom"
+TT_TBL_SCHEMA = "at_tomtom"
 
 # adapted from https://github.com/FraunhoferIVI/openlr/blob/master/src/main/resources/SQL/SQL_Script.sql
 HWY_TO_FRC = {
@@ -47,16 +55,18 @@ HWY_TO_FOW = {
     "unclassified": 0,
 }
 JUNCTION_TO_FOW = {"roundabout": 4}
-YEAR = 2022
-MONTH = 12
+YEAR = 2023
+MONTH = 2
 
 
-def extract_osm(year=YEAR, month=MONTH, simplify=False):
-    conn = db.connect_db("repoman", driver="sqlalchemy")
-    query_str = """
+def extract_osm(year=YEAR, month=MONTH, simplify=False, project_id=PROJECT_ID):
+    openlr_lines_tbl_name = f"{project_id}_osm_openlr_lines"
+    openlr_nodes_tbl_name = f"{project_id}_osm_openlr_nodes"
+    conn = db.connect_db(PROJECT_TBL_DB_NICKNAME, driver="sqlalchemy")
+    query_str = f"""
     select *
-    from cem_tt_repo.projects
-    where project_id = 'hollowell_cumberland'
+    from {PROJECTS_TBL_SCHEMA}.projects
+    where project_id = '{project_id}'
     """
     proj_info = gpd.read_postgis(text(query_str), con=conn, crs="epsg:4326", geom_col="bounding_box")
     conn.close()
@@ -64,7 +74,7 @@ def extract_osm(year=YEAR, month=MONTH, simplify=False):
     proj_bb_coords = proj_info["bounding_box"].values[0].bounds
     ox.settings.all_oneway = False
     ox.settings.bidirectional_network_types = []
-    osmnx_datetimestamp = "{YYYY}-{MM}-01T00:00:00Z".format(YYYY=year, MM=month)
+    osmnx_datetimestamp = "{YYYY}-{MM}-01T00:00:00Z".format(YYYY=year, MM=str(month).zfill(2))
     overpass_date_str = f'[date:"{osmnx_datetimestamp}"]'
     ox.settings.overpass_settings += overpass_date_str
     west, south, east, north = proj_bb_coords
@@ -98,9 +108,9 @@ def extract_osm(year=YEAR, month=MONTH, simplify=False):
     openlr_lines.index.name = "line_id"
     openlr_lines.reset_index(inplace=True)
     openlr_nodes = nodes[["osmid", "geometry"]].rename(columns={"osmid": "node_id"})
-    conn = db.connect_db("dell4db", driver="sqlalchemy")
+    conn = db.connect_db(OLR_DB_NICKNAME, driver="sqlalchemy")
     openlr_lines.to_postgis(
-        OPENLR_LINES_TBL_NAME,
+        openlr_lines_tbl_name,
         con=conn,
         schema=SCHEMA_NAME,
         index=False,
@@ -108,11 +118,11 @@ def extract_osm(year=YEAR, month=MONTH, simplify=False):
         if_exists="replace",
     )
     lines_index_query = (
-        f"create index {OPENLR_LINES_TBL_NAME}_lineid on {SCHEMA_NAME}.{OPENLR_LINES_TBL_NAME} (line_id);"
+        f"create index {openlr_lines_tbl_name}_lineid on {SCHEMA_NAME}.{openlr_lines_tbl_name} (line_id);"
     )
     db.execute_remote_query(conn, text(lines_index_query), driver="sqlalchemy")
     openlr_nodes.to_postgis(
-        OPENLR_NODES_TBL_NAME,
+        openlr_nodes_tbl_name,
         con=conn,
         schema=SCHEMA_NAME,
         index=False,
@@ -122,16 +132,13 @@ def extract_osm(year=YEAR, month=MONTH, simplify=False):
         if_exists="replace",
     )
     nodes_index_query = (
-        f"create index {OPENLR_NODES_TBL_NAME}_nodeid on {SCHEMA_NAME}.{OPENLR_NODES_TBL_NAME} (node_id);"
+        f"create index {openlr_nodes_tbl_name}_nodeid on {SCHEMA_NAME}.{openlr_nodes_tbl_name} (node_id);"
     )
     db.execute_remote_query(conn, text(nodes_index_query), driver="sqlalchemy")
     conn.close()
 
+    print(f"New tables available: {SCHEMA_NAME}.{openlr_nodes_tbl_name}, {SCHEMA_NAME}.{openlr_lines_tbl_name}")
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--simplify-osm", action="store_true")
-    args = parser.parse_args()
-    simplify = args.simplify_osm
-
-    extract_osm(simplify=simplify)
+    extract_osm(simplify=SIMPLIFY, project_id=PROJECT_ID)

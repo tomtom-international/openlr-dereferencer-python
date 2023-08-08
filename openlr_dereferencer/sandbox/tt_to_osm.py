@@ -13,19 +13,27 @@ import psycopg2
 from sqlalchemy import text
 from shapely.geometry import LineString
 from tqdm import tqdm
-from stl_general import database as db
+from repoman.utils import stl_database as db
 
 import openlr_dereferencer
 from openlr_dereferencer.maps.wgs84 import distance
 from openlr_dereferencer.stl_osm_map import PostgresMapReader
 from openlr_dereferencer.decoding.error import LRDecodeError
 
-MAX_FRC = 5
-OPENLR_LINES_TBL_NAME = "hollowell_cumberland_osm_openlr_lines"
-OPENLR_NODES_TBL_NAME = "hollowell_cumberland_osm_openlr_nodes"
-OUTPUT_TBL_NAME = "hollowell_cumberland_tt_osm_simp_crosswalk"
-SCHEMA_NAME = "mag"
-DB_NICKNAME = "dell4db"
+
+PROJECT_ID = "at_7"
+PROJECT_TBL_DB_NICKNAME = "dell4db"
+PROJECTS_TBL_SCHEMA = "at_tomtom"
+OLR_DB_NICKNAME = "dell4db"
+OLR_SCHEMA_NAME = "at_tomtom"
+TT_SEGS_SCHEMA_NAME = "at_tomtom"
+TT_SEGS_TBL_NAME = f"tt_segments"
+MAX_FRC = 7
+BATCHSIZE = 5
+FILTER_PROJ_BBOX = True
+XWALK_TABLE_NAME_TEMPLATE = "{project_id}_tt_osm_crosswalk"
+FULL_JOIN_TABLE_NAME_TEMPLATE = "{project_id}_tt_osm_full_outer_join"
+OLR_LINES_TABLE_NAME_TEMPLATE = "{project_id}_osm_openlr_lines"
 
 # OLR dereferencers configs
 SEARCH_RADIUS = 25
@@ -35,6 +43,108 @@ FOW_WEIGHT = 0  # we don't get FOW from TomTom at the moment
 TOLERATED_DNP_DEV = 100  # tomtom has v short segs
 CANDIDATE_THRESHOLD = 20  # tomtom has v short segs
 REL_CANDIDATE_THRESHOLD = 0.1  # threshold should be relative to candidate segment length
+
+
+def create_full_outer_join_tbl(
+    project_id=PROJECT_ID,
+    db_nickname=OLR_DB_NICKNAME,
+    output_schema=OLR_SCHEMA_NAME,
+    olr_schema=OLR_SCHEMA_NAME,
+    tt_schema=TT_SEGS_SCHEMA_NAME,
+    tt_segs_tbl_name=TT_SEGS_TBL_NAME,
+):
+    olr_lines_table_name = OLR_LINES_TABLE_NAME_TEMPLATE.format(project_id=project_id)
+    xwalk_table_name = XWALK_TABLE_NAME_TEMPLATE.format(project_id=project_id)
+    match_output_tbl_name = FULL_JOIN_TABLE_NAME_TEMPLATE.format(project_id=project_id)
+    outer_join_query_str = f"""
+    drop table if exists {output_schema}.{xwalk_table_name};
+    create table {output_schema}.{xwalk_table_name} as
+    select
+        segment_id as tt_seg_id,
+        tt_frc,
+        tt_geom,
+        hcool.line_id as osm_line_id,
+        hcool.frc as osm_frc,
+        hcool.geometry as osm_geom,
+        xtt.osm_geometry as matched_geom
+    from (
+        select
+            segment_id,
+            road_class as tt_frc,
+            geom as tt_geom,
+            unnest(case when line_ids <> '{{}}' then line_ids else '{{null}}' end) as line_id,
+            osm_geometry
+        FROM {output_schema}.{match_output_tbl_name} x
+        right join {tt_schema}.{tt_segs_tbl_name} hcts
+        on x.tt_seg_id = hcts.segment_id
+    ) xtt
+    full outer join {olr_schema}.{olr_lines_table_name} hcool
+    on hcool.line_id = xtt.line_id;
+    """
+    conn = db.connect_db(nickname=db_nickname, driver="sqlalchemy")
+    for query_str in outer_join_query_str.split(";\n"):
+        if query_str.strip() != "":
+            db.execute_remote_query(conn, text(query_str), driver="sqlalchemy")
+    conn.close()
+
+    tt_score_query = f"""
+    with match_counts as (
+        SELECT tt_seg_id, count(osm_line_id) > 0 as matched
+        FROM {output_schema}.{xwalk_table_name}
+        where tt_seg_id notnull
+        and tt_frc <= 5
+        group by 1
+    )
+    select matched, count(*)::float / (select count(*) from match_counts)
+    from match_counts
+    group by 1;
+    """
+    conn = db.connect_db(nickname=db_nickname, driver="sqlalchemy")
+    res = pd.read_sql(text(tt_score_query), con=conn).to_dict(orient="records")
+    print(res)
+    conn.close()
+
+    osm_score_query = f"""
+    with match_counts as (
+        SELECT osm_line_id, count(tt_seg_id) > 0 as matched
+        FROM {output_schema}.{xwalk_table_name}
+        where osm_line_id notnull
+        and osm_frc <= 5
+        group by 1
+    )
+    select matched, count(*)::float / (select count(*) from match_counts)
+    from match_counts
+    group by 1;
+    """
+    conn = db.connect_db(nickname=db_nickname, driver="sqlalchemy")
+    res = pd.read_sql(text(osm_score_query), con=conn).to_dict(orient="records")
+    print(res)
+    conn.close()
+    return
+
+
+def get_proj_bbox(
+    project_id=PROJECT_ID, db_nickname=PROJECT_TBL_DB_NICKNAME, db_schema=PROJECTS_TBL_SCHEMA, proj_tbl_name="projects"
+):
+    conn = db.connect_db(db_nickname, driver="sqlalchemy")
+    query_str = f"""
+    select *
+    from {db_schema}.{proj_tbl_name}
+    where project_id = '{project_id}'
+    """
+    proj_info = gpd.read_postgis(text(query_str), con=conn, crs="epsg:4326", geom_col="bounding_box")
+    conn.close()
+    return proj_info["bounding_box"].values[0]
+
+
+def clip_segs_to_bbox(segs_gdf, bbox):
+    """_summary_
+
+    Args:
+        segs_gdf (geopandas.GeoDataFrame):
+        bbox (shapely.geometry.polygon.Polygon):
+    """
+    return segs_gdf[segs_gdf.intersects(bbox)]
 
 
 def tt_seg_to_openlr_ref(linestr, frc=7, fow=0, lfrcnp=None):
@@ -67,30 +177,41 @@ def tt_seg_to_openlr_ref(linestr, frc=7, fow=0, lfrcnp=None):
     return line
 
 
-def load_tomtom_segs(resume=False, max_frc=7, simplify=False, geom_col="geom"):
-    conn = db.connect_db(
-        host="dev-cem-01.streetlightdata.net", dbname="repo", user="postgres", port=6543, driver="sqlalchemy"
-    )
+def load_tomtom_segs(
+    db_nickname,
+    db_schema,
+    table_name,
+    output_db_nickname,
+    output_schema,
+    output_table_name,
+    layer_id,
+    resume,
+    max_frc,
+    simplify,
+    geom_col="geom",
+):
+    conn = db.connect_db(db_nickname, driver="sqlalchemy")
     if simplify:
-        geom_col = f"""st_makeline(st_startpoint({geom_col}), st_endpoint({geom_col})) as {geom_col}
-        """
+        geom_col = f"""st_makeline(st_startpoint({geom_col}), st_endpoint({geom_col})) as {geom_col}"""
 
     query_str = f"""
     select
         segment_id,
         {geom_col},
         road_class
-    from cem_tt_pipeline.tt_segments
-    where layer_id = 'hollowell_cumberland_2022_12'
-    and road_class <= {max_frc}
+    from {db_schema}.{table_name}
+    where road_class <= {max_frc}
     """
+    if layer_id:
+        query_str += f" and layer_id = '{layer_id}'"
     tt_segs = gpd.read_postgis(text(query_str), con=conn, crs="epsg:4326", coerce_float=False)
     conn.close()
     if resume:
-        conn = db.connect_db("dell4db", driver="sqlalchemy")
+        print("Picking back up where we left off...")
+        conn = db.connect_db(output_db_nickname, driver="sqlalchemy")
         query_str = f"""
         select tt_seg_id
-        from {SCHEMA_NAME}.{OUTPUT_TBL_NAME}
+        from {output_schema}.{output_table_name}
         """
         completed = pd.read_sql(text(query_str), con=conn)
         conn.close()
@@ -99,7 +220,7 @@ def load_tomtom_segs(resume=False, max_frc=7, simplify=False, geom_col="geom"):
     return tt_segs
 
 
-def create_output_table(schema_name, table_name, db_nickname):
+def create_output_table(db_nickname, schema_name, table_name):
     query_text = f"""
     DROP TABLE if exists {schema_name}.{table_name};
     CREATE TABLE {schema_name}.{table_name} (
@@ -114,10 +235,21 @@ def create_output_table(schema_name, table_name, db_nickname):
         if query_str.strip() != "":
             db.execute_remote_query(conn, text(query_str), driver="sqlalchemy")
     conn.close()
-    return
+    return f"{schema_name}.{table_name}"
 
 
-def match_segs(segments, config, observer):
+def match_segs(
+    segments,
+    config,
+    observer,
+    project_id,
+    olr_db_nickname=OLR_DB_NICKNAME,
+    olr_schema=OLR_SCHEMA_NAME,
+    output_schema=OLR_SCHEMA_NAME,
+):
+    olr_lines_table_name = f"{project_id}_osm_openlr_lines"
+    olr_nodes_table_name = f"{project_id}_osm_openlr_nodes"
+    output_table_name = f"{project_id}_tt_osm_crosswalk"
     write_errs = []
     conn = db.connect_db(nickname="dell4db", driver="psycopg2")
     for seg in segments:
@@ -125,7 +257,7 @@ def match_segs(segments, config, observer):
         olr_ref = tt_seg_to_openlr_ref(seg["geom"], frc=seg["road_class"])
         try:
             with PostgresMapReader(
-                DB_NICKNAME, SCHEMA_NAME, OPENLR_LINES_TBL_NAME, OPENLR_NODES_TBL_NAME
+                olr_db_nickname, olr_schema, olr_lines_table_name, olr_nodes_table_name
             ) as mapreader:
                 match = openlr_dereferencer.decode(
                     olr_ref,
@@ -143,7 +275,7 @@ def match_segs(segments, config, observer):
             line_ids = []
             geom = LineString()
         cur = conn.cursor()
-        insert_str = f"insert into {SCHEMA_NAME}.{OUTPUT_TBL_NAME} values (%s, %s, %s)"
+        insert_str = f"insert into {output_schema}.{output_table_name} values (%s, %s, %s)"
         try:
             cur.execute(insert_str, (seg["segment_id"], line_ids, geom.wkb))
             conn.commit()
@@ -154,12 +286,65 @@ def match_segs(segments, config, observer):
     return write_errs
 
 
-def run_matcher(simplify=False, max_frc=MAX_FRC, resume=False, observer=False, debug=False, batchsize=50):
+def run_batches_parallel(observer, config, seg_batches, num_batches, project_id):
+    pbar = tqdm(total=num_batches)
+    all_write_errs = []
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        futures = []
+        for batch in seg_batches:
+            new_future = executor.submit(match_segs, batch, config, observer, project_id)
+            futures.append(new_future)
+        for result in concurrent.futures.as_completed(futures):
+            write_errs = result.result()
+            all_write_errs += write_errs
+            pbar.update(n=1)
+    return all_write_errs
+
+
+def run_matcher(
+    simplify,
+    max_frc,
+    parallel,
+    resume,
+    layer_id=None,
+    project_id=PROJECT_ID,
+    filter_proj_bbox=FILTER_PROJ_BBOX,
+    observer=False,
+    debug=False,
+    batchsize=BATCHSIZE,
+    tt_db_nickname=OLR_DB_NICKNAME,
+    tt_segs_schema_name=TT_SEGS_SCHEMA_NAME,
+    tt_segs_table_name=TT_SEGS_TBL_NAME,
+    output_db_nickname=OLR_DB_NICKNAME,
+    output_db_schema=OLR_SCHEMA_NAME,
+):
+    output_table_name = f"{project_id}_tt_osm_crosswalk"
+    output_table_details = f"{output_db_schema}.{output_table_name}"
     if debug:
         logging.basicConfig(level=logging.DEBUG)
     if not resume:
-        create_output_table(SCHEMA_NAME, OUTPUT_TBL_NAME, DB_NICKNAME)
-    tt_segs = load_tomtom_segs(resume, max_frc=max_frc, simplify=simplify)
+        create_output_table(
+            db_nickname=output_db_nickname,
+            schema_name=output_db_schema,
+            table_name=output_table_name,
+        )
+
+    tt_segs = load_tomtom_segs(
+        db_nickname=tt_db_nickname,
+        db_schema=tt_segs_schema_name,
+        table_name=tt_segs_table_name,
+        output_db_nickname=output_db_nickname,
+        output_schema=output_db_schema,
+        output_table_name=output_table_name,
+        layer_id=layer_id,
+        resume=resume,
+        max_frc=max_frc,
+        simplify=simplify,
+    )
+    if filter_proj_bbox:
+        bbox = get_proj_bbox(project_id=project_id)
+        tt_segs = clip_segs_to_bbox(tt_segs, bbox)
+
     config = openlr_dereferencer.Config(
         search_radius=SEARCH_RADIUS,
         bear_dist=BEAR_DIST,
@@ -177,17 +362,17 @@ def run_matcher(simplify=False, max_frc=MAX_FRC, resume=False, observer=False, d
     num_batches = len(seg_batches)
 
     # run batches
-    pbar = tqdm(total=num_batches)
-    all_write_errs = []
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        futures = []
-        for batch in seg_batches:
-            new_future = executor.submit(match_segs, batch, config, observer)
-            futures.append(new_future)
-        for result in concurrent.futures.as_completed(futures):
-            write_errs = result.result()
-            all_write_errs += write_errs
-            pbar.update(n=1)
+    if parallel:
+        all_write_errs = run_batches_parallel(observer, config, seg_batches, num_batches, project_id=project_id)
+    else:
+        all_write_errs = []
+        for batch in tqdm(seg_batches, total=num_batches):
+            write_errs = match_segs(batch, config, observer)
+            all_write_errs.append(write_errs)
+    print(f"Output table available at {output_table_details}")
+
+    # create full outer join table
+    create_full_outer_join_tbl()
     return all_write_errs
 
 
@@ -198,10 +383,14 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--observer", action="store_true", help="Enable internal dereferencing observer.")
     parser.add_argument("-s", "--simplify", action="store_true", help="Simplify TomTom geometries.")
     parser.add_argument("-f", "--max_frc", action="store", help="Max TomTom FRC to process.", default=MAX_FRC)
+    parser.add_argument("-p", "--parallel", action="store_true", help="Run segment batches in parallel.")
+    parser.add_argument("-l", "--layer_id", action="store", help="TomTom layer ID (CEM only).")
     args = parser.parse_args()
     resume = args.resume
     debug = args.debug
     observer = args.observer if not debug else True
     simplify = args.simplify
     max_frc = args.max_frc
-    write_errs = run_matcher(simplify, max_frc, resume, observer, debug)
+    parallel = args.parallel
+    layer_id = args.layer_id
+    write_errs = run_matcher(simplify, max_frc, parallel, resume, layer_id, observer=observer, debug=debug)
