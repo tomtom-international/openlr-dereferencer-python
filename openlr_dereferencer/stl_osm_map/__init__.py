@@ -5,7 +5,7 @@ from typing import Iterable
 from openlr import Coordinates
 from .primitives import Line, Node, ExampleMapError
 from openlr_dereferencer.maps import MapReader
-from repoman.utils import stl_database as db
+from stl_general import database as db
 
 
 class PostgresMapReader(MapReader):
@@ -38,33 +38,47 @@ class PostgresMapReader(MapReader):
 
     def get_line(self, line_id: int) -> Line:
         # Just verify that this line ID exists.
-        self.cursor.execute(f"SELECT line_id FROM {self.db_schema}.{self.lines_tbl_name} WHERE line_id=%s", (line_id,))
+        self.cursor.execute(
+            f"SELECT line_id FROM {self.db_schema}.{self.lines_tbl_name} WHERE line_id=%s",
+            (line_id,),
+        )
         if self.cursor.fetchone() is None:
             raise ExampleMapError(f"The line {line_id} does not exist")
         return Line(self, line_id)
 
     def get_lines(self) -> Iterable[Line]:
-        self.cursor.execute(f"SELECT line_id FROM {self.db_schema}.{self.lines_tbl_name}")
+        self.cursor.execute(
+            f"SELECT line_id FROM {self.db_schema}.{self.lines_tbl_name}"
+        )
         for (line_id,) in self.cursor.fetchall():
             yield Line(self, line_id)
 
     def get_linecount(self) -> int:
-        self.cursor.execute(f"SELECT COUNT(*) FROM {self.db_schema}.{self.lines_tbl_name}")
+        self.cursor.execute(
+            f"SELECT COUNT(*) FROM {self.db_schema}.{self.lines_tbl_name}"
+        )
         (count,) = self.cursor.fetchone()
         return count
 
     def get_node(self, node_id: int) -> Node:
-        self.cursor.execute(f"SELECT node_id FROM {self.db_schema}.{self.nodes_tbl_name} WHERE node_id=%s", (node_id,))
+        self.cursor.execute(
+            f"SELECT node_id FROM {self.db_schema}.{self.nodes_tbl_name} WHERE node_id=%s",
+            (node_id,),
+        )
         (node_id,) = self.cursor.fetchone()
         return Node(self, node_id)
 
     def get_nodes(self) -> Iterable[Node]:
-        self.cursor.execute(f"SELECT node_id FROM {self.db_schema}.{self.nodes_tbl_name}")
+        self.cursor.execute(
+            f"SELECT node_id FROM {self.db_schema}.{self.nodes_tbl_name}"
+        )
         for (node_id,) in self.cursor.fetchall():
             yield Node(self, node_id)
 
     def get_nodecount(self) -> int:
-        self.cursor.execute(f"SELECT COUNT(*) FROM {self.db_schema}.{self.nodes_tbl_name}")
+        self.cursor.execute(
+            f"SELECT COUNT(*) FROM {self.db_schema}.{self.nodes_tbl_name}"
+        )
         (count,) = self.cursor.fetchone()
         return count
 

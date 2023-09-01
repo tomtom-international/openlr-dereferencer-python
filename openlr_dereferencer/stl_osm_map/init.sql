@@ -14,7 +14,7 @@ CREATE TABLE openlr_lines (
     bearing float8
 );
 
-CREATE INDEX idx_openlr_nodes_geometry ON openlr_nodes USING GIST (coord gist_geometry_ops_2d);
-CREATE INDEX idx_openlr_lines_geometry ON openlr_lines USING GIST (path gist_geometry_ops_2d);
+CREATE INDEX idx_openlr_nodes_geometry ON openlr_nodes USING GIST (geometry gist_geometry_ops_2d);
+CREATE INDEX idx_openlr_lines_geometry ON openlr_lines USING GIST (geometry gist_geometry_ops_2d);
 CREATE INDEX idx_openlr_lines_startnode ON openlr_lines(startnode int8_ops);
 CREATE INDEX idx_openlr_lines_endnode ON openlr_lines(endnode int8_ops);
