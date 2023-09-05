@@ -75,6 +75,7 @@ class Config(NamedTuple):
     fow_standin_score: List[List[float]] = DEFAULT_FOW_STAND_IN_SCORE
     #: The bearing angle is computed along this distance on a given line. Given in meters.
     bear_dist: int = 20
+    equal_area: bool = False
 
 
 DEFAULT_CONFIG = Config()
@@ -116,6 +117,7 @@ def load_config(source: Union[str, TextIOBase, dict]) -> Config:
             opened_source["bear_weight"],
             opened_source["fow_standin_score"],
             opened_source["bear_dist"],
+            opened_source["equal_area"],
         ]
     )
 

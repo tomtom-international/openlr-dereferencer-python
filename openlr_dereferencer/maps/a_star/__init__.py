@@ -34,6 +34,7 @@ def shortest_path(
     end: Node,
     linefilter: Callable[[Line], bool] = tautology,
     maxlen: float = float("inf"),
+    equal_area: bool = False,
 ) -> List[Line]:
     """
     Returns a shortest path on the map between two nodes, as list of lines.
