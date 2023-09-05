@@ -50,7 +50,7 @@ def get_lines(line_location_path: Iterable[Route]) -> List[Line]:
     return result
 
 
-def combine_routes(line_location_path: Iterable[Route]) -> Route:
+def combine_routes(line_location_path: Iterable[Route], equal_area: bool = False) -> Route:
     """Builds the whole location reference path
 
     Args:
@@ -62,11 +62,11 @@ def combine_routes(line_location_path: Iterable[Route]) -> Route:
         The combined route
     """
     path = get_lines(line_location_path)
-    start = PointOnLine(path.pop(0), line_location_path[0].start.relative_offset)
+    start = PointOnLine(path.pop(0), line_location_path[0].start.relative_offset, equal_area)
     if path:
-        end = PointOnLine(path.pop(), line_location_path[-1].end.relative_offset)
+        end = PointOnLine(path.pop(), line_location_path[-1].end.relative_offset, equal_area)
     else:
-        end = PointOnLine(start.line, line_location_path[-1].end.relative_offset)
+        end = PointOnLine(start.line, line_location_path[-1].end.relative_offset, equal_area)
     return Route(start, path, end)
 
 
@@ -76,4 +76,4 @@ def build_line_location(path: List[Route], reference: LineLocationReference, equ
     The result will be a trimmed list of Line objects, with minimized offset values"""
     p_off = reference.poffs * path[0].length()
     n_off = reference.noffs * path[-1].length()
-    return LineLocation(remove_offsets(combine_routes(path), p_off, n_off))
+    return LineLocation(remove_offsets(combine_routes(path, equal_area), p_off, n_off))
