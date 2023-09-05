@@ -70,7 +70,7 @@ def combine_routes(line_location_path: Iterable[Route]) -> Route:
     return Route(start, path, end)
 
 
-def build_line_location(path: List[Route], reference: LineLocationReference) -> LineLocation:
+def build_line_location(path: List[Route], reference: LineLocationReference, equal_area: bool = False) -> LineLocation:
     """Builds a LineLocation object from all location reference path parts and the offset values.
 
     The result will be a trimmed list of Line objects, with minimized offset values"""
