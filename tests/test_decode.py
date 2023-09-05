@@ -5,15 +5,23 @@ from itertools import zip_longest
 from io import StringIO
 from typing import List, Iterable, TypeVar, NamedTuple
 from shapely.geometry import LineString
-from openlr import Coordinates, FRC, FOW, LineLocationReference, LocationReferencePoint,\
-    PointAlongLineLocationReference, Orientation, SideOfRoad, PoiWithAccessPointLocationReference, \
-    GeoCoordinateLocationReference
+from openlr import (
+    Coordinates,
+    FRC,
+    FOW,
+    LineLocationReference,
+    LocationReferencePoint,
+    PointAlongLineLocationReference,
+    Orientation,
+    SideOfRoad,
+    PoiWithAccessPointLocationReference,
+    GeoCoordinateLocationReference,
+)
 
 from openlr_dereferencer import decode, Config
 from openlr_dereferencer.decoding import PointAlongLine, LineLocation, LRDecodeError, PoiWithAccessPoint
 from openlr_dereferencer.decoding.candidate_functions import nominate_candidates, make_candidate
-from openlr_dereferencer.decoding.scoring import score_geolocation, score_frc, \
-    score_bearing, score_angle_difference
+from openlr_dereferencer.decoding.scoring import score_geolocation, score_frc, score_bearing, score_angle_difference
 from openlr_dereferencer.decoding.routes import PointOnLine, Route
 from openlr_dereferencer.decoding.path_math import remove_offsets
 from openlr_dereferencer.observer import SimpleObserver
@@ -24,8 +32,10 @@ from .example_mapformat import setup_testdb, setup_testdb_in_memory, remove_db_f
 
 from openlr_dereferencer import load_config, save_config, DEFAULT_CONFIG
 
-class DummyNode():
+
+class DummyNode:
     "Fake Node class for unit testing"
+
     def __init__(self, coord: Coordinates):
         self.coord = coord
 
@@ -36,6 +46,7 @@ class DummyNode():
     def coordinates(self) -> Coordinates:
         "Return the saved coordinates"
         return self.coord
+
 
 class DummyLine(NamedTuple):
     "Fake Line class for unit testing"
@@ -62,46 +73,37 @@ class DummyLine(NamedTuple):
     def geometry(self) -> LineString:
         return LineString([(c.lon, c.lat) for c in self.coordinates()])
 
+
 def get_test_linelocation_1():
     "Return a prepared line location with 3 LRPs"
     # References node 0 / line 1 / lines 1, 3
-    lrp1 = LocationReferencePoint(13.41, 52.525,
-                                  FRC.FRC0, FOW.SINGLE_CARRIAGEWAY, 90.0,
-                                  FRC.FRC2, 717.8)
+    lrp1 = LocationReferencePoint(13.41, 52.525, FRC.FRC0, FOW.SINGLE_CARRIAGEWAY, 90.0, FRC.FRC2, 717.8)
     # References node 3 / line 4
-    lrp2 = LocationReferencePoint(13.4145, 52.529,
-                                  FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, 170,
-                                  FRC.FRC2, 456.6)
+    lrp2 = LocationReferencePoint(13.4145, 52.529, FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, 170, FRC.FRC2, 456.6)
     # References node 4 / line 4
-    lrp3 = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
-                                  FOW.SINGLE_CARRIAGEWAY, 320.0, None, None)
+    lrp3 = LocationReferencePoint(13.416, 52.525, FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, 320.0, None, None)
     return LineLocationReference([lrp1, lrp2, lrp3], 0.0, 0.0)
 
 
 def get_test_linelocation_2():
     "Return a undecodable line location with 2 LRPs"
     # References node 0 / line 1 / lines 1, 3
-    lrp1 = LocationReferencePoint(13.41, 52.525,
-                                  FRC.FRC0, FOW.SINGLE_CARRIAGEWAY, 90.0,
-                                  FRC.FRC2, 0.0)
+    lrp1 = LocationReferencePoint(13.41, 52.525, FRC.FRC0, FOW.SINGLE_CARRIAGEWAY, 90.0, FRC.FRC2, 0.0)
     # References node 13 / ~ line 17
-    lrp2 = LocationReferencePoint(13.429, 52.523, FRC.FRC2,
-                                  FOW.SINGLE_CARRIAGEWAY, 270.0, None, None)
+    lrp2 = LocationReferencePoint(13.429, 52.523, FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, 270.0, None, None)
     return LineLocationReference([lrp1, lrp2], 0.0, 0.0)
 
 
 def get_test_linelocation_3():
     """Returns a line location that is within a line.
-    
+
     This simulates that the start and end junction are missing on the target map."""
     # References a point on line 1
-    lrp1 = LocationReferencePoint(13.411, 52.525,
-                                  FRC.FRC1, FOW.SINGLE_CARRIAGEWAY, 90.0,
-                                  FRC.FRC1, 135)
+    lrp1 = LocationReferencePoint(13.411, 52.525, FRC.FRC1, FOW.SINGLE_CARRIAGEWAY, 90.0, FRC.FRC1, 135)
     # References another point on line 1
-    lrp2 = LocationReferencePoint(13.413, 52.525, FRC.FRC1,
-                                  FOW.SINGLE_CARRIAGEWAY, -90.0, None, None)
+    lrp2 = LocationReferencePoint(13.413, 52.525, FRC.FRC1, FOW.SINGLE_CARRIAGEWAY, -90.0, None, None)
     return LineLocationReference([lrp1, lrp2], 0.0, 0.0)
+
 
 def get_test_linelocation_4() -> LineLocationReference:
     "Test backtracking with a location that tries the decoder to get lost"
@@ -117,23 +119,22 @@ def get_test_linelocation_4() -> LineLocationReference:
 def get_test_pointalongline() -> PointAlongLineLocationReference:
     "Get a test Point Along Line location reference"
     path_ref = get_test_linelocation_1().points[-2:]
-    return PointAlongLineLocationReference(path_ref, 0.5, Orientation.WITH_LINE_DIRECTION, \
-                                  SideOfRoad.RIGHT)
+    return PointAlongLineLocationReference(path_ref, 0.5, Orientation.WITH_LINE_DIRECTION, SideOfRoad.RIGHT)
 
 
 def get_test_invalid_pointalongline() -> PointAlongLineLocationReference:
     "Get a test Point Along Line location reference"
     path_ref = get_test_linelocation_1().points[-2:]
-    return PointAlongLineLocationReference(path_ref, 1500, Orientation.WITH_LINE_DIRECTION, \
-                                  SideOfRoad.RIGHT)
+    return PointAlongLineLocationReference(path_ref, 1500, Orientation.WITH_LINE_DIRECTION, SideOfRoad.RIGHT)
 
 
 def get_test_poi() -> PoiWithAccessPointLocationReference:
     "Get a test POI with access point location reference"
     path_ref = get_test_linelocation_1().points[-2:]
     return PoiWithAccessPointLocationReference(
-        path_ref, 0.5, 13.414, 52.526, Orientation.WITH_LINE_DIRECTION,
-        SideOfRoad.RIGHT)
+        path_ref, 0.5, 13.414, 52.526, Orientation.WITH_LINE_DIRECTION, SideOfRoad.RIGHT
+    )
+
 
 T = TypeVar("T")
 
@@ -149,12 +150,14 @@ class DecodingTests(unittest.TestCase):
         # Get the generators
         gen_a = iter(iter_a)
         gen_b = iter(iter_b)
-        for (a, b) in zip_longest(gen_a, gen_b):
+        for a, b in zip_longest(gen_a, gen_b):
             if abs(a - b) > delta:
                 list_a = [a] + list(gen_a)
                 list_b = [b] + list(gen_b)
-                msg = (f"Iterables are not almost equal within delta {delta}.\n"
-                       f"Remaining a: {list_a}\nRemaining b: {list_b}")
+                msg = (
+                    f"Iterables are not almost equal within delta {delta}.\n"
+                    f"Remaining a: {list_a}\nRemaining b: {list_b}"
+                )
                 raise self.failureException(msg)
 
     def setUp(self):
@@ -175,7 +178,7 @@ class DecodingTests(unittest.TestCase):
         node1 = DummyNode(Coordinates(0.0, 0.0))
         node2 = DummyNode(Coordinates(0.0, 90.0))
         pal = PointOnLine(DummyLine(None, node1, node2), 0.0)
-        score = score_geolocation(lrp, pal, 1.0)
+        score = score_geolocation(lrp, pal, 1.0, self.config.equal_area)
         self.assertEqual(score, 1.0)
 
     def test_geoscore_0(self):
@@ -184,7 +187,7 @@ class DecodingTests(unittest.TestCase):
         node1 = DummyNode(Coordinates(0.0, 0.0))
         node2 = DummyNode(Coordinates(0.0, 90.0))
         pal = PointOnLine(DummyLine(None, node1, node2), 1.0)
-        score = score_geolocation(lrp, pal, 1.0)
+        score = score_geolocation(lrp, pal, 1.0, self.config.equal_area)
         self.assertEqual(score, 0.0)
 
     def test_frcscore_0(self):
@@ -218,10 +221,9 @@ class DecodingTests(unittest.TestCase):
         node2 = DummyNode(Coordinates(0.0, 90.0))
         node3 = DummyNode(Coordinates(1.0, 0.0))
         wanted_bearing = degrees(bearing(node1.coordinates, node2.coordinates))
-        wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
-                                        FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
+        wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
         line = DummyLine(1, node1, node3)
-        score = score_bearing(wanted, PointOnLine(line, 0.0), False, self.config.bear_dist)
+        score = score_bearing(wanted, PointOnLine(line, 0.0), False, self.config.bear_dist, self.config.equal_area)
         self.assertEqual(score, 0.5)
 
     def test_bearingscore_2(self):
@@ -230,10 +232,9 @@ class DecodingTests(unittest.TestCase):
         node2 = DummyNode(Coordinates(0.0, 90.0))
         node3 = DummyNode(Coordinates(-1.0, 0.0))
         wanted_bearing = degrees(bearing(node1.coordinates, node2.coordinates))
-        wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
-                                        FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
+        wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
         line = DummyLine(1, node1, node3)
-        score = score_bearing(wanted, PointOnLine(line, 0.0), False, self.config.bear_dist)
+        score = score_bearing(wanted, PointOnLine(line, 0.0), False, self.config.bear_dist, self.config.equal_area)
         self.assertEqual(score, 0.5)
 
     def test_bearingscore_3(self):
@@ -242,10 +243,9 @@ class DecodingTests(unittest.TestCase):
         node2 = DummyNode(Coordinates(0.0, 90.0))
         node3 = DummyNode(Coordinates(1.0, 0.0))
         wanted_bearing = degrees(bearing(node1.coordinates, node2.coordinates))
-        wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
-                                        FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
+        wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
         line = DummyLine(1, node1, node3)
-        score = score_bearing(wanted, PointOnLine(line, 1.0), True, self.config.bear_dist)
+        score = score_bearing(wanted, PointOnLine(line, 1.0), True, self.config.bear_dist, self.config.equal_area)
         self.assertAlmostEqual(score, 0.5)
 
     def test_bearingscore_4(self):
@@ -254,10 +254,9 @@ class DecodingTests(unittest.TestCase):
         node2 = DummyNode(Coordinates(0.0, 90.0))
         node3 = DummyNode(Coordinates(-1.0, 0.0))
         wanted_bearing = degrees(bearing(node1.coordinates, node2.coordinates))
-        wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
-                                        FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
+        wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
         line = DummyLine(1, node1, node3)
-        score = score_bearing(wanted, PointOnLine(line, 1.0), True, self.config.bear_dist)
+        score = score_bearing(wanted, PointOnLine(line, 1.0), True, self.config.bear_dist, self.config.equal_area)
         self.assertAlmostEqual(score, 0.5)
 
     def test_bearingscore_5(self):
@@ -265,12 +264,11 @@ class DecodingTests(unittest.TestCase):
         node1 = DummyNode(Coordinates(1.0, 0.0))
         node2 = DummyNode(Coordinates(0.0, 0.0))
         wanted_bearing = degrees(bearing(node1.coordinates, node2.coordinates))
-        wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2,
-                                        FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
+        wanted = LocationReferencePoint(13.416, 52.525, FRC.FRC2, FOW.SINGLE_CARRIAGEWAY, wanted_bearing, None, None)
         line = DummyLine(1, node1, node2)
-        score = score_bearing(wanted, PointOnLine(line, 0.0), False, self.config.bear_dist)
+        score = score_bearing(wanted, PointOnLine(line, 0.0), False, self.config.bear_dist, self.config.equal_area)
         self.assertAlmostEqual(score, 1.0)
-        score = score_bearing(wanted, PointOnLine(line, 1.0), True, self.config.bear_dist)
+        score = score_bearing(wanted, PointOnLine(line, 1.0), True, self.config.bear_dist, self.config.equal_area)
         self.assertAlmostEqual(score, 0.0)
 
     def test_anglescore_1(self):
@@ -303,9 +301,15 @@ class DecodingTests(unittest.TestCase):
         self.assertTrue(isinstance(location, LineLocation))
         lines = [l.line_id for l in location.lines]
         self.assertListEqual([1, 3, 4], lines)
-        for (a, b) in zip(location.coordinates(),
-                             [Coordinates(13.41, 52.525), Coordinates(13.414, 52.525),
-                              Coordinates(13.4145, 52.529), Coordinates(13.416, 52.525)]):
+        for a, b in zip(
+            location.coordinates(),
+            [
+                Coordinates(13.41, 52.525),
+                Coordinates(13.414, 52.525),
+                Coordinates(13.4145, 52.529),
+                Coordinates(13.416, 52.525),
+            ],
+        ):
             self.assertAlmostEqual(a.lon, b.lon, delta=0.00001)
             self.assertAlmostEqual(a.lat, b.lat, delta=0.00001)
 
@@ -365,18 +369,17 @@ class DecodingTests(unittest.TestCase):
         with self.assertRaises(LRDecodeError):
             decode(reference, self.reader)
 
-
     def test_decode_midline(self):
         reference = get_test_linelocation_3()
         line_location = decode(reference, self.reader)
         coords = line_location.coordinates()
         self.assertEqual(len(coords), 2)
-        for ((lon1, lat1), (lon2, lat2)) in zip(coords, [(13.411, 52.525), (13.413, 52.525)]):
+        for (lon1, lat1), (lon2, lat2) in zip(coords, [(13.411, 52.525), (13.413, 52.525)]):
             self.assertAlmostEqual(lon1, lon2)
             self.assertAlmostEqual(lat1, lat2)
 
     def test_observer_decode_3_lrps(self):
-        "Add a simple observer for decoding a line location of 3 lrps "
+        "Add a simple observer for decoding a line location of 3 lrps"
         observer = SimpleObserver()
         reference = get_test_linelocation_1()
         decode(reference, self.reader, observer=observer)
@@ -466,11 +469,7 @@ class DecodingToolsTests(unittest.TestCase):
         node1 = DummyNode(extrapolate(node0.coord, 20, 180.0))
         node2 = DummyNode(extrapolate(node1.coord, 90, 90.0))
         node3 = DummyNode(extrapolate(node2.coord, 20, 180.0))
-        lines = [
-            DummyLine(0, node0, node1),
-            DummyLine(1, node1, node2),
-            DummyLine(2, node2, node3)
-        ]
+        lines = [DummyLine(0, node0, node1), DummyLine(1, node1, node2), DummyLine(2, node2, node3)]
         route = Route(PointOnLine(lines[0], 0.5), [lines[1]], PointOnLine(lines[2], 0.5))
         route = remove_offsets(route, 40, 40)
         self.assertListEqual(route.lines, [lines[1]])
