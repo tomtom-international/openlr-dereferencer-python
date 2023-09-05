@@ -75,6 +75,7 @@ class Config(NamedTuple):
     fow_standin_score: List[List[float]] = DEFAULT_FOW_STAND_IN_SCORE
     #: The bearing angle is computed along this distance on a given line. Given in meters.
     bear_dist: int = 20
+    #: Input coordinates are provided in an equal-area projection (i.e. NOT WGS84 lat/lon)
     equal_area: bool = False
 
 

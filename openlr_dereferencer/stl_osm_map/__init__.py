@@ -47,16 +47,12 @@ class PostgresMapReader(MapReader):
         return Line(self, line_id)
 
     def get_lines(self) -> Iterable[Line]:
-        self.cursor.execute(
-            f"SELECT line_id FROM {self.db_schema}.{self.lines_tbl_name}"
-        )
+        self.cursor.execute(f"SELECT line_id FROM {self.db_schema}.{self.lines_tbl_name}")
         for (line_id,) in self.cursor.fetchall():
             yield Line(self, line_id)
 
     def get_linecount(self) -> int:
-        self.cursor.execute(
-            f"SELECT COUNT(*) FROM {self.db_schema}.{self.lines_tbl_name}"
-        )
+        self.cursor.execute(f"SELECT COUNT(*) FROM {self.db_schema}.{self.lines_tbl_name}")
         (count,) = self.cursor.fetchone()
         return count
 
@@ -69,16 +65,12 @@ class PostgresMapReader(MapReader):
         return Node(self, node_id)
 
     def get_nodes(self) -> Iterable[Node]:
-        self.cursor.execute(
-            f"SELECT node_id FROM {self.db_schema}.{self.nodes_tbl_name}"
-        )
+        self.cursor.execute(f"SELECT node_id FROM {self.db_schema}.{self.nodes_tbl_name}")
         for (node_id,) in self.cursor.fetchall():
             yield Node(self, node_id)
 
     def get_nodecount(self) -> int:
-        self.cursor.execute(
-            f"SELECT COUNT(*) FROM {self.db_schema}.{self.nodes_tbl_name}"
-        )
+        self.cursor.execute(f"SELECT COUNT(*) FROM {self.db_schema}.{self.nodes_tbl_name}")
         (count,) = self.cursor.fetchone()
         return count
 
@@ -90,10 +82,11 @@ class PostgresMapReader(MapReader):
             SELECT
                 node_id
             FROM {self.db_schema}.{self.nodes_tbl_name}
-            WHERE ST_Distance(
-                ST_SetSRID(ST_MakePoint(%s,%s),4326)::geography, 
-                geometry::geography
-            ) < %s;
+            WHERE ST_DWithin(
+                ST_SetSRID(ST_MakePoint(%s,%s), 2163),
+                geometry,
+                %s
+            );
         """
         self.cursor.execute(stmt, (lon, lat, dist))
         for (node_id,) in self.cursor.fetchall():
@@ -106,10 +99,11 @@ class PostgresMapReader(MapReader):
             SELECT
                 line_id
             FROM {self.db_schema}.{self.lines_tbl_name} 
-            WHERE ST_Distance(
-                ST_SetSRID(ST_MakePoint(%s,%s),4326)::geography, 
-                geometry::geography
-            ) < %s;
+            WHERE ST_DWithin(
+                ST_SetSRID(ST_MakePoint(%s,%s), 2163),
+                geometry,
+                %s
+            );
         """
         self.cursor.execute(stmt, (lon, lat, dist))
         for (line_id,) in self.cursor.fetchall():

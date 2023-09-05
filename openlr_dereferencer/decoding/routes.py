@@ -118,7 +118,6 @@ class Route(NamedTuple):
         result += [line.geometry for line in self.path_inbetween]
         if last is not None:
             result.append(last)
-
         return wgs84.join_lines(result)
 
     def coordinates(self) -> List[Coordinates]:
