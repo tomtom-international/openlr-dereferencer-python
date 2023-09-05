@@ -11,8 +11,8 @@ from openlr import (
 from ..maps import MapReader, path_length
 from ..maps.abstract import Line
 from ..observer import DecoderObserver
-from ..maps.wgs84 import interpolate as interpolate_wgs84
-from ..maps.equal_area import interpolate as interpolate_ee
+from ..maps import wgs84
+from ..maps import equal_area as ee
 from .line_decoding import dereference_path
 from .line_location import get_lines, Route, combine_routes
 from .configuration import Config
@@ -33,9 +33,9 @@ class PointAlongLine(NamedTuple):
     def coordinates(self) -> Coordinates:
         "Returns the geo coordinates of the point"
         if not self.config.equal_area:
-            coords = interpolate_wgs84(list(self.line.coordinates()), self.positive_offset)
+            coords = wgs84.interpolate(list(self.line.coordinates()), self.positive_offset)
         else:
-            coords = interpolate_ee(list(self.line.coordinates()), self.positive_offset)
+            coords = ee.interpolate_ee(list(self.line.coordinates()), self.positive_offset)
         return coords
 
 
@@ -81,9 +81,9 @@ class PoiWithAccessPoint(NamedTuple):
     def access_point_coordinates(self) -> Coordinates:
         "Returns the geo coordinates of the access point"
         if not self.config.equal_area:
-            result = interpolate_wgs84(list(self.line.coordinates()), self.positive_offset)
+            result = wgs84.interpolate(list(self.line.coordinates()), self.positive_offset)
         else:
-            result = interpolate_ee(list(self.line.coordinates()), self.positive_offset)
+            result = ee.interpolate(list(self.line.coordinates()), self.positive_offset)
         return result
 
 

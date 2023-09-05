@@ -35,7 +35,6 @@ def line_string_length(line_string: LineString) -> float:
 
 def bearing(point_a: Coordinates, point_b: Coordinates) -> float:
     """Returns the angle between self and other relative to true north
-
     The result of this function is between -pi, pi, including them"""
 
     bear = np.arctan2(point_b.lon - point_a.lon, point_b.lat - point_a.lon)
@@ -44,9 +43,7 @@ def bearing(point_a: Coordinates, point_b: Coordinates) -> float:
 
 def extrapolate(point: Coordinates, dist: float, angle: float) -> Coordinates:
     """Creates a new point that is `dist` meters away in direction `angle`
-
     NOTE: angle must be in radians bc it should be the output of bearing()
-
     """
     x0, y0 = point.lon, point.lat
     theta_rad = pi / 2 - angle
@@ -57,7 +54,6 @@ def extrapolate(point: Coordinates, dist: float, angle: float) -> Coordinates:
 
 def interpolate(path: Sequence[Coordinates], distance_meters: float) -> Coordinates:
     """Go `distance` meters along the `path` and return the resulting point
-
     When the length of the path is too short, returns its last coordinate"""
     remaining_distance = distance_meters
     segments = [(path[i], path[i + 1]) for i in range(len(path) - 1)]

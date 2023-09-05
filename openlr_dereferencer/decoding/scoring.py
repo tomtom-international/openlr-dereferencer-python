@@ -7,8 +7,7 @@ with `1.0` being an exact match and 0.0 being a non-match."""
 
 from logging import debug
 from openlr import FRC, FOW, LocationReferencePoint
-from ..maps.wgs84 import distance as distance_wgs84
-from ..maps.equal_area import distance as distance_ee
+from ..maps import wgs84, equal_area as ee
 from .path_math import coords, PointOnLine, compute_bearing
 from .configuration import Config
 
@@ -24,9 +23,9 @@ def score_geolocation(wanted: LocationReferencePoint, actual: PointOnLine, radiu
     A distance of `radius` or more will result in a 0.0 score."""
     debug(f"Candidate coords are {actual.position()}")
     if not equal_area:
-        dist = distance_wgs84(coords(wanted), actual.position())
+        dist = wgs84.distance(coords(wanted), actual.position())
     else:
-        dist = distance_ee(coords(wanted), actual.position())
+        dist = ee.distance(coords(wanted), actual.position())
     if dist < radius:
         return 1.0 - dist / radius
     return 0.0
@@ -49,7 +48,7 @@ def angle_sector(angle: float) -> int:
 
 
 def angle_sector_difference(angle1: float, angle2: float) -> int:
-    """ "The distance of the two sectors containing the angles values, respectively
+    """The distance of the two sectors containing the angles values, respectively
     Args:
         angle1, angle2:
             the values are expected in degrees

@@ -47,18 +47,18 @@ class PointOnLine(NamedTuple):
             result = wgs84.split_line(self.line.geometry, self._geometry_length_from_start())
         else:
             result = ee.split_line(self.line.geometry, self._geometry_length_from_start())
-        return
+        return result
 
     @classmethod
-    def from_abs_offset(cls, line: Line, meters_into: float):
+    def from_abs_offset(cls, line: Line, meters_into: float, equal_area: bool = False):
         """Build a PointOnLine from an absolute offset value.
 
         Negative offsets are recognized and subtracted."""
         if meters_into >= 0.0:
-            return cls(line, meters_into / line.length)
+            return cls(line, meters_into / line.length, equal_area)
         else:
             negative_meters_into = line.length + meters_into
-            return cls(line, negative_meters_into / line.length)
+            return cls(line, negative_meters_into / line.length, equal_area)
 
 
 class Route(NamedTuple):

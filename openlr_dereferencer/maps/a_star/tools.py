@@ -2,8 +2,8 @@
 
 from functools import lru_cache
 from ..abstract import Node
-from ..wgs84 import distance as wgs84_dist
-from ..equal_area import distance as ee_dist
+from .. import wgs84
+from .. import equal_area as ee
 
 
 class LRPathNotFoundError(Exception):
@@ -16,9 +16,9 @@ def heuristic(current: Node, target: Node, equal_area: bool = False) -> float:
 
     We use geographical distance here as heuristic here."""
     if not equal_area:
-        dist = wgs84_dist(current.coordinates, target.coordinates)
+        dist = wgs84.distance(current.coordinates, target.coordinates)
     else:
-        dist = ee_dist(current.coordinates, target.coordinates)
+        dist = ee.distance(current.coordinates, target.coordinates)
     return dist
 
 
