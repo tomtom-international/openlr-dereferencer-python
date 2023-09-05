@@ -9,7 +9,8 @@ from openlr import Coordinates, LocationReferencePoint
 from .error import LRDecodeError
 from .routes import Route, PointOnLine
 from ..maps import Line
-from ..maps.wgs84 import interpolate, bearing, line_string_length
+from ..maps import wgs84
+from ..maps import equal_area as ee
 
 
 def remove_offsets(path: Route, p_off: float, n_off: float) -> Route:
@@ -57,12 +58,16 @@ def project(line: Line, coord: Coordinates, equal_area: bool = False) -> PointOn
 
     to_projection_point = substring(line.geometry, 0.0, fraction, normalized=True)
 
-    meters_to_projection_point = line_string_length(to_projection_point)
-    geometry_length = line_string_length(line.geometry)
+    if not equal_area:
+        meters_to_projection_point = wgs84.line_string_length(to_projection_point)
+        geometry_length = wgs84.line_string_length(line.geometry)
+    else:
+        meters_to_projection_point = ee.line_string_length(to_projection_point)
+        geometry_length = ee.line_string_length(line.geometry)
 
     length_fraction = meters_to_projection_point / geometry_length
 
-    return PointOnLine(line, length_fraction)
+    return PointOnLine(line, length_fraction, equal_area)
 
 
 def linestring_coords(line: LineString) -> List[Coordinates]:
@@ -84,6 +89,12 @@ def compute_bearing(
         if line2 is None:
             return 0.0
         coordinates = linestring_coords(line2)
-    bearing_point = interpolate(coordinates, bear_dist)
-    bear = bearing(coordinates[0], bearing_point)
-    return degrees(bear) % 360
+    if not equal_area:
+        bearing_point = wgs84.interpolate(coordinates, bear_dist)
+        bear = wgs84.bearing(coordinates[0], bearing_point)
+        result = degrees(bear) % 360
+    else:
+        bearing_point = ee.interpolate(coordinates, bear_dist)
+        bear = ee.bearing(coordinates[0], bearing_point)
+        result = (degrees(bear) + 360) % 360
+    return result

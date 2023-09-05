@@ -16,6 +16,7 @@ class PointOnLine(NamedTuple):
     #: Its value is member of the interval [0.0, 1.0].
     #: A value of 0 references the starting point of the line.
     relative_offset: float
+    equal_area: bool = False
 
     def _geometry_length_from_start(self):
         geometry_length = line_string_length(self.line.geometry)
@@ -38,15 +39,15 @@ class PointOnLine(NamedTuple):
         return split_line(self.line.geometry, self._geometry_length_from_start())
 
     @classmethod
-    def from_abs_offset(cls, line: Line, meters_into: float):
+    def from_abs_offset(cls, line: Line, meters_into: float, equal_area: bool = False):
         """Build a PointOnLine from an absolute offset value.
 
         Negative offsets are recognized and subtracted."""
         if meters_into >= 0.0:
-            return cls(line, meters_into / line.length)
+            return cls(line, meters_into / line.length, equal_area)
         else:
             negative_meters_into = line.length + meters_into
-            return cls(line, negative_meters_into / line.length)
+            return cls(line, negative_meters_into / line.length, equal_area)
 
 
 class Route(NamedTuple):
@@ -95,10 +96,7 @@ class Route(NamedTuple):
         "Returns the shape of the route. The route is has to be continuous."
         if self.start.line.line_id == self.end.line.line_id:
             return substring(
-                self.start.line.geometry,
-                self.start.relative_offset,
-                self.end.relative_offset,
-                normalized=True
+                self.start.line.geometry, self.start.relative_offset, self.end.relative_offset, normalized=True
             )
 
         result = []
