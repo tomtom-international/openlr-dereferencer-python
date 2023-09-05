@@ -2,7 +2,8 @@
 
 from functools import lru_cache
 from ..abstract import Node
-from ..wgs84 import distance
+from ..wgs84 import distance as wgs84_dist
+from ..equal_area import distance as ee_dist
 
 
 class LRPathNotFoundError(Exception):
@@ -10,11 +11,15 @@ class LRPathNotFoundError(Exception):
 
 
 @lru_cache(maxsize=2)
-def heuristic(current: Node, target: Node) -> float:
+def heuristic(current: Node, target: Node, equal_area: bool = False) -> float:
     """Estimated cost from current to target.
 
     We use geographical distance here as heuristic here."""
-    return distance(current.coordinates, target.coordinates)
+    if not equal_area:
+        dist = wgs84_dist(current.coordinates, target.coordinates)
+    else:
+        dist = ee_dist(current.coordinates, target.coordinates)
+    return dist
 
 
 def tautology(_) -> bool:

@@ -5,7 +5,7 @@ from shapely.geometry import LineString
 from shapely.ops import substring
 from openlr import Coordinates
 from ..maps.abstract import Line, path_length
-from ..maps.wgs84 import interpolate, split_line, join_lines, line_string_length
+from ..maps import wgs84, equal_area as ee
 
 
 class PointOnLine(NamedTuple):
@@ -16,14 +16,22 @@ class PointOnLine(NamedTuple):
     #: Its value is member of the interval [0.0, 1.0].
     #: A value of 0 references the starting point of the line.
     relative_offset: float
+    equal_area: bool = False
 
     def _geometry_length_from_start(self):
-        geometry_length = line_string_length(self.line.geometry)
+        if not self.equal_area:
+            geometry_length = wgs84.line_string_length(self.line.geometry)
+        else:
+            geometry_length = ee.line_string_length(self.line.geometry)
         return geometry_length * self.relative_offset
 
     def position(self) -> Coordinates:
         "Returns the actual geo position"
-        return interpolate(self.line.coordinates(), self._geometry_length_from_start())
+        if not self.equal_area:
+            pos = wgs84.interpolate(self.line.coordinates(), self._geometry_length_from_start())
+        else:
+            pos = ee.interpolate(self.line.coordinates(), self._geometry_length_from_start())
+        return pos
 
     def distance_from_start(self) -> float:
         "Returns the distance in meters from the start of the line to the point"
@@ -35,7 +43,11 @@ class PointOnLine(NamedTuple):
 
     def split(self) -> Tuple[Optional[LineString], Optional[LineString]]:
         "Splits the Line element that this point is along and returns the parts"
-        return split_line(self.line.geometry, self._geometry_length_from_start())
+        if not self.equal_area:
+            result = wgs84.split_line(self.line.geometry, self._geometry_length_from_start())
+        else:
+            result = ee.split_line(self.line.geometry, self._geometry_length_from_start())
+        return
 
     @classmethod
     def from_abs_offset(cls, line: Line, meters_into: float):
@@ -95,10 +107,7 @@ class Route(NamedTuple):
         "Returns the shape of the route. The route is has to be continuous."
         if self.start.line.line_id == self.end.line.line_id:
             return substring(
-                self.start.line.geometry,
-                self.start.relative_offset,
-                self.end.relative_offset,
-                normalized=True
+                self.start.line.geometry, self.start.relative_offset, self.end.relative_offset, normalized=True
             )
 
         result = []
@@ -109,8 +118,7 @@ class Route(NamedTuple):
         result += [line.geometry for line in self.path_inbetween]
         if last is not None:
             result.append(last)
-
-        return join_lines(result)
+        return wgs84.join_lines(result)
 
     def coordinates(self) -> List[Coordinates]:
         "Returns all Coordinates of this line location"

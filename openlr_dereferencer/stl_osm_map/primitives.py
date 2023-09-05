@@ -70,8 +70,8 @@ class Line(AbstractLine):
         stmt = f"""
             SELECT
                 ST_Distance(
-                    ST_SetSRID(ST_MakePoint(%s,%s),4326)::geography, 
-                    geometry::geography
+                    ST_SetSRID(ST_MakePoint(%s,%s), 2163),
+                    geometry
                 )
             FROM {self.db_schema}.{self.lines_tbl_name} 
             WHERE
@@ -112,10 +112,11 @@ class Line(AbstractLine):
             FROM {self.db_schema}.{self.nodes_tbl_name} nodes, {self.db_schema}.{self.lines_tbl_name} lines
             WHERE
                 lines.line_id = %s AND 
-                ST_Distance(
-                    nodes.geometry::geography,
-                    lines.geometry::geography
-                )<= %s
+                ST_DWithin(
+                    nodes.geometry,
+                    lines.geometry,
+                    %s
+                )
         """
         self.map_reader.cursor.execute(stmt, (self.line_id, distance))
         for (point_id,) in self.map_reader.cursor.fetchall():
@@ -124,7 +125,7 @@ class Line(AbstractLine):
     @property
     def length(self) -> float:
         "Length of line in meters"
-        stmt = f"SELECT ST_Length(geometry::geography) FROM {self.db_schema}.{self.lines_tbl_name} WHERE line_id = %s"
+        stmt = f"SELECT ST_Length(geometry) FROM {self.db_schema}.{self.lines_tbl_name} WHERE line_id = %s"
         self.map_reader.cursor.execute(stmt, (self.line_id,))
         (result,) = self.map_reader.cursor.fetchone()
         return result

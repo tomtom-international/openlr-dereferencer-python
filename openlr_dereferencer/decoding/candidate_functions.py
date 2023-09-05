@@ -23,7 +23,7 @@ def make_candidate(
     # we don't need to project on the point that is the degenerated line.
     if line.geometry.length == 0:
         return
-    point_on_line = project(line, coords(lrp))
+    point_on_line = project(line, coords(lrp), config.equal_area)
     reloff = point_on_line.relative_offset
 
     # threshold should be relative to line len. replaces config.candidate_threshold
@@ -56,7 +56,7 @@ def make_candidate(
     if is_last_lrp and reloff <= 0.0 or not is_last_lrp and reloff >= 1.0:
         return
     candidate = Candidate(line, reloff)
-    bearing = compute_bearing(lrp, candidate, is_last_lrp, config.bear_dist)
+    bearing = compute_bearing(lrp, candidate, is_last_lrp, config.bear_dist, config.equal_area)
     bear_diff = angle_difference(bearing, lrp.bear)
     if abs(bear_diff) > config.max_bear_deviation:
         if observer is not None:
@@ -106,7 +106,9 @@ def nominate_candidates(
             yield candidate
 
 
-def get_candidate_route(start: Candidate, dest: Candidate, lfrc: FRC, maxlen: float) -> Optional[Route]:
+def get_candidate_route(
+    start: Candidate, dest: Candidate, lfrc: FRC, maxlen: float, equal_area: bool
+) -> Optional[Route]:
     """Returns the shortest path between two LRP candidates, excluding partial lines.
 
     If it is longer than `maxlen`, it is treated as if no path exists.
@@ -137,7 +139,9 @@ def get_candidate_route(start: Candidate, dest: Candidate, lfrc: FRC, maxlen: fl
         return line.frc <= lfrc
 
     try:
-        path = shortest_path(start.line.end_node, dest.line.start_node, linefilter, maxlen=maxlen)
+        path = shortest_path(
+            start.line.end_node, dest.line.start_node, linefilter, maxlen=maxlen, equal_area=equal_area
+        )
         debug(f"Returning {path}")
         return Route(start, path, dest)
     except LRPathNotFoundError:
@@ -198,7 +202,9 @@ def match_tail(
 
     # For every pair of candidates, search for a path matching our requirements
     for c_from, c_to in pairs:
-        route = handleCandidatePair((current, next_lrp), (c_from, c_to), observer, lfrc, minlen, maxlen)
+        route = handleCandidatePair(
+            (current, next_lrp), (c_from, c_to), observer, lfrc, minlen, maxlen, config.equal_area
+        )
         if route is None:
             continue
         if last_lrp:
@@ -222,6 +228,7 @@ def handleCandidatePair(
     lowest_frc: FRC,
     minlen: float,
     maxlen: float,
+    equal_area: bool,
 ) -> Optional[Route]:
     """
     Try to find an adequate route between two LRP candidates.
@@ -246,7 +253,7 @@ def handleCandidatePair(
     """
     current, next_lrp = lrps
     source, dest = candidates
-    route = get_candidate_route(source, dest, lowest_frc, maxlen)
+    route = get_candidate_route(source, dest, lowest_frc, maxlen, equal_area)
 
     if not route:
         debug("No path for candidate found")
