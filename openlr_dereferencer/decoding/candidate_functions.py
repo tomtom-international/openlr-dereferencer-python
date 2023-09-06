@@ -26,36 +26,34 @@ def make_candidate(
     point_on_line = project(line, coords(lrp), config.equal_area)
     reloff = point_on_line.relative_offset
 
-    # threshold should be relative to line len. replaces config.candidate_threshold
-    rel_threshold = config.rel_candidate_threshold * line.geometry.length
     # In case the LRP is not the last LRP
     if not is_last_lrp:
         # Snap to the relevant end of the line, only if the node is not a simple connection node between two lines:
         # so it does not look like this: ----*-----
-        if abs(point_on_line.distance_from_start()) <= rel_threshold and is_valid_node(line.start_node):
+        if abs(point_on_line.distance_from_start()) <= config.candidate_threshold and is_valid_node(line.start_node):
             reloff = 0.0
         # If the projection onto the line is close to the END of the line,
         # discard the point since we expect that the start of
         # an adjacent line will be considered as candidate and that would be the better candidate.
         else:
-            if abs(point_on_line.distance_to_end()) <= rel_threshold and is_valid_node(line.end_node):
+            if abs(point_on_line.distance_to_end()) <= config.candidate_threshold and is_valid_node(line.end_node):
                 return
     # In case the LRP is the last LRP
     if is_last_lrp:
         # Snap to the relevant end of the line, only if the node is not a simple connection node between two lines:
         # so it does not look like this: ----*-----
-        if abs(point_on_line.distance_to_end()) <= rel_threshold and is_valid_node(line.end_node):
+        if abs(point_on_line.distance_to_end()) <= config.candidate_threshold and is_valid_node(line.end_node):
             reloff = 1.0
         else:
             # If the projection onto the line is close to the START of the line,
             # discard the point since we expect that the end of an adjacent line
             # will be considered as candidate and that would be the better candidate.
-            if point_on_line.distance_from_start() <= rel_threshold and is_valid_node(line.start_node):
+            if point_on_line.distance_from_start() <= config.candidate_threshold and is_valid_node(line.start_node):
                 return
     # Drop candidate if there is no partial line left
     if is_last_lrp and reloff <= 0.0 or not is_last_lrp and reloff >= 1.0:
         return
-    candidate = Candidate(line, reloff)
+    candidate = Candidate(line, reloff, config.equal_area)
     bearing = compute_bearing(lrp, candidate, is_last_lrp, config.bear_dist, config.equal_area)
     bear_diff = angle_difference(bearing, lrp.bear)
     if abs(bear_diff) > config.max_bear_deviation:
@@ -199,7 +197,6 @@ def match_tail(
     pairs = list(product(candidates, next_candidates))
     # Sort by line scores
     pairs.sort(key=lambda pair: (pair[0].score + pair[1].score), reverse=True)
-
     # For every pair of candidates, search for a path matching our requirements
     for c_from, c_to in pairs:
         route = handleCandidatePair(
@@ -217,7 +214,6 @@ def match_tail(
 
     if observer is not None:
         observer.on_matching_fail(current, next_lrp, candidates, next_candidates, "No candidate pair matches")
-
     raise LRDecodeError("Decoding was unsuccessful: No candidates left or available.")
 
 

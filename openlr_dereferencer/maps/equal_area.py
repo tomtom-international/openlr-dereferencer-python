@@ -37,7 +37,7 @@ def bearing(point_a: Coordinates, point_b: Coordinates) -> float:
     """Returns the angle between self and other relative to true north
     The result of this function is between -pi, pi, including them"""
 
-    bear = np.arctan2(point_b.lon - point_a.lon, point_b.lat - point_a.lon)
+    bear = np.arctan2(point_b.lon - point_a.lon, point_b.lat - point_a.lat)
     return bear
 
 
