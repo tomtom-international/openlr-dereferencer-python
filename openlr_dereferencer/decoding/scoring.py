@@ -124,5 +124,5 @@ def score_lrp_candidate(
     bear_score = score_bearing(wanted, candidate, is_last_lrp, config.bear_dist, config.equal_area)
     bear_score *= config.bear_weight
     score = fow_score + frc_score + geo_score + bear_score
-    debug(f"Score: geo {geo_score} + fow {fow_score} + frc {frc_score} " f"+ bear {bear_score} = {score}")
+    debug(f"Score: geo {geo_score} + fow {fow_score} + frc {frc_score} bear {bear_score} = {score}")
     return score

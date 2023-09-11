@@ -22,14 +22,14 @@ def remove_offsets(path: Route, p_off: float, n_off: float) -> Route:
     debug(f"first line's offset is {path.absolute_start_offset}")
     remaining_poff = p_off + path.absolute_start_offset
     while remaining_poff >= lines[0].length:
-        debug(f"Remaining positive offset {remaining_poff} is greater than " f"the first line. Removing it.")
+        debug(f"Remaining positive offset {remaining_poff} is greater than the first line. Removing it.")
         remaining_poff -= lines.pop(0).length
         if not lines:
             raise LRDecodeError("Offset is bigger than line location path")
     # Remove negative offset
     remaining_noff = n_off + path.absolute_end_offset
     while remaining_noff >= lines[-1].length:
-        debug(f"Remaining negative offset {remaining_noff} is greater than " f"the last line. Removing it.")
+        debug(f"Remaining negative offset {remaining_noff} is greater than the last line. Removing it.")
         remaining_noff -= lines.pop().length
         if not lines:
             raise LRDecodeError("Offset is bigger than line location path")

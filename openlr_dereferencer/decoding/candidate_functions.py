@@ -77,8 +77,7 @@ def make_candidate(
                 f"Candidate score = {candidate.score} lower than min. score = {config.min_score}",
             )
         debug(
-            f"Not considering {candidate}",
-            f"Candidate score = {candidate.score} < min. score = {config.min_score}",
+            f"Not considering {candidate}" + f"Candidate score = {candidate.score} < min. score = {config.min_score}",
         )
         return
     if observer is not None:
