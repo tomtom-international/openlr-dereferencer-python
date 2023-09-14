@@ -34,6 +34,7 @@ def shortest_path(
     end: Node,
     linefilter: Callable[[Line], bool] = tautology,
     maxlen: float = float("inf"),
+    equal_area: bool = False,
 ) -> List[Line]:
     """
     Returns a shortest path on the map between two nodes, as list of lines.
@@ -73,7 +74,7 @@ def shortest_path(
     """
 
     # The initial queue item
-    initial = PQItem(Score(heuristic(start, end), 0), start, None, None)
+    initial = PQItem(Score(heuristic(start, end, equal_area), 0), start, None, None)
 
     # The queue
     open_set = [initial]
@@ -115,7 +116,7 @@ def shortest_path(
                 continue
 
             neighbor_g_score = current.score.g + line.length
-            neighbor_f_score = neighbor_g_score + heuristic(neighbor_node, end)
+            neighbor_f_score = neighbor_g_score + heuristic(neighbor_node, end, equal_area)
 
             if neighbor_f_score > maxlen:
                 continue

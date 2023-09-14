@@ -27,4 +27,4 @@ def decode_line(
 
     Candidates are searched in a radius of `radius` meters around an LRP."""
     parts = dereference_path(reference.points, reader, config, observer)
-    return build_line_location(parts, reference)
+    return build_line_location(parts, reference, config.equal_area)
