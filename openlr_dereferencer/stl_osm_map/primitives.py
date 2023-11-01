@@ -1,10 +1,14 @@
 "Contains the Node and the Line class of the example format"
-
+from collections import namedtuple
 from itertools import chain
+import functools
 from typing import Iterable
 from openlr import Coordinates, FRC, FOW
 from shapely.geometry import LineString
+from shapely import wkt
 from openlr_dereferencer.maps import Line as AbstractLine, Node as AbstractNode
+
+LineNode = namedtuple("LineNode", ["start_node", "end_node"])
 
 
 class Line(AbstractLine):
@@ -18,6 +22,14 @@ class Line(AbstractLine):
         self.lines_tbl_name = map_reader.lines_tbl_name
         self.nodes_tbl_name = map_reader.nodes_tbl_name
         self.line_id_internal = line_id
+        self.srid = map_reader.srid
+        self._start_node = None
+        self._end_node = None
+        self._fow = None
+        self._frc = None
+        self._geometry = None
+        self._numpoints = None
+        self._length = None
 
     def __repr__(self):
         return f"Line with id={self.line_id} of length {self.length}"
@@ -27,50 +39,91 @@ class Line(AbstractLine):
         "Returns the line id"
         return self.line_id_internal
 
+    def get_and_store_database_info(self):
+        stmt = f"""
+            SELECT 
+                startnode,
+                endnode,
+                fow,
+                frc,
+                ST_astext(geometry),
+                ST_NumPoints(geometry),
+                st_length(geometry)
+            FROM {self.db_schema}.{self.lines_tbl_name}
+            WHERE line_id = %s
+        """
+        self.map_reader.cursor.execute(stmt, (self.line_id,))
+        (startnode, endnode, fow, frc, geometry, num_points, length) = self.map_reader.cursor.fetchone()
+        self._start_node = Node(self.map_reader, startnode)
+        self._end_node = Node(self.map_reader, endnode)
+        self._fow = FOW(fow)
+        self._frc = FRC(frc)
+        self._geometry = wkt.loads(geometry)
+        self._numpoints = num_points
+        self._length = length
+
     @property
     def start_node(self) -> "Node":
         "Returns the node from which this line comes from"
-        stmt = f"SELECT startnode FROM {self.db_schema}.{self.lines_tbl_name} WHERE line_id = %s"
-        self.map_reader.cursor.execute(stmt, (self.line_id,))
-        (point_id,) = self.map_reader.cursor.fetchone()
-        return self.map_reader.get_node(point_id)
+        if not self._start_node:
+            self.get_and_store_database_info()
+        return self._start_node
 
     @property
     def end_node(self) -> "Node":
         "Returns the node to which this line goes"
-        stmt = f"SELECT endnode FROM {self.db_schema}.{self.lines_tbl_name} WHERE line_id = %s"
-        self.map_reader.cursor.execute(stmt, (self.line_id,))
-        (point_id,) = self.map_reader.cursor.fetchone()
-        return self.map_reader.get_node(point_id)
+        if not self._end_node:
+            self.get_and_store_database_info()
+        return self._end_node
 
     @property
     def fow(self) -> FOW:
         "Returns the form of way for this line"
-        stmt = f"SELECT fow FROM {self.db_schema}.{self.lines_tbl_name} WHERE line_id = %s"
-        self.map_reader.cursor.execute(stmt, (self.line_id,))
-        (fow,) = self.map_reader.cursor.fetchone()
-        return FOW(fow)
+        if not self._fow:
+            self.get_and_store_database_info()
+        return self._fow
 
     @property
     def frc(self) -> FRC:
         "Returns the functional road class for this line"
-        stmt = f"SELECT frc FROM {self.db_schema}.{self.lines_tbl_name} WHERE line_id = %s"
+        if not self._frc:
+            self.get_and_store_database_info()
+        return self._frc
+
+    @property
+    def length(self) -> float:
+        "Length of line in meters"
+        if not self._length:
+            self.get_and_store_database_info()
+        return self._length
+
+    @property
+    def way_ids(self) -> int:
+        stmt = f"SELECT distinct(way_ids) FROM {self.db_schema}.{self.lines_tbl_name} WHERE line_id = %s"
         self.map_reader.cursor.execute(stmt, (self.line_id,))
-        (frc,) = self.map_reader.cursor.fetchone()
-        return FRC(frc)
+        (result,) = self.map_reader.cursor.fetchone()
+        return result
 
     @property
     def geometry(self) -> LineString:
         "Returns the line geometry"
-        points = [self.point_n(index + 1) for index in range(self.num_points())]
-        return LineString(points)
+        # chg list comp to single call
+        if not self._geometry:
+            self.get_and_store_database_info()
+        return self._geometry
+
+    def num_points(self) -> int:
+        "Returns how many points the path geometry contains"
+        if not self._numpoints:
+            self.get_and_store_database_info()
+        return self._numpoints
 
     def distance_to(self, coord) -> float:
         "Returns the distance of this line to `coord` in meters"
         stmt = f"""
             SELECT
                 ST_Distance(
-                    ST_SetSRID(ST_MakePoint(%s,%s), 2163),
+                    ST_SetSRID(ST_MakePoint(%s,%s), {self.srid}),
                     geometry
                 )
             FROM {self.db_schema}.{self.lines_tbl_name} 
@@ -83,13 +136,6 @@ class Line(AbstractLine):
         if dist is None:
             return 0.0
         return dist
-
-    def num_points(self) -> int:
-        "Returns how many points the path geometry contains"
-        stmt = f"SELECT ST_NumPoints(geometry) FROM {self.db_schema}.{self.lines_tbl_name} WHERE line_id = %s"
-        self.map_reader.cursor.execute(stmt, (self.line_id,))
-        (count,) = self.map_reader.cursor.fetchone()
-        return count
 
     def point_n(self, index) -> Coordinates:
         "Returns the `n` th point in the path geometry, starting at 0"
@@ -122,21 +168,6 @@ class Line(AbstractLine):
         for (point_id,) in self.map_reader.cursor.fetchall():
             yield self.map_reader.get_node(point_id)
 
-    @property
-    def length(self) -> float:
-        "Length of line in meters"
-        stmt = f"SELECT ST_Length(geometry) FROM {self.db_schema}.{self.lines_tbl_name} WHERE line_id = %s"
-        self.map_reader.cursor.execute(stmt, (self.line_id,))
-        (result,) = self.map_reader.cursor.fetchone()
-        return result
-
-    @property
-    def way_ids(self) -> int:
-        stmt = f"SELECT distinct(way_ids) FROM {self.db_schema}.{self.lines_tbl_name} WHERE line_id = %s"
-        self.map_reader.cursor.execute(stmt, (self.line_id,))
-        (result,) = self.map_reader.cursor.fetchone()
-        return result
-
 
 class Node(AbstractNode):
     "Node class implementation for example_sqlite_map"
@@ -161,17 +192,33 @@ class Node(AbstractNode):
         geo = self.map_reader.cursor.fetchone()
         return Coordinates(lon=geo[0], lat=geo[1])
 
+    @functools.cache
     def outgoing_lines(self) -> Iterable[Line]:
         stmt = f"SELECT line_id FROM {self.db_schema}.{self.lines_tbl_name} WHERE startnode = %s"
         self.map_reader.cursor.execute(stmt, (self.node_id,))
         for (line_id,) in self.map_reader.cursor.fetchall():
             yield Line(self.map_reader, line_id)
 
+    @functools.cache
     def incoming_lines(self) -> Iterable[Line]:
         stmt = f"SELECT line_id FROM {self.db_schema}.{self.lines_tbl_name} WHERE endnode = %s"
         self.map_reader.cursor.execute(stmt, [self.node_id])
         for (line_id,) in self.map_reader.cursor.fetchall():
             yield Line(self.map_reader, line_id)
+
+    @functools.cache
+    def incoming_line_nodes(self) -> Iterable[LineNode]:
+        stmt = f"SELECT startnode, endnode FROM {self.db_schema}.{self.lines_tbl_name} WHERE startnode = %s"
+        self.map_reader.cursor.execute(stmt, (self.node_id,))
+        for (startnode, endnode) in self.map_reader.cursor.fetchall():
+            yield LineNode(Node(self.map_reader, startnode), Node(self.map_reader, endnode))
+
+    @functools.cache
+    def outgoing_line_nodes(self) -> Iterable[LineNode]:
+        stmt = f"SELECT startnode, endnode FROM {self.db_schema}.{self.lines_tbl_name} WHERE endnode = %s"
+        self.map_reader.cursor.execute(stmt, (self.node_id,))
+        for (startnode, endnode) in self.map_reader.cursor.fetchall():
+            yield LineNode(Node(self.map_reader, startnode), Node(self.map_reader, endnode))
 
     def connected_lines(self) -> Iterable[Line]:
         return chain(self.incoming_lines(), self.outgoing_lines())

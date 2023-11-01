@@ -1,5 +1,5 @@
 "Contains functions for candidate searching and map matching"
-
+import functools
 from itertools import product
 from logging import debug
 from typing import Optional, Iterable, List, Tuple
@@ -274,11 +274,13 @@ def handleCandidatePair(
     return route
 
 
+@functools.lru_cache(maxsize=1000)
 def is_valid_node(node: Node):
     """
     Checks if a node is a valid node. A valid node is a node that corresponds to a real-world junction
     """
-    return not is_invalid_node(node)
+    v = not is_invalid_node(node)
+    return v
 
 
 def is_invalid_node(node: Node):
@@ -287,23 +289,23 @@ def is_invalid_node(node: Node):
     """
 
     # Get a list of all incoming lines to the node
-    incoming_lines = list(node.incoming_lines())
+    incoming_line_nodes = list(node.incoming_line_nodes())
 
     # Get a list of all outgoing lines from the node
-    outgoing_lines = list(node.outgoing_lines())
+    outgoing_line_nodes = list(node.outgoing_line_nodes())
 
     # Check the number of incoming and outgoing lines
-    if (len(incoming_lines) == 1 and len(outgoing_lines) == 1) or (
-        len(incoming_lines) == 2 and len(outgoing_lines) == 2
+    if (len(incoming_line_nodes) == 1 and len(outgoing_line_nodes) == 1) or (
+        len(incoming_line_nodes) == 2 and len(outgoing_line_nodes) == 2
     ):
         # Get the unique nodes of all incoming and outgoing lines
         unique_nodes = set()
 
-        for line in incoming_lines:
+        for line in outgoing_line_nodes:
             unique_nodes.add(line.start_node)
             unique_nodes.add(line.end_node)
 
-        for line in outgoing_lines:
+        for line in outgoing_line_nodes:
             unique_nodes.add(line.start_node)
             unique_nodes.add(line.end_node)
 
