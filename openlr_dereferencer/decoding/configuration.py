@@ -48,7 +48,7 @@ class Config(NamedTuple):
     min_score: float = 0.3
     #: For every LFRCNP possibly present in an LRP, this defines
     #: what lowest FRC in a considered route is acceptable
-    tolerated_lfrc: Dict[FRC, FRC] = {frc: frc for frc in FRC}
+    tolerated_lfrc: Dict[FRC, FRC] = {frc: frc if frc < 4 else 6 for frc in FRC}
     #: Partial candidate line threshold, measured in meters
     #:
     #: To find candidates, the LRP coordinates are projected against any line in the local area.
@@ -77,6 +77,7 @@ class Config(NamedTuple):
     bear_dist: int = 20
     #: Input coordinates are provided in an equal-area projection (i.e. NOT WGS84 lat/lon)
     equal_area: bool = False
+    equal_area_srid: int = 2163
 
 
 DEFAULT_CONFIG = Config()
