@@ -5,7 +5,7 @@ from typing import Iterable
 from openlr import Coordinates
 from .primitives import Line, Node, ExampleMapError
 from openlr_dereferencer.maps import MapReader
-from stl_general import stl_database as db
+from stl_general import database as db
 
 
 class PostgresMapReader(MapReader):
