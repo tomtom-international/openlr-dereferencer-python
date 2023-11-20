@@ -78,6 +78,8 @@ class Config(NamedTuple):
     #: Input coordinates are provided in an equal-area projection (i.e. NOT WGS84 lat/lon)
     equal_area: bool = False
     equal_area_srid: int = 2163
+    #: Timeout in seconds for single segment line decoding
+    timeout: int = 50000
 
 
 DEFAULT_CONFIG = Config()
@@ -120,6 +122,7 @@ def load_config(source: Union[str, TextIOBase, dict]) -> Config:
             opened_source["fow_standin_score"],
             opened_source["bear_dist"],
             opened_source["equal_area"],
+            opened_source["timeout"],
         ]
     )
 

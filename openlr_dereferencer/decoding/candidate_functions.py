@@ -3,13 +3,14 @@ import functools
 from itertools import product
 from logging import debug
 from typing import Optional, Iterable, List, Tuple
+import time
 from openlr import FRC, LocationReferencePoint
 from ..maps import shortest_path, MapReader, Line, Node
 from ..maps.a_star import LRPathNotFoundError
 from ..observer import DecoderObserver
 from .candidate import Candidate
 from .scoring import score_lrp_candidate, angle_difference
-from .error import LRDecodeError
+from .error import LRDecodeError, LRTimeoutError
 from .path_math import coords, project, compute_bearing
 from .routes import Route
 from .configuration import Config
@@ -153,6 +154,7 @@ def match_tail(
     reader: MapReader,
     config: Config,
     observer: Optional[DecoderObserver],
+    start_time: Optional[float] = None, 
 ) -> List[Route]:
     """Searches for the rest of the line location.
 
@@ -174,6 +176,9 @@ def match_tail(
             The wanted behaviour, as configuration options
         observer:
             The optional decoder observer, which emits events and calls back.
+        elapsed_time:
+            Time in seconds since outer-most call to `match_tail()` was initiated.
+
 
     Returns:
         If any candidate pair matches, the function calls itself for the rest of `tail` and
@@ -182,8 +187,17 @@ def match_tail(
     Raises:
         LRDecodeError:
             If no candidate pair matches or a recursive call can not resolve a route.
+        LRTimeoutError:
+            If `elapsed_time` > `config.timeout` before a candidate pair is matched
     """
+    if start_time is None:
+        start_time = time.time()
+    elapsed_time = time.time() - start_time
+    if elapsed_time > config.timeout:
+        raise LRTimeoutError("Decoding was unsuccessful: timed out trying to find a match.")
+    
     last_lrp = len(tail) == 1
+
     # The accepted distance to next point. This helps to save computations and filter bad paths
     minlen = (1 - config.max_dnp_deviation) * current.dnp - config.tolerated_dnp_dev
     maxlen = (1 + config.max_dnp_deviation) * current.dnp + config.tolerated_dnp_dev
@@ -206,7 +220,7 @@ def match_tail(
         if last_lrp:
             return [route]
         try:
-            return [route] + match_tail(next_lrp, [c_to], tail[1:], reader, config, observer)
+            return [route] + match_tail(next_lrp, [c_to], tail[1:], reader, config, observer, start_time)
         except LRDecodeError:
             debug("Recursive call to resolve remaining path had no success")
             continue
