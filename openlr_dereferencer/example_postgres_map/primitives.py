@@ -98,13 +98,6 @@ class Line(AbstractLine):
         return self._length
 
     @property
-    def way_ids(self) -> int:
-        stmt = f"SELECT distinct(way_ids) FROM {self.db_schema}.{self.lines_tbl_name} WHERE line_id = %s"
-        self.map_reader.cursor.execute(stmt, (self.line_id,))
-        (result,) = self.map_reader.cursor.fetchone()
-        return result
-
-    @property
     def geometry(self) -> LineString:
         "Returns the line geometry"
         # chg list comp to single call
@@ -170,7 +163,7 @@ class Line(AbstractLine):
 
 
 class Node(AbstractNode):
-    "Node class implementation for example_sqlite_map"
+    "Node class implementation for example_postgres_map"
 
     def __init__(self, map_reader, node_id: int):
         if not isinstance(node_id, int):
@@ -210,14 +203,14 @@ class Node(AbstractNode):
     def incoming_line_nodes(self) -> Iterable[LineNode]:
         stmt = f"SELECT startnode, endnode FROM {self.db_schema}.{self.lines_tbl_name} WHERE startnode = %s"
         self.map_reader.cursor.execute(stmt, (self.node_id,))
-        for (startnode, endnode) in self.map_reader.cursor.fetchall():
+        for startnode, endnode in self.map_reader.cursor.fetchall():
             yield LineNode(Node(self.map_reader, startnode), Node(self.map_reader, endnode))
 
     @functools.cache
     def outgoing_line_nodes(self) -> Iterable[LineNode]:
         stmt = f"SELECT startnode, endnode FROM {self.db_schema}.{self.lines_tbl_name} WHERE endnode = %s"
         self.map_reader.cursor.execute(stmt, (self.node_id,))
-        for (startnode, endnode) in self.map_reader.cursor.fetchall():
+        for startnode, endnode in self.map_reader.cursor.fetchall():
             yield LineNode(Node(self.map_reader, startnode), Node(self.map_reader, endnode))
 
     def connected_lines(self) -> Iterable[Line]:
