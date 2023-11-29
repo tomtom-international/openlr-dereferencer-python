@@ -5,18 +5,25 @@ from typing import Iterable
 from openlr import Coordinates
 from .primitives import Line, Node, ExampleMapError
 from openlr_dereferencer.maps import MapReader
-from stl_general import database as db
+import psycopg2
 
 
 class PostgresMapReader(MapReader):
     """
-    This is a reader for the example map format described in `map_format.md`.
-
-    Create an instance with: `ExampleMapReader('example.sqlite')`.
+    This is a reader for the example postgres map format described in `init.sql`
     """
 
-    def __init__(self, db_nickname, db_schema, lines_tbl_name, nodes_tbl_name, srid=4326):
-        self.db_nickname = db_nickname
+    def __init__(self, conn_str, db_schema, lines_tbl_name, nodes_tbl_name, srid=4326):
+        """Initializes PostgresMapReader class
+
+        Args:
+            conn_str (str): a libpq-style connection string (dsn)
+            db_schema (str): name of postgres schema where basemap tables live
+            lines_tbl_name (str): name of the basemap line table on postgres
+            nodes_tbl_name (str): name of the basemap nodes table on postgres
+            srid (int, optional): SRID of basemap node and line geometries. Defaults to 4326.
+        """
+        self.conn_str = conn_str
         self.db_schema = db_schema
         self.lines_tbl_name = lines_tbl_name
         self.nodes_tbl_name = nodes_tbl_name
@@ -24,8 +31,9 @@ class PostgresMapReader(MapReader):
         self.srid = srid
 
     def __enter__(self):
-        assert self.db_nickname is not None
-        self.connection = db.connect_db(nickname=self.db_nickname, driver="psycopg2")
+        self.connection = psycopg2.connect(
+            self.conn_str, keepalives_idle=120, keepalives_interval=20, keepalives_count=100
+        )
         self.cursor = self.connection.cursor()
         return self
 
