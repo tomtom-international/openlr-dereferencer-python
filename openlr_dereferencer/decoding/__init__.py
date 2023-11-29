@@ -22,20 +22,19 @@ from .point_locations import (
 )
 from .configuration import Config, DEFAULT_CONFIG, load_config, save_config
 
-LR = TypeVar("LocationReference",
-             LineLocationReference,
-             PointAlongLineLocationReference,
-             PoiWithAccessPointLocationReference,
-             GeoCoordinateLocationReference)
+LR = TypeVar(
+    "LocationReference",
+    LineLocationReference,
+    PointAlongLineLocationReference,
+    PoiWithAccessPointLocationReference,
+    GeoCoordinateLocationReference,
+)
 
 MapObjects = TypeVar("MapObjects", LineLocation, Coordinates, PointAlongLine)
 
 
 def decode(
-        reference: LR,
-        reader: MapReader,
-        observer: Optional[DecoderObserver] = None,
-        config: Config = DEFAULT_CONFIG
+    reference: LR, reader: MapReader, observer: Optional[DecoderObserver] = None, config: Config = DEFAULT_CONFIG
 ) -> MapObjects:
     """Translates an openLocationReference into a real location on your map.
 

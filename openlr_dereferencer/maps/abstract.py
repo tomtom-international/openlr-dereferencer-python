@@ -45,6 +45,7 @@ they can be used to implement line IDs.
 
 
 from abc import ABC, abstractmethod
+from collections import namedtuple
 from typing import Iterable, Hashable, Sequence
 from openlr import Coordinates, FOW, FRC
 from shapely.geometry import LineString, Point
@@ -57,6 +58,7 @@ class GeometricObject(ABC):
     def geometry(self) -> BaseGeometry:
         "Returns the geometry of this object"
 
+
 class Line(GeometricObject):
     "Abstract Line class, modelling a line coming from a map reader"
 
@@ -64,8 +66,12 @@ class Line(GeometricObject):
     @abstractmethod
     def line_id(self) -> Hashable:
         """Returns the id of the line.
-        
+
         A type is not specified here, but the ID has to be usable as key of a dictionary."""
+
+    @abstractmethod
+    def get_and_store_database_info(self):
+        """Single call to db to fetch all attributes of line and store as class attributes"""
 
     @property
     @abstractmethod
@@ -125,6 +131,14 @@ class Node(GeometricObject):
     @abstractmethod
     def incoming_lines(self) -> Iterable[Line]:
         "Yields all lines coming directly to this node."
+
+    @abstractmethod
+    def outgoing_line_nodes(self) -> Iterable[namedtuple]:
+        """Yields all tuples of start and end nodes for lines where end node is this node"""
+
+    @abstractmethod
+    def incoming_line_nodes(self) -> Iterable[namedtuple]:
+        """Yields all tuples of start and end nodes for lines where start node is this node"""
 
     @abstractmethod
     def connected_lines(self) -> Iterable[Line]:
