@@ -76,7 +76,7 @@ class Config(NamedTuple):
     bear_dist: int = 20
     #: Input coordinates are provided in an equal-area projection (i.e. NOT WGS84 lat/lon)
     equal_area: bool = False
-    equal_area_srid: int = 2163
+    equal_area_srid: int = 9311
     #: Timeout in seconds for single segment line decoding
     timeout: int = 50000
 
