@@ -10,7 +10,7 @@ from ..maps.a_star import LRPathNotFoundError
 from ..observer import DecoderObserver
 from .candidate import Candidate
 from .scoring import score_lrp_candidate, angle_difference
-from .error import LRDecodeError, LRTimeoutError
+from .error import LRDecodeError, LRTimeoutError, LRLastLRPNoCandidatesError
 from .path_math import coords, project, compute_bearing
 from .routes import Route
 from .configuration import Config
@@ -98,7 +98,8 @@ def nominate_candidates(
 ) -> Iterable[Candidate]:
     "Yields candidate lines for the LRP along with their score."
     debug(f"Finding candidates for LRP {lrp} at {coords(lrp)} in radius {config.search_radius}")
-    for line in reader.find_lines_close_to(coords(lrp), config.search_radius):
+    lines = reader.find_lines_close_to(coords(lrp), config.search_radius)
+    for line in lines:
         candidate = make_candidate(lrp, line, config, observer, is_last_lrp)
         if candidate:
             yield candidate
@@ -154,7 +155,7 @@ def match_tail(
     reader: MapReader,
     config: Config,
     observer: Optional[DecoderObserver],
-    start_time: Optional[float] = None, 
+    start_time: Optional[float] = None,
 ) -> List[Route]:
     """Searches for the rest of the line location.
 
@@ -189,15 +190,16 @@ def match_tail(
             If no candidate pair matches or a recursive call can not resolve a route.
         LRTimeoutError:
             If `elapsed_time` > `config.timeout` before a candidate pair is matched
+        LRNoFirstCandidatesError:
+            No candidates found for first lrp, so can't match the seg.
     """
     if start_time is None:
         start_time = time.time()
     elapsed_time = time.time() - start_time
     if elapsed_time > config.timeout:
         raise LRTimeoutError("Decoding was unsuccessful: timed out trying to find a match.")
-    
-    last_lrp = len(tail) == 1
 
+    last_lrp = len(tail) == 1
     # The accepted distance to next point. This helps to save computations and filter bad paths
     minlen = (1 - config.max_dnp_deviation) * current.dnp - config.tolerated_dnp_dev
     maxlen = (1 + config.max_dnp_deviation) * current.dnp + config.tolerated_dnp_dev
@@ -206,7 +208,8 @@ def match_tail(
     # Generate all pairs of candidates for the first two lrps
     next_lrp = tail[0]
     next_candidates = list(nominate_candidates(next_lrp, reader, config, observer, last_lrp))
-
+    if last_lrp and len(next_candidates) == 0:
+        raise LRLastLRPNoCandidatesError("Decoding was unsuccessful: no candidates found for last lrp.")
     pairs = list(product(candidates, next_candidates))
     # Sort by line scores
     pairs.sort(key=lambda pair: (pair[0].score + pair[1].score), reverse=True)
@@ -272,17 +275,15 @@ def handleCandidatePair(
 
     length = route.length()
 
-    if observer is not None:
-        observer.on_route_success(current, next_lrp, source, dest, route)
-
-    debug(f"DNP should be {current.dnp} m, is {length} m.")
     # If the path does not match DNP, continue with the next candidate pair
     if length < minlen or length > maxlen:
         debug("Shortest path deviation from DNP is too large")
+        debug(f"DNP should be {current.dnp} m, is {length} m.")
         if observer is not None:
             observer.on_route_fail(current, next_lrp, source, dest, "Shortest path deviation from DNP is too large")
         return None
-
+    if observer is not None:
+        observer.on_route_success(current, next_lrp, source, dest, route)
     debug(f"Taking route {route}.")
 
     return route

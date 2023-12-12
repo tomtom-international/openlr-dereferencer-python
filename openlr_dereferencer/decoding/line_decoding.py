@@ -8,6 +8,7 @@ from .candidate_functions import nominate_candidates, match_tail
 from .line_location import build_line_location, LineLocation
 from .routes import Route
 from .configuration import Config
+from .error import LRFirstLRPNoCandidatesError
 
 
 def dereference_path(
@@ -16,6 +17,8 @@ def dereference_path(
     "Decode the location reference path, without considering any offsets"
     first_lrp = lrps[0]
     first_candidates = list(nominate_candidates(first_lrp, reader, config, observer, False))
+    if len(first_candidates) == 0:
+        raise LRFirstLRPNoCandidatesError("Decoding was unsuccessful: no candidates found for first lrp.")
     linelocationpath = match_tail(first_lrp, first_candidates, lrps[1:], reader, config, observer)
     return linelocationpath
 

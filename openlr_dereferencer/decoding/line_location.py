@@ -76,4 +76,4 @@ def build_line_location(path: List[Route], reference: LineLocationReference, equ
     The result will be a trimmed list of Line objects, with minimized offset values"""
     p_off = reference.poffs * path[0].length()
     n_off = reference.noffs * path[-1].length()
-    return LineLocation(remove_offsets(combine_routes(path, equal_area), p_off, n_off))
+    return LineLocation(remove_offsets(combine_routes(path, equal_area), p_off, n_off, equal_area))
