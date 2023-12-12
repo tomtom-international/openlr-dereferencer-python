@@ -24,7 +24,7 @@ setup(
         "openlr_dereferencer.decoding",
         "openlr_dereferencer.observer",
         "openlr_dereferencer",
-        "openlr_dereferencer_stl_osm_map",
+        "openlr_dereferencer.stl_osm_map",
     ],
     install_requires=["openlr==1.0.1", "geographiclib", "shapely"],
     test_suite="tests",
