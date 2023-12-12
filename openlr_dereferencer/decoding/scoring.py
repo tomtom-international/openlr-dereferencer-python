@@ -12,9 +12,12 @@ from .path_math import coords, PointOnLine, compute_bearing
 from .configuration import Config
 
 
-def score_frc(wanted: FRC, actual: FRC) -> float:
+def score_frc(wanted: FRC, actual: FRC, tolerance: int = 0) -> float:
     "Return a score for a FRC value"
-    return 1.0 - abs(actual - wanted) / 7
+    diff = abs(actual - wanted)
+    if diff <= tolerance:
+        diff = 0
+    return 1.0 - diff / 7
 
 
 def score_geolocation(wanted: LocationReferencePoint, actual: PointOnLine, radius: float, equal_area: bool) -> float:
@@ -120,7 +123,7 @@ def score_lrp_candidate(
     debug(f"scoring {candidate} with config {config}")
     geo_score = config.geo_weight * score_geolocation(wanted, candidate, config.search_radius, config.equal_area)
     fow_score = config.fow_weight * config.fow_standin_score[wanted.fow][candidate.line.fow]
-    frc_score = config.frc_weight * score_frc(wanted.frc, candidate.line.frc)
+    frc_score = config.frc_weight * score_frc(wanted.frc, candidate.line.frc, config.frc_score_tolerance)
     bear_score = score_bearing(wanted, candidate, is_last_lrp, config.bear_dist, config.equal_area)
     bear_score *= config.bear_weight
     score = fow_score + frc_score + geo_score + bear_score

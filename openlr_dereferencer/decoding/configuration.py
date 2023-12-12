@@ -49,6 +49,9 @@ class Config(NamedTuple):
     #: For every LFRCNP possibly present in an LRP, this defines
     #: what lowest FRC in a considered route is acceptable
     tolerated_lfrc: Dict[FRC, FRC] = {frc: frc if frc < 4 else 6 for frc in FRC}
+    #: Defines level of FRC "fuzziness" for scoring. If FRC diff is less than or equal to this
+    #: value, treat FRC's as equivalent for scoring
+    frc_score_tolerance: int = 0
     #: Partial candidate line threshold, measured in meters
     #:
     #: To find candidates, the LRP coordinates are projected against any line in the local area.
@@ -56,7 +59,6 @@ class Config(NamedTuple):
     #: beginning at the projection point is considered to be the candidate. Else, the candidate
     #: snaps onto the starting point (or ending point, when it is the last LRP)
     candidate_threshold: int = 20
-    rel_candidate_threshold: float = 1.0
     #: Defines a threshold for the bearing difference. Candidates differing too much from
     #: the LRP's bearing value are pre-filtered.
     max_bear_deviation: float = 45.0
