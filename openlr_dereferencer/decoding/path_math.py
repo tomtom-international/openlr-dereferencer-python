@@ -13,7 +13,7 @@ from ..maps import wgs84
 from ..maps import equal_area as ee
 
 
-def remove_offsets(path: Route, p_off: float, n_off: float) -> Route:
+def remove_offsets(path: Route, p_off: float, n_off: float, equal_area: bool = False) -> Route:
     """Remove start+end offsets, measured in meters, from a route and return the result"""
     debug(f"Will consider positive offset = {p_off} m and negative offset {n_off} m.")
     lines = path.lines
@@ -39,9 +39,9 @@ def remove_offsets(path: Route, p_off: float, n_off: float) -> Route:
     else:
         end_line = start_line
     return Route(
-        PointOnLine.from_abs_offset(start_line, remaining_poff),
+        PointOnLine.from_abs_offset(start_line, remaining_poff, equal_area),
         lines,
-        PointOnLine.from_abs_offset(end_line, end_line.length - remaining_noff),
+        PointOnLine.from_abs_offset(end_line, end_line.length - remaining_noff, equal_area),
     )
 
 
