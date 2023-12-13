@@ -11,12 +11,15 @@ from .tools import heuristic, LRPathNotFoundError, tautology
 
 class Score(NamedTuple):
     """The score of a single item in the search priority queue"""
+
     f: float
     g: float
+
 
 @total_ordering
 class PQItem(NamedTuple):
     """A single item in the search priority queue"""
+
     score: Score
     node: Node
     line: Line
@@ -27,10 +30,11 @@ class PQItem(NamedTuple):
 
 
 def shortest_path(
-        start: Node,
-        end: Node,
-        linefilter: Callable[[Line], bool] = tautology,
-        maxlen: float = float("inf"),
+    start: Node,
+    end: Node,
+    linefilter: Callable[[Line], bool] = tautology,
+    maxlen: float = float("inf"),
+    equal_area: bool = False,
 ) -> List[Line]:
     """
     Returns a shortest path on the map between two nodes, as list of lines.
@@ -70,7 +74,7 @@ def shortest_path(
     """
 
     # The initial queue item
-    initial = PQItem(Score(heuristic(start, end), 0), start, None, None)
+    initial = PQItem(Score(heuristic(start, end, equal_area), 0), start, None, None)
 
     # The queue
     open_set = [initial]
@@ -112,17 +116,12 @@ def shortest_path(
                 continue
 
             neighbor_g_score = current.score.g + line.length
-            neighbor_f_score = neighbor_g_score + heuristic(neighbor_node, end)
+            neighbor_f_score = neighbor_g_score + heuristic(neighbor_node, end, equal_area)
 
             if neighbor_f_score > maxlen:
                 continue
 
-            neighbor = PQItem(
-                Score(neighbor_f_score, neighbor_g_score),
-                neighbor_node,
-                line,
-                current
-            )
+            neighbor = PQItem(Score(neighbor_f_score, neighbor_g_score), neighbor_node, line, current)
 
             heappush(open_set, neighbor)
 

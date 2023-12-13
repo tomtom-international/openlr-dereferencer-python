@@ -74,6 +74,11 @@ class Config(NamedTuple):
     fow_standin_score: List[List[float]] = DEFAULT_FOW_STAND_IN_SCORE
     #: The bearing angle is computed along this distance on a given line. Given in meters.
     bear_dist: int = 20
+    #: Input coordinates are provided in an equal-area projection (i.e. NOT WGS84 lat/lon)
+    equal_area: bool = False
+    equal_area_srid: int = 9311
+    #: Timeout in seconds for single segment line decoding
+    timeout: int = 50000
 
 
 DEFAULT_CONFIG = Config()
@@ -101,22 +106,21 @@ def load_config(source: Union[str, TextIOBase, dict]) -> Config:
         raise TypeError("Surprising type")
     return Config._make(
         [
-            opened_source['search_radius'],
-            opened_source['max_dnp_deviation'],
-            opened_source['tolerated_dnp_dev'],
-            opened_source['min_score'],
-            {
-                FRC(int(key)): FRC(value)
-                for (key, value) in opened_source['tolerated_lfrc'].items()
-            },
-            opened_source['candidate_threshold'],
-            opened_source['max_bear_deviation'],
-            opened_source['fow_weight'],
-            opened_source['frc_weight'],
-            opened_source['geo_weight'],
-            opened_source['bear_weight'],
-            opened_source['fow_standin_score'],
-            opened_source['bear_dist']
+            opened_source["search_radius"],
+            opened_source["max_dnp_deviation"],
+            opened_source["tolerated_dnp_dev"],
+            opened_source["min_score"],
+            {FRC(int(key)): FRC(value) for (key, value) in opened_source["tolerated_lfrc"].items()},
+            opened_source["candidate_threshold"],
+            opened_source["max_bear_deviation"],
+            opened_source["fow_weight"],
+            opened_source["frc_weight"],
+            opened_source["geo_weight"],
+            opened_source["bear_weight"],
+            opened_source["fow_standin_score"],
+            opened_source["bear_dist"],
+            opened_source["equal_area"],
+            opened_source["timeout"],
         ]
     )
 
