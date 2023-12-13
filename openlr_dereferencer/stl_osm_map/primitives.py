@@ -196,29 +196,31 @@ class Node(AbstractNode):
     def outgoing_lines(self) -> Iterable[Line]:
         stmt = f"SELECT line_id FROM {self.db_schema}.{self.lines_tbl_name} WHERE startnode = %s"
         self.map_reader.cursor.execute(stmt, (self.node_id,))
-        for (line_id,) in self.map_reader.cursor.fetchall():
-            yield Line(self.map_reader, line_id)
+        return [Line(self.map_reader, line_id[0]) for line_id in self.map_reader.cursor.fetchall()]
 
     @functools.cache
     def incoming_lines(self) -> Iterable[Line]:
         stmt = f"SELECT line_id FROM {self.db_schema}.{self.lines_tbl_name} WHERE endnode = %s"
-        self.map_reader.cursor.execute(stmt, [self.node_id])
-        for (line_id,) in self.map_reader.cursor.fetchall():
-            yield Line(self.map_reader, line_id)
+        self.map_reader.cursor.execute(stmt, (self.node_id,))
+        return [Line(self.map_reader, line_id[0]) for line_id in self.map_reader.cursor.fetchall()]
 
     @functools.cache
     def incoming_line_nodes(self) -> Iterable[LineNode]:
         stmt = f"SELECT startnode, endnode FROM {self.db_schema}.{self.lines_tbl_name} WHERE startnode = %s"
         self.map_reader.cursor.execute(stmt, (self.node_id,))
-        for (startnode, endnode) in self.map_reader.cursor.fetchall():
-            yield LineNode(Node(self.map_reader, startnode), Node(self.map_reader, endnode))
+        return [
+            LineNode(Node(self.map_reader, startnode), Node(self.map_reader, endnode))
+            for startnode, endnode in self.map_reader.cursor.fetchall()
+        ]
 
     @functools.cache
     def outgoing_line_nodes(self) -> Iterable[LineNode]:
         stmt = f"SELECT startnode, endnode FROM {self.db_schema}.{self.lines_tbl_name} WHERE endnode = %s"
         self.map_reader.cursor.execute(stmt, (self.node_id,))
-        for (startnode, endnode) in self.map_reader.cursor.fetchall():
-            yield LineNode(Node(self.map_reader, startnode), Node(self.map_reader, endnode))
+        return [
+            LineNode(Node(self.map_reader, startnode), Node(self.map_reader, endnode))
+            for startnode, endnode in self.map_reader.cursor.fetchall()
+        ]
 
     def connected_lines(self) -> Iterable[Line]:
         return chain(self.incoming_lines(), self.outgoing_lines())

@@ -48,7 +48,7 @@ class Config(NamedTuple):
     min_score: float = 0.3
     #: For every LFRCNP possibly present in an LRP, this defines
     #: what lowest FRC in a considered route is acceptable
-    tolerated_lfrc: Dict[FRC, FRC] = {frc: frc if frc < 4 else 6 for frc in FRC}
+    tolerated_lfrc: Dict[FRC, FRC] = {frc: frc for frc in FRC}
     #: Defines level of FRC "fuzziness" for scoring. If FRC diff is less than or equal to this
     #: value, treat FRC's as equivalent for scoring
     frc_score_tolerance: int = 0

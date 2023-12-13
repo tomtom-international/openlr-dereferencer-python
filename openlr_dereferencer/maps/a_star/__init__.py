@@ -82,7 +82,6 @@ def shortest_path(
 
     # The seen items
     closed_set = set()
-
     # Keep trying while the queue is not empty
     while open_set:
         # Pop the next item from the queue
@@ -98,7 +97,6 @@ def shortest_path(
             while c.previous:
                 lines.insert(0, c.line)
                 c = c.previous
-
             return lines
 
         # Check if the item has been seen already
@@ -122,10 +120,11 @@ def shortest_path(
                 continue
 
             neighbor = PQItem(Score(neighbor_f_score, neighbor_g_score), neighbor_node, line, current)
-
             heappush(open_set, neighbor)
 
         # Add the current item to the closed set
         closed_set.add(current_node.node_id)
-
-    raise LRPathNotFoundError("No path found")
+    err_msg = "No path found between nodes {0} and {1}. Got stuck at node {2}.".format(
+        start.node_id, end.node_id, current_node.node_id
+    )
+    raise LRPathNotFoundError(err_msg)

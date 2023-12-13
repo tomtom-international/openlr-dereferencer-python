@@ -143,8 +143,8 @@ def get_candidate_route(
         )
         debug(f"Returning {path}")
         return Route(start, path, dest)
-    except LRPathNotFoundError:
-        debug(f"No path found between these nodes: ({start.line.end_node.node_id}, {dest.line.start_node.node_id})")
+    except LRPathNotFoundError as e:
+        debug(e)
         return None
 
 
@@ -266,7 +266,6 @@ def handleCandidatePair(
     current, next_lrp = lrps
     source, dest = candidates
     route = get_candidate_route(source, dest, lowest_frc, maxlen, equal_area)
-
     if not route:
         debug("No path for candidate found")
         if observer is not None:
