@@ -1,7 +1,7 @@
 """The example map format described in `map_format.md`, conforming to
 the interface in openlr_dereferencer.maps"""
 
-from typing import Iterable
+from typing import Iterable, Optional
 from openlr import Coordinates
 from .primitives import Line, Node, ExampleMapError
 from openlr_dereferencer.maps import MapReader
@@ -19,7 +19,9 @@ class PostgresMapReader(MapReader):
     Create an instance with: `ExampleMapReader('example.sqlite')`.
     """
 
-    def __init__(self, db_nickname, db_schema, lines_tbl_name, nodes_tbl_name, srid=4326):
+    def __init__(
+        self, db_nickname, db_schema, lines_tbl_name, nodes_tbl_name, srid=4326
+    ):
         self.db_nickname = db_nickname
         self.db_schema = db_schema
         self.lines_tbl_name = lines_tbl_name
@@ -29,7 +31,9 @@ class PostgresMapReader(MapReader):
 
     def __enter__(self):
         assert self.db_nickname is not None
-        self.connection = db.connect_db(nickname=self.db_nickname, driver="psycopg2")
+        self.connection = db.connect_db(
+            nickname=self.db_nickname, driver="psycopg2"
+        )
         self.cursor = self.connection.cursor()
         return self
 
@@ -53,12 +57,16 @@ class PostgresMapReader(MapReader):
         return Line(self, line_id)
 
     def get_lines(self) -> Iterable[Line]:
-        self.cursor.execute(f"SELECT line_id FROM {self.db_schema}.{self.lines_tbl_name}")
+        self.cursor.execute(
+            f"SELECT line_id FROM {self.db_schema}.{self.lines_tbl_name}"
+        )
         for (line_id,) in self.cursor.fetchall():
             yield Line(self, line_id)
 
     def get_linecount(self) -> int:
-        self.cursor.execute(f"SELECT COUNT(*) FROM {self.db_schema}.{self.lines_tbl_name}")
+        self.cursor.execute(
+            f"SELECT COUNT(*) FROM {self.db_schema}.{self.lines_tbl_name}"
+        )
         (count,) = self.cursor.fetchone()
         return count
 
@@ -71,16 +79,22 @@ class PostgresMapReader(MapReader):
         return Node(self, node_id)
 
     def get_nodes(self) -> Iterable[Node]:
-        self.cursor.execute(f"SELECT node_id FROM {self.db_schema}.{self.nodes_tbl_name}")
+        self.cursor.execute(
+            f"SELECT node_id FROM {self.db_schema}.{self.nodes_tbl_name}"
+        )
         for (node_id,) in self.cursor.fetchall():
             yield Node(self, node_id)
 
     def get_nodecount(self) -> int:
-        self.cursor.execute(f"SELECT COUNT(*) FROM {self.db_schema}.{self.nodes_tbl_name}")
+        self.cursor.execute(
+            f"SELECT COUNT(*) FROM {self.db_schema}.{self.nodes_tbl_name}"
+        )
         (count,) = self.cursor.fetchone()
         return count
 
-    def find_nodes_close_to(self, coord: Coordinates, dist: float) -> Iterable[Node]:
+    def find_nodes_close_to(
+        self, coord: Coordinates, dist: float
+    ) -> Iterable[Node]:
         """Finds all nodes in a given radius, given in meters
         Yields every node within this distance to `coord`."""
         lon, lat = coord.lon, coord.lat
@@ -98,7 +112,12 @@ class PostgresMapReader(MapReader):
         for (node_id,) in self.cursor.fetchall():
             yield Node(self, node_id)
 
-    def find_lines_close_to(self, coord: Coordinates, dist: float) -> Iterable[Line]:
+    def find_lines_close_to(
+        self,
+        coord: Coordinates,
+        dist: float,
+        and_filter_str: Optional[str] = "",
+    ) -> Iterable[Line]:
         "Yields all lines within `dist` meters around `coord`"
         lon, lat = coord.lon, coord.lat
         stmt = f"""
@@ -109,7 +128,9 @@ class PostgresMapReader(MapReader):
                 ST_SetSRID(ST_MakePoint(%s,%s), {self.srid}),
                 geometry,
                 %s
-            );
+            )
+            {and_filter_str}
+            ;
         """
         self.cursor.execute(stmt, (lon, lat, dist))
         for (line_id,) in self.cursor.fetchall():

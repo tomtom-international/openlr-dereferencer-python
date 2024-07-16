@@ -34,7 +34,11 @@ MapObjects = TypeVar("MapObjects", LineLocation, Coordinates, PointAlongLine)
 
 
 def decode(
-    reference: LR, reader: MapReader, observer: Optional[DecoderObserver] = None, config: Config = DEFAULT_CONFIG
+    reference: LR,
+    reader: MapReader,
+    observer: Optional[DecoderObserver] = None,
+    config: Config = DEFAULT_CONFIG,
+    basemap_filter_str: Optional[str] = "",
 ) -> MapObjects:
     """Translates an openLocationReference into a real location on your map.
 
@@ -68,7 +72,9 @@ def decode(
             Raised if the decoding process was not successful.
     """
     if isinstance(reference, LineLocationReference):
-        return decode_line(reference, reader, config, observer)
+        return decode_line(
+            reference, reader, config, observer, basemap_filter_str
+        )
     elif isinstance(reference, PointAlongLineLocationReference):
         return decode_pointalongline(reference, reader, config, observer)
     elif isinstance(reference, GeoCoordinateLocationReference):

@@ -17,7 +17,11 @@ from .configuration import Config
 
 
 def make_candidate(
-    lrp: LocationReferencePoint, line: Line, config: Config, observer: Optional[DecoderObserver], is_last_lrp: bool
+    lrp: LocationReferencePoint,
+    line: Line,
+    config: Config,
+    observer: Optional[DecoderObserver],
+    is_last_lrp: bool,
 ) -> Candidate:
     "Returns one or none LRP candidates based on the given line"
     # When the line is of length zero, we expect that also the adjacent lines are considered as candidates, hence
@@ -31,31 +35,43 @@ def make_candidate(
     if not is_last_lrp:
         # Snap to the relevant end of the line, only if the node is not a simple connection node between two lines:
         # so it does not look like this: ----*-----
-        if abs(point_on_line.distance_from_start()) <= config.candidate_threshold and is_valid_node(line.start_node):
+        if abs(
+            point_on_line.distance_from_start()
+        ) <= config.candidate_threshold and is_valid_node(line.start_node):
             reloff = 0.0
         # If the projection onto the line is close to the END of the line,
         # discard the point since we expect that the start of
         # an adjacent line will be considered as candidate and that would be the better candidate.
         else:
-            if abs(point_on_line.distance_to_end()) <= config.candidate_threshold and is_valid_node(line.end_node):
+            if abs(
+                point_on_line.distance_to_end()
+            ) <= config.candidate_threshold and is_valid_node(line.end_node):
                 return
     # In case the LRP is the last LRP
     if is_last_lrp:
         # Snap to the relevant end of the line, only if the node is not a simple connection node between two lines:
         # so it does not look like this: ----*-----
-        if abs(point_on_line.distance_to_end()) <= config.candidate_threshold and is_valid_node(line.end_node):
+        if abs(
+            point_on_line.distance_to_end()
+        ) <= config.candidate_threshold and is_valid_node(line.end_node):
             reloff = 1.0
         else:
             # If the projection onto the line is close to the START of the line,
             # discard the point since we expect that the end of an adjacent line
             # will be considered as candidate and that would be the better candidate.
-            if point_on_line.distance_from_start() <= config.candidate_threshold and is_valid_node(line.start_node):
+            if (
+                point_on_line.distance_from_start()
+                <= config.candidate_threshold
+                and is_valid_node(line.start_node)
+            ):
                 return
     # Drop candidate if there is no partial line left
     if is_last_lrp and reloff <= 0.0 or not is_last_lrp and reloff >= 1.0:
         return
     candidate = Candidate(line, reloff, config.equal_area)
-    bearing = compute_bearing(lrp, candidate, is_last_lrp, config.bear_dist, config.equal_area)
+    bearing = compute_bearing(
+        lrp, candidate, is_last_lrp, config.bear_dist, config.equal_area
+    )
     bear_diff = angle_difference(bearing, lrp.bear)
     if abs(bear_diff) > config.max_bear_deviation:
         if observer is not None:
@@ -78,7 +94,8 @@ def make_candidate(
                 f"Candidate score = {candidate.score} lower than min. score = {config.min_score}",
             )
         debug(
-            f"Not considering {candidate}" + f"Candidate score = {candidate.score} < min. score = {config.min_score}",
+            f"Not considering {candidate}"
+            + f"Candidate score = {candidate.score} < min. score = {config.min_score}",
         )
         return
     if observer is not None:
@@ -95,10 +112,15 @@ def nominate_candidates(
     config: Config,
     observer: Optional[DecoderObserver],
     is_last_lrp: bool,
+    basemap_filter_str: Optional[str] = "",
 ) -> Iterable[Candidate]:
     "Yields candidate lines for the LRP along with their score."
-    debug(f"Finding candidates for LRP {lrp} at {coords(lrp)} in radius {config.search_radius}")
-    lines = reader.find_lines_close_to(coords(lrp), config.search_radius)
+    debug(
+        f"Finding candidates for LRP {lrp} at {coords(lrp)} in radius {config.search_radius}"
+    )
+    lines = reader.find_lines_close_to(
+        coords(lrp), config.search_radius, basemap_filter_str
+    )
     for line in lines:
         candidate = make_candidate(lrp, line, config, observer, is_last_lrp)
         if candidate:
@@ -106,7 +128,11 @@ def nominate_candidates(
 
 
 def get_candidate_route(
-    start: Candidate, dest: Candidate, lfrc: FRC, maxlen: float, equal_area: bool
+    start: Candidate,
+    dest: Candidate,
+    lfrc: FRC,
+    maxlen: float,
+    equal_area: bool,
 ) -> Optional[Route]:
     """Returns the shortest path between two LRP candidates, excluding partial lines.
 
@@ -132,14 +158,20 @@ def get_candidate_route(
     debug(f"Try to find path between {start, dest}")
     if start.line.line_id == dest.line.line_id:
         return Route(start, [], dest)
-    debug(f"Finding path between nodes {start.line.end_node.node_id, dest.line.start_node.node_id}")
+    debug(
+        f"Finding path between nodes {start.line.end_node.node_id, dest.line.start_node.node_id}"
+    )
 
     def linefilter(line, lfrc=lfrc):
         return line.frc <= lfrc
 
     try:
         path = shortest_path(
-            start.line.end_node, dest.line.start_node, linefilter, maxlen=maxlen, equal_area=equal_area
+            start.line.end_node,
+            dest.line.start_node,
+            linefilter,
+            maxlen=maxlen,
+            equal_area=equal_area,
         )
         debug(f"Returning {path}")
         return Route(start, path, dest)
@@ -197,40 +229,66 @@ def match_tail(
         start_time = time.time()
     elapsed_time = time.time() - start_time
     if elapsed_time > config.timeout:
-        raise LRTimeoutError("Decoding was unsuccessful: timed out trying to find a match.")
+        raise LRTimeoutError(
+            "Decoding was unsuccessful: timed out trying to find a match."
+        )
 
     last_lrp = len(tail) == 1
     # The accepted distance to next point. This helps to save computations and filter bad paths
-    minlen = (1 - config.max_dnp_deviation) * current.dnp - config.tolerated_dnp_dev
-    maxlen = (1 + config.max_dnp_deviation) * current.dnp + config.tolerated_dnp_dev
+    minlen = (
+        1 - config.max_dnp_deviation
+    ) * current.dnp - config.tolerated_dnp_dev
+    maxlen = (
+        1 + config.max_dnp_deviation
+    ) * current.dnp + config.tolerated_dnp_dev
     lfrc = config.tolerated_lfrc[current.lfrcnp]
 
     # Generate all pairs of candidates for the first two lrps
     next_lrp = tail[0]
-    next_candidates = list(nominate_candidates(next_lrp, reader, config, observer, last_lrp))
+    next_candidates = list(
+        nominate_candidates(next_lrp, reader, config, observer, last_lrp)
+    )
     if last_lrp and len(next_candidates) == 0:
-        raise LRLastLRPNoCandidatesError("Decoding was unsuccessful: no candidates found for last lrp.")
+        raise LRLastLRPNoCandidatesError(
+            "Decoding was unsuccessful: no candidates found for last lrp."
+        )
     pairs = list(product(candidates, next_candidates))
     # Sort by line scores
     pairs.sort(key=lambda pair: (pair[0].score + pair[1].score), reverse=True)
     # For every pair of candidates, search for a path matching our requirements
     for c_from, c_to in pairs:
         route = handleCandidatePair(
-            (current, next_lrp), (c_from, c_to), observer, lfrc, minlen, maxlen, config.equal_area
+            (current, next_lrp),
+            (c_from, c_to),
+            observer,
+            lfrc,
+            minlen,
+            maxlen,
+            config.equal_area,
         )
         if route is None:
             continue
         if last_lrp:
             return [route]
         try:
-            return [route] + match_tail(next_lrp, [c_to], tail[1:], reader, config, observer, start_time)
+            return [route] + match_tail(
+                next_lrp, [c_to], tail[1:], reader, config, observer, start_time
+            )
         except LRDecodeError:
             debug("Recursive call to resolve remaining path had no success")
             continue
 
     if observer is not None:
-        observer.on_matching_fail(current, next_lrp, candidates, next_candidates, "No candidate pair matches")
-    raise LRDecodeError("Decoding was unsuccessful: No candidates left or available.")
+        observer.on_matching_fail(
+            current,
+            next_lrp,
+            candidates,
+            next_candidates,
+            "No candidate pair matches",
+        )
+    raise LRDecodeError(
+        "Decoding was unsuccessful: No candidates left or available."
+    )
 
 
 def handleCandidatePair(
@@ -269,7 +327,9 @@ def handleCandidatePair(
     if not route:
         debug("No path for candidate found")
         if observer is not None:
-            observer.on_route_fail(current, next_lrp, source, dest, "No path for candidate found")
+            observer.on_route_fail(
+                current, next_lrp, source, dest, "No path for candidate found"
+            )
         return None
 
     length = route.length()
@@ -279,7 +339,13 @@ def handleCandidatePair(
         debug("Shortest path deviation from DNP is too large")
         debug(f"DNP should be {current.dnp} m, is {length} m.")
         if observer is not None:
-            observer.on_route_fail(current, next_lrp, source, dest, "Shortest path deviation from DNP is too large")
+            observer.on_route_fail(
+                current,
+                next_lrp,
+                source,
+                dest,
+                "Shortest path deviation from DNP is too large",
+            )
         return None
     if observer is not None:
         observer.on_route_success(current, next_lrp, source, dest, route)
