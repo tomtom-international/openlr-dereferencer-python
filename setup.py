@@ -26,7 +26,12 @@ setup(
         "openlr_dereferencer",
         "openlr_dereferencer.stl_osm_map",
     ],
-    install_requires=["openlr==1.0.1", "geographiclib", "shapely"],
+    install_requires=[
+        "openlr==1.0.1",
+        "geographiclib",
+        "shapely",
+        "stl_general @ git+ssh://git@github.com/StreetLight-Data/npp.git@develop#subdirectory=streetlight/stl_general",
+    ],
     test_suite="tests",
     python_requires=">=3.6",
     classifiers=[
