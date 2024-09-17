@@ -21,7 +21,7 @@ def score_geolocation(wanted: LocationReferencePoint, actual: PointOnLine, radiu
     """Scores the geolocation of a candidate.
 
     A distance of `radius` or more will result in a 0.0 score."""
-    debug(f"Candidate coords are {actual.position()}")
+    debug("Candidate coords are %s", actual.position())
     dist = distance(coords(wanted), actual.position())
     if dist < radius:
         return 1.0 - dist / radius
@@ -118,13 +118,13 @@ def score_lrp_candidate(
     """Scores the candidate (line) for the LRP.
 
     This is the average of fow, frc, geo and bearing score."""
-    debug(f"scoring {candidate} with config {config}")
+    debug("scoring %s with config %s", candidate, config)
     geo_score = config.geo_weight * score_geolocation(wanted, candidate, config.search_radius)
     fow_score = config.fow_weight * config.fow_standin_score[wanted.fow][candidate.line.fow]
     frc_score = config.frc_weight * score_frc(wanted.frc, candidate.line.frc)
     bear_score = score_bearing(wanted, candidate, is_last_lrp, config.bear_dist)
     bear_score *= config.bear_weight
     score = fow_score + frc_score + geo_score + bear_score
-    debug(f"Score: geo {geo_score} + fow {fow_score} + frc {frc_score} "
-          f"+ bear {bear_score} = {score}")
+    debug("Score: geo(%.02f) + fow(%.02f) + frc(%.02f) + bear(%.02f) = %.02f", geo_score, fow_score, frc_score, bear_score, score
+    )
     return score
