@@ -4,7 +4,7 @@ from itertools import product
 from logging import debug
 from typing import Optional, Iterable, List, Tuple
 from openlr import FRC, LocationReferencePoint
-from ..maps import shortest_path, MapReader, Line
+from ..maps import shortest_path, MapReader, Line, Node
 from ..maps.a_star import LRPathNotFoundError
 from ..observer import DecoderObserver
 from .candidate import Candidate
@@ -15,39 +15,39 @@ from .routes import Route
 from .configuration import Config
 
 
-def make_candidates(
-        lrp: LocationReferencePoint,
-        line: Line,
-        config: Config,
-        is_last_lrp: bool
-) -> Iterable[Candidate]:
-    "Yields zero or more LRP candidates based on the given line"
+def make_candidate(
+    lrp: LocationReferencePoint, line: Line, config: Config, observer: Optional[DecoderObserver], is_last_lrp: bool
+) -> Candidate:
+    "Returns one or none LRP candidates based on the given line"
+    # When the line is of length zero, we expect that also the adjacent lines are considered as candidates, hence
+    # we don't need to project on the point that is the degenerated line.
+    if line.geometry.length == 0:
+        return
     point_on_line = project(line, coords(lrp))
     reloff = point_on_line.relative_offset
-    #In case the LRP is not the last LRP
+    # In case the LRP is not the last LRP
     if not is_last_lrp:
-
-    # Snap to the relevant end of the line, only if the node is not a simple connection node between two lines:
-    # so it does not look like this: ----*-----
-        if abs(point_on_line.distance_from_start()) <= config.candidate_threshold and not (len(list(line.start_node.incoming_lines()))==1 and len(list(line.start_node.outgoing_lines()))==1):
+        # Snap to the relevant end of the line, only if the node is not a simple connection node between two lines:
+        # so it does not look like this: ----*-----
+        if abs(point_on_line.distance_from_start()) <= config.candidate_threshold and is_valid_node(line.start_node):
             reloff = 0.0
         # If the projection onto the line is close to the END of the line,
         # discard the point since we expect that the start of
-        # the an adjacent line will be considered as candidate and that would be the better candidate.
+        # an adjacent line will be considered as candidate and that would be the better candidate.
         else:
-            if abs(point_on_line.distance_to_end()) <= config.candidate_threshold and not (len(list(line.end_node.incoming_lines()))==1 and len(list(line.end_node.outgoing_lines()))==1):
+            if abs(point_on_line.distance_to_end()) <= config.candidate_threshold and is_valid_node(line.end_node):
                 return
     # In case the LRP is the last LRP
     if is_last_lrp:
         # Snap to the relevant end of the line, only if the node is not a simple connection node between two lines:
         # so it does not look like this: ----*-----
-        if abs(point_on_line.distance_to_end()) <= config.candidate_threshold and not (len(list(line.end_node.incoming_lines()))==1 and len(list(line.end_node.outgoing_lines()))==1):
+        if abs(point_on_line.distance_to_end()) <= config.candidate_threshold and is_valid_node(line.end_node):
             reloff = 1.0
         else:
-            #If the projection onto the line is close to the START of the line,
+            # If the projection onto the line is close to the START of the line,
             # discard the point since we expect that the end of an adjacent line
             # will be considered as candidate and that would be the better candidate.
-            if point_on_line.distance_from_start()<=config.candidate_threshold:
+            if point_on_line.distance_from_start() <= config.candidate_threshold and is_valid_node(line.start_node):
                 return
     # Drop candidate if there is no partial line left
     if is_last_lrp and reloff <= 0.0 or not is_last_lrp and reloff >= 1.0:
@@ -56,23 +56,52 @@ def make_candidates(
     bearing = compute_bearing(lrp, candidate, is_last_lrp, config.bear_dist)
     bear_diff = angle_difference(bearing, lrp.bear)
     if abs(bear_diff) > config.max_bear_deviation:
-        debug("Not considering %s because the bearing difference is %.02f°. (bear: %.02f. lrp bear: %.02f)", candidate, bear_diff, bearing, lrp.bear)
+        if observer is not None:
+            observer.on_candidate_rejected(
+                lrp, candidate,
+                f"Bearing difference = {bear_diff} greater than max. bearing deviation = {config.max_bear_deviation}",
+            )
+        debug(
+            "Not considering %s because the bearing difference is %.02f°. (bear: %.02f. lrp bear: %.02f)", 
+            candidate, bear_diff, bearing, lrp.bear
+        )
         return
     candidate.score = score_lrp_candidate(lrp, candidate, config, is_last_lrp)
-    if candidate.score >= config.min_score:
-        yield candidate
+    if candidate.score < config.min_score:
+        if observer is not None:
+            observer.on_candidate_rejected(
+                lrp, candidate,
+                f"Candidate score = {candidate.score} lower than min. score = {config.min_score}",
+            )
+        debug(
+            f"Not considering {candidate}",
+            f"Candidate score = {candidate.score} < min. score = {config.min_score}",
+        )
+        return
+    if observer is not None:
+        observer.on_candidate_found(
+            lrp, candidate,
+        )
+    return candidate
 
 
 def nominate_candidates(
-        lrp: LocationReferencePoint, reader: MapReader, config: Config, is_last_lrp: bool
+    lrp: LocationReferencePoint, reader: MapReader, config: Config,
+    observer: Optional[DecoderObserver], is_last_lrp: bool
 ) -> Iterable[Candidate]:
     "Yields candidate lines for the LRP along with their score."
-    debug("Finding candidates for LRP %s at %s in radius %.02f", lrp, coords(lrp), config.search_radius)
+    debug(
+        "Finding candidates for LRP %s at %s within radius %.02f m", lrp, coords(lrp), config.search_radius
+    )
     for line in reader.find_lines_close_to(coords(lrp), config.search_radius):
-        yield from make_candidates(lrp, line, config, is_last_lrp)
+        candidate = make_candidate(lrp, line, config, observer, is_last_lrp)
+        if candidate:
+            yield candidate
 
 
-def get_candidate_route(start: Candidate, dest: Candidate, lfrc: FRC, maxlen: float) -> Optional[Route]:
+def get_candidate_route(
+    start: Candidate, dest: Candidate, lfrc: FRC, maxlen: float
+) -> Optional[Route]:
     """Returns the shortest path between two LRP candidates, excluding partial lines.
 
     If it is longer than `maxlen`, it is treated as if no path exists.
@@ -97,10 +126,14 @@ def get_candidate_route(start: Candidate, dest: Candidate, lfrc: FRC, maxlen: fl
     debug("Try to find path between %s,%s",start, dest)
     if start.line.line_id == dest.line.line_id:
         return Route(start, [], dest)
-    debug("Finding path between nodes %d,%d",start.line.end_node.node_id, dest.line.start_node.node_id)
+    debug(
+        "Finding path between nodes %d,%d",start.line.end_node.node_id, dest.line.start_node.node_id
+    )
     linefilter = lambda line: line.frc <= lfrc
     try:
-        path = shortest_path(start.line.end_node, dest.line.start_node, linefilter, maxlen=maxlen)
+        path = shortest_path(
+            start.line.end_node, dest.line.start_node, linefilter, maxlen=maxlen
+        )
         debug("Returning %s", path)
         return Route(start, path, dest)
     except LRPathNotFoundError:
@@ -109,12 +142,12 @@ def get_candidate_route(start: Candidate, dest: Candidate, lfrc: FRC, maxlen: fl
 
 
 def match_tail(
-        current: LocationReferencePoint,
-        candidates: List[Candidate],
-        tail: List[LocationReferencePoint],
-        reader: MapReader,
-        config: Config,
-        observer: Optional[DecoderObserver]
+    current: LocationReferencePoint,
+    candidates: List[Candidate],
+    tail: List[LocationReferencePoint],
+    reader: MapReader,
+    config: Config,
+    observer: Optional[DecoderObserver],
 ) -> List[Route]:
     """Searches for the rest of the line location.
 
@@ -153,10 +186,7 @@ def match_tail(
 
     # Generate all pairs of candidates for the first two lrps
     next_lrp = tail[0]
-    next_candidates = list(nominate_candidates(next_lrp, reader, config, last_lrp))
-
-    if observer is not None:
-        observer.on_candidates_found(next_lrp, next_candidates)
+    next_candidates = list(nominate_candidates(next_lrp, reader, config, observer, last_lrp))
 
     pairs = list(product(candidates, next_candidates))
     # Sort by line scores
@@ -164,29 +194,34 @@ def match_tail(
 
     # For every pair of candidates, search for a path matching our requirements
     for (c_from, c_to) in pairs:
-        route = handleCandidatePair((current, next_lrp), (c_from, c_to), observer, lfrc, minlen, maxlen)
+        route = handleCandidatePair(
+            (current, next_lrp), (c_from, c_to), observer, lfrc, minlen, maxlen
+        )
         if route is None:
             continue
         if last_lrp:
             return [route]
         try:
-            return [route] + match_tail(next_lrp, [c_to], tail[1:], reader, config, observer)
+            return [route] + match_tail(
+                next_lrp, [c_to], tail[1:], reader, config, observer
+            )
         except LRDecodeError:
             debug("Recursive call to resolve remaining path had no success")
             continue
 
     if observer is not None:
-        observer.on_matching_fail(current, next_lrp, candidates, next_candidates)
+        observer.on_matching_fail(current, next_lrp, candidates, next_candidates, "No candidate pair matches")
     raise LRDecodeError("Decoding was unsuccessful: No candidates left or available.")
 
+
 def handleCandidatePair(
-        lrps: Tuple[LocationReferencePoint, LocationReferencePoint],
-        candidates: Tuple[Candidate, Candidate],
-        observer: Optional[DecoderObserver],
-        lowest_frc: FRC,
-        minlen: float,
-        maxlen: float,
-    ) -> Optional[Route]:
+    lrps: Tuple[LocationReferencePoint, LocationReferencePoint],
+    candidates: Tuple[Candidate, Candidate],
+    observer: Optional[DecoderObserver],
+    lowest_frc: FRC,
+    minlen: float,
+    maxlen: float,
+) -> Optional[Route]:
     """
     Try to find an adequate route between two LRP candidates.
 
@@ -215,7 +250,7 @@ def handleCandidatePair(
     if not route:
         debug("No path for candidate found")
         if observer is not None:
-            observer.on_route_fail(current, next_lrp, source, dest)
+            observer.on_route_fail(current, next_lrp, source, dest, "No path for candidate found")
         return None
 
     length = route.length()
@@ -227,8 +262,49 @@ def handleCandidatePair(
     # If the path does not match DNP, continue with the next candidate pair
     if length < minlen or length > maxlen:
         debug("Shortest path deviation from DNP is too large")
+        if observer is not None:
+            observer.on_route_fail(current, next_lrp, source, dest, "Shortest path deviation from DNP is too large")
         return None
 
     debug("Taking route %s.", route)
 
     return route
+
+
+def is_valid_node(node: Node):
+    """
+    Checks if a node is a valid node. A valid node is a node that corresponds to a real-world junction
+    """
+    return not is_invalid_node(node)
+
+
+def is_invalid_node(node: Node):
+    """
+    Checks if a node is an invalid node. An invalid node is a node along a road and not at a real-world junction.
+    """
+
+    # Get a list of all incoming lines to the node
+    incoming_lines = list(node.incoming_lines())
+
+    # Get a list of all outgoing lines from the node
+    outgoing_lines = list(node.outgoing_lines())
+
+    # Check the number of incoming and outgoing lines
+    if (len(incoming_lines) == 1 and len(outgoing_lines) == 1) or (len(incoming_lines) == 2 and len(outgoing_lines) == 2):
+        # Get the unique nodes of all incoming and outgoing lines
+        unique_nodes = set()
+
+        for line in incoming_lines:
+            unique_nodes.add(line.start_node)
+            unique_nodes.add(line.end_node)
+
+        for line in outgoing_lines:
+            unique_nodes.add(line.start_node)
+            unique_nodes.add(line.end_node)
+
+        # If it is an invalid node, there should be 3 unique nodes
+        return len(unique_nodes) == 3
+
+    else:
+        # Otherwise it is a valid node
+        return False
